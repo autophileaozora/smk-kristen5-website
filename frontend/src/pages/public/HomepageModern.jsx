@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { useSchoolLogo } from '../../hooks/useContact';
 
 const HomepageModern = () => {
+  // Get school logo from contact info
+  const { logo: schoolLogo } = useSchoolLogo();
+
   // State management
   const [data, setData] = useState({
     runningTexts: [],
@@ -102,8 +106,8 @@ const HomepageModern = () => {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                <span className="text-white font-bold text-xl">SMK</span>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform overflow-hidden">
+                <img src={schoolLogo} alt="SMK Kristen 5" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="font-bold text-lg text-slate-800 leading-tight">SMK Kristen 5</h1>
@@ -622,8 +626,8 @@ const HomepageModern = () => {
             {/* About */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">SMK</span>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-white">
+                  <img src={schoolLogo} alt="SMK Kristen 5" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">SMK Kristen 5 Klaten</h3>

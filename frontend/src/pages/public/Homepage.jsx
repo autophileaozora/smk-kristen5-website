@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { useSchoolLogo } from '../../hooks/useContact';
 
 const Homepage = () => {
+  // Get school logo from contact info
+  const { logo: schoolLogo } = useSchoolLogo();
+
   // State for data from API
   const [runningTexts, setRunningTexts] = useState([]);
   const [jurusans, setJurusans] = useState([]);
@@ -107,10 +111,10 @@ const Homepage = () => {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <img 
-                src="/logo.svg" 
-                alt="SMK Kristen 5 Klaten" 
-                className="h-12 w-12"
+              <img
+                src={schoolLogo}
+                alt="SMK Kristen 5 Klaten"
+                className="h-12 w-12 object-contain"
               />
               <div className={`transition-colors ${isScrolled ? 'text-dark-gray' : 'text-white'}`}>
                 <h1 className="font-russo text-lg leading-tight">SMK KRISTEN 5</h1>
@@ -540,7 +544,7 @@ const Homepage = () => {
             {/* Logo & Name */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src="/logo.svg" alt="SMK Kristen 5" className="h-12 w-12" />
+                <img src={schoolLogo} alt="SMK Kristen 5" className="h-12 w-12 object-contain" />
                 <div>
                   <h3 className="font-russo text-lg">SMK KRISTEN 5</h3>
                   <p className="text-xs text-gray-400">KLATEN</p>

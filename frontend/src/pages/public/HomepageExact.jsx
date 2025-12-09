@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { useSchoolLogo } from '../../hooks/useContact';
 
 const HomepageExact = () => {
+  // Get school logo from contact info
+  const { logo: schoolLogo } = useSchoolLogo();
+
   const [data, setData] = useState({
     runningTexts: [],
     jurusans: [],
@@ -84,7 +88,7 @@ const HomepageExact = () => {
           <div className="flex items-center justify-between h-20">
             {/* Logo - Exact position */}
             <Link to="/" className="flex items-center gap-3">
-              <img src="/logo.svg" alt="Logo" className="h-12 w-12" />
+              <img src={schoolLogo} alt="Logo" className="h-12 w-12 object-contain" />
               <div className="leading-tight">
                 <div className="text-xs text-gray-600">SEKOLAH MENENGAH KEJURUAN</div>
                 <div className="text-lg font-bold text-gray-800">KRISTEN 5 KLATEN</div>
@@ -134,7 +138,7 @@ const HomepageExact = () => {
         <div className="relative container mx-auto px-4">
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
-              <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
+              <img src={schoolLogo} alt="Logo" className="h-8 w-8 object-contain" />
               <span className="text-white text-sm font-semibold">
                 SEKOLAH MENENGAH KEJURUAN KRISTEN 5 KLATEN
               </span>
@@ -529,7 +533,7 @@ const HomepageExact = () => {
             {/* Logo Column */}
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <img src="/logo.svg" alt="Logo" className="h-16 w-16" />
+                <img src={schoolLogo} alt="Logo" className="h-16 w-16 object-contain" />
                 <div>
                   <div className="text-2xl font-bold">SMK KRISTEN 5</div>
                   <div className="text-xl">KLATEN</div>
