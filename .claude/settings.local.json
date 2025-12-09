@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(del \"c:\\Users\\aozora\\Music\\project\\backend\\src\\utils\\generateArticleImages.js\")",
+      "Bash(del \"c:\\Users\\aozora\\Music\\project\\backend\\GENERATE_IMAGES_README.md\")",
+      "Bash(del \"c:\\Users\\aozora\\Music\\project\\backend\\src\\routes\\contactRoutes.js\")",
+      "Bash(git --version:*)",
+      "Bash(git config:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
