@@ -74,11 +74,26 @@ export const extractPublicId = (url) => {
 
   try {
     // Extract public ID from Cloudinary URL
-    // Format: https://res.cloudinary.com/cloud-name/image/upload/v123456/folder/filename.ext
-    const matches = url.match(/\/([^\/]+)\.[a-z]+$/i);
-    if (matches && matches[1]) {
-      return matches[1];
+    // Format: https://res.cloudinary.com/cloud-name/image/upload/v123456/folder/subfolder/filename.ext
+    // Public ID should be: folder/subfolder/filename (without extension)
+
+    // Match everything after /upload/v[numbers]/ until the file extension
+    const uploadPattern = /\/upload\/v\d+\/(.+)\.[a-z]+$/i;
+    const uploadMatch = url.match(uploadPattern);
+
+    if (uploadMatch && uploadMatch[1]) {
+      return uploadMatch[1];
     }
+
+    // Fallback: Match everything after /upload/ until the file extension
+    const fallbackPattern = /\/upload\/(.+)\.[a-z]+$/i;
+    const fallbackMatch = url.match(fallbackPattern);
+
+    if (fallbackMatch && fallbackMatch[1]) {
+      // Remove version prefix if exists (v123456/)
+      return fallbackMatch[1].replace(/^v\d+\//, '');
+    }
+
     return null;
   } catch (error) {
     return null;
