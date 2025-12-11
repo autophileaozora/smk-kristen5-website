@@ -174,7 +174,7 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
       });
     }
 
-    const { name, description, category, coach, schedule, location, achievements, isActive } = req.body;
+    const { name, description, category, coach, schedule, location, achievements, isActive, image } = req.body;
 
     ekskul.name = name || ekskul.name;
     ekskul.description = description || ekskul.description;
@@ -200,6 +200,8 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
           message: 'Failed to upload image to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (image !== undefined) {
+      ekskul.image = image;
     }
 
     await ekskul.save();

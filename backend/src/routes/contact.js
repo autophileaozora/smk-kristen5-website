@@ -98,8 +98,10 @@ router.put('/', protect, async (req, res) => {
       contact.operatingHours = operatingHours || contact.operatingHours;
       contact.socialMedia = socialMedia || contact.socialMedia;
       contact.mapUrl = mapUrl || contact.mapUrl;
-      contact.heroImage = heroImage || contact.heroImage;
-      contact.schoolLogo = schoolLogo || contact.schoolLogo;
+
+      // Allow empty string for images (to delete them)
+      if (heroImage !== undefined) contact.heroImage = heroImage;
+      if (schoolLogo !== undefined) contact.schoolLogo = schoolLogo;
 
       await contact.save();
     }

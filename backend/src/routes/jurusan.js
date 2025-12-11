@@ -239,9 +239,9 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
       });
     }
 
-    const { 
+    const {
       name, code, description, vision, mission, headOfDepartment, isActive,
-      subjects, facilities, careerProspects, competencies
+      subjects, facilities, careerProspects, competencies, logo, backgroundImage
     } = req.body;
 
     // Check duplicate code if code is being changed
@@ -292,6 +292,8 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
           message: 'Failed to upload logo to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (logo !== undefined) {
+      jurusan.logo = logo;
     }
 
     // Upload new backgroundImage to Cloudinary if provided
@@ -309,6 +311,8 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
           message: 'Failed to upload background image to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (backgroundImage !== undefined) {
+      jurusan.backgroundImage = backgroundImage;
     }
 
     // Upload new gallery images to Cloudinary if provided

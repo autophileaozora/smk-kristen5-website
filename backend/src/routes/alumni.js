@@ -250,6 +250,7 @@ router.put('/:id', protect, isAdministrator, uploadSingle('photo'), async (req, 
       linkedIn,
       isPublished,
       isFeatured,
+      photo,
     } = req.body;
 
     alumni.name = name || alumni.name;
@@ -279,6 +280,8 @@ router.put('/:id', protect, isAdministrator, uploadSingle('photo'), async (req, 
           message: 'Failed to upload photo to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (photo !== undefined) {
+      alumni.photo = photo;
     }
 
     await alumni.save();

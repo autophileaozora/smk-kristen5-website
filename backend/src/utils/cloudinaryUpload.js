@@ -1,21 +1,7 @@
-import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 import { Readable } from 'stream';
-
-// Configure Cloudinary with fallback to hardcoded values
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'drszo9bl2',
-  api_key: process.env.CLOUDINARY_API_KEY || '655933234672663',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'azdMIKT382EqxYGiRcmUG7Slsxw',
-});
-
-// Show configuration status
-console.log('🔧 Cloudinary Config:', {
-  cloud_name: cloudinary.config().cloud_name,
-  api_key: cloudinary.config().api_key ? 'Set' : 'Not Set',
-  api_secret: cloudinary.config().api_secret ? 'Set' : 'Not Set',
-  source: process.env.CLOUDINARY_CLOUD_NAME ? '.env file' : 'hardcoded fallback'
-});
+// Import configured cloudinary instance from config
+import cloudinary from '../config/cloudinary.js';
 
 // Use memory storage
 const storage = multer.memoryStorage();
@@ -52,12 +38,6 @@ export const uploadMultiple = (fields) => {
 // Upload buffer to Cloudinary
 export const uploadToCloudinary = (buffer, folder = 'smk-kristen5') => {
   return new Promise((resolve, reject) => {
-    // Check if Cloudinary is configured
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      reject(new Error('Cloudinary credentials not configured. Please check your .env file.'));
-      return;
-    }
-
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: folder,

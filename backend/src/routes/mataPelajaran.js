@@ -182,7 +182,7 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
       });
     }
 
-    const { name, description, category, semester, hoursPerWeek, isActive, displayOrder } = req.body;
+    const { name, description, category, semester, hoursPerWeek, isActive, displayOrder, image } = req.body;
 
     mataPelajaran.name = name || mataPelajaran.name;
     mataPelajaran.description = description || mataPelajaran.description;
@@ -207,6 +207,8 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
           message: 'Failed to upload image to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (image !== undefined) {
+      mataPelajaran.image = image;
     }
 
     await mataPelajaran.save();

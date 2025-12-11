@@ -1,12 +1,14 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-// Configure Cloudinary
+// Configure Cloudinary with direct values (env variables not loaded yet during ES6 imports)
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: 'drszo9bl2',
+  api_key: '655933234672663',
+  api_secret: 'azdMIKT382EqxYGiRcmUG7Slsxw',
   secure: true,
 });
+
+console.log('✅ Cloudinary configured successfully');
 
 /**
  * Upload image to Cloudinary

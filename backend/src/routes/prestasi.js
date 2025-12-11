@@ -144,7 +144,7 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
       });
     }
 
-    const { title, description, category, level, date, participants } = req.body;
+    const { title, description, category, level, date, participants, image } = req.body;
 
     prestasi.title = title || prestasi.title;
     prestasi.description = description || prestasi.description;
@@ -168,6 +168,8 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
           message: 'Failed to upload image to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (image !== undefined) {
+      prestasi.image = image;
     }
 
     await prestasi.save();
