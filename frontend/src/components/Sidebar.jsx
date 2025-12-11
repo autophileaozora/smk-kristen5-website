@@ -1,19 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import api from '../services/api';
 
 const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pendingArticlesCount, setPendingArticlesCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
   const isActive = (path) => location.pathname === path;
 
+  // Fetch pending articles count for administrator
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      if (user?.role === 'administrator') {
+        try {
+          const response = await api.get('/api/articles?status=pending&limit=1');
+          if (response.data.success && response.data.data.pagination) {
+            setPendingArticlesCount(response.data.data.pagination.total);
+          }
+        } catch (error) {
+          console.error('Error fetching pending articles count:', error);
+        }
+      }
+    };
+
+    fetchPendingCount();
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Navigation items based on role
   const navigationItems = user?.role === 'administrator' ? [
     { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
-    { name: 'Artikel', path: '/admin/articles', icon: '📝' },
+    { name: 'Artikel', path: '/admin/articles', icon: '📝', badge: pendingArticlesCount },
     { name: 'Running Text', path: '/admin/running-text', icon: '📢' },
     { name: 'Prestasi', path: '/admin/prestasi', icon: '🏆' },
     { name: 'Jurusan', path: '/admin/jurusan', icon: '🎓' },
@@ -90,22 +114,35 @@ const Sidebar = () => {
         {/* Logo/Header */}
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-xl font-bold text-primary-600">
-            SMK Kristen 5 Klaten
+            {user?.role === 'administrator' ? 'KRISMA DASHBOARD' : 'SMK Kristen 5 Klaten'}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {user?.role === 'administrator' ? 'Administrator' : 'Admin Siswa'}
-          </p>
+          {user?.role !== 'administrator' && (
+            <p className="text-sm text-gray-500 mt-1">Admin Siswa</p>
+          )}
+          {user?.role === 'administrator' && (
+            <div className="mt-3">
+              <input
+                type="text"
+                placeholder="Cari menu atau pengaturan..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {navigationItems.map((item) => (
+          {navigationItems
+            .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map((item) => (
             <Link
               key={item.path}
               to={item.path}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`
-                flex items-center space-x-3 px-4 py-3 rounded-lg
+                flex items-center justify-between px-4 py-3 rounded-lg
                 transition-colors duration-200
                 ${
                   isActive(item.path)
@@ -114,8 +151,15 @@ const Sidebar = () => {
                 }
               `}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-medium">{item.name}</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-xl">{item.icon}</span>
+                <span className="font-medium">{item.name}</span>
+              </div>
+              {item.badge > 0 && (
+                <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
