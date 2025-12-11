@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { useSchoolLogo } from '../../hooks/useContact';
 
 const HomepageFixed = () => {
   const navigate = useNavigate();
+  const { logo: schoolLogo } = useSchoolLogo();
 
   const [data, setData] = useState({
     runningTexts: [],
@@ -22,11 +24,20 @@ const HomepageFixed = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isPrestasiPaused, setIsPrestasiPaused] = useState(false);
+  const [isTestimoniPaused, setIsTestimoniPaused] = useState(false);
+  const [jurusanScrollProgress, setJurusanScrollProgress] = useState(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
   const jurusanSectionRef = useRef(null);
+  const jurusanCardsRef = useRef(null);
   const invitingSectionRef = useRef(null);
   const row2Ref = useRef(null);
+  const prestasiRef = useRef(null);
+  const testimoniRef = useRef(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
 
   useEffect(() => {
     // Add global styles to hide scrollbar and infinite scroll animation
@@ -45,22 +56,32 @@ const HomepageFixed = () => {
           transform: translateX(0);
         }
         100% {
-          transform: translateX(-50%);
+          transform: translateX(-33.333%);
         }
       }
       @keyframes scroll-right {
         0% {
-          transform: translateX(-50%);
+          transform: translateX(-33.333%);
         }
         100% {
           transform: translateX(0);
         }
       }
       .animate-scroll-left {
-        animation: scroll-left 30s linear infinite;
+        animation: scroll-left 20s linear infinite;
       }
       .animate-scroll-right {
-        animation: scroll-right 30s linear infinite;
+        animation: scroll-right 20s linear infinite;
+      }
+      .paused {
+        animation-play-state: paused !important;
+      }
+      .dragging {
+        cursor: grabbing !important;
+        user-select: none;
+      }
+      .draggable {
+        cursor: grab;
       }
     `;
     document.head.appendChild(style);
@@ -124,9 +145,38 @@ const HomepageFixed = () => {
       lastScrollY.current = currentScrollY;
     };
 
+    const handleWheel = (e) => {
+      const jurusanCards = jurusanCardsRef.current;
+      if (!jurusanCards) return;
+
+      const cardsRect = jurusanCards.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const maxScroll = jurusanCards.scrollWidth - jurusanCards.clientWidth;
+      const currentHorizontalScroll = jurusanCards.scrollLeft;
+
+      // Check if cards are fully visible in viewport
+      const isCardsVisible = cardsRect.top <= 100 && cardsRect.bottom <= windowHeight;
+
+      if (isCardsVisible) {
+        // Scrolling down and has more cards to show
+        if (e.deltaY > 0 && currentHorizontalScroll < maxScroll) {
+          e.preventDefault();
+          jurusanCards.scrollLeft += e.deltaY;
+        }
+        // Scrolling up and not at the start
+        else if (e.deltaY < 0 && currentHorizontalScroll > 0) {
+          e.preventDefault();
+          jurusanCards.scrollLeft += e.deltaY;
+        }
+      }
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('wheel', handleWheel, { passive: false });
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('wheel', handleWheel);
       clearTimeout(scrollTimeout.current);
     };
   }, [data.jurusans.length]);
@@ -168,6 +218,98 @@ const HomepageFixed = () => {
   // Check if prestasi needs scrolling (more cards than can fit in viewport)
   const prestasiNeedsScroll = data.prestasis.length > 3;
 
+  // Auto-scroll effect for Prestasi
+  useEffect(() => {
+    if (!prestasiRef.current || isPrestasiPaused || !prestasiNeedsScroll) return;
+
+    const scrollContainer = prestasiRef.current;
+    let animationId;
+
+    const scroll = () => {
+      if (scrollContainer && !isPrestasiPaused) {
+        scrollContainer.scrollLeft += 1;
+
+        // Reset scroll when reaching 1/3 point (seamless loop)
+        const maxScroll = scrollContainer.scrollWidth / 3;
+        if (scrollContainer.scrollLeft >= maxScroll) {
+          scrollContainer.scrollLeft = 0;
+        }
+      }
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPrestasiPaused, prestasiNeedsScroll]);
+
+  // Auto-scroll effect for Testimoni
+  useEffect(() => {
+    if (!testimoniRef.current || isTestimoniPaused || data.alumnis.length === 0) return;
+
+    const scrollContainer = testimoniRef.current;
+    let animationId;
+
+    const scroll = () => {
+      if (scrollContainer && !isTestimoniPaused) {
+        scrollContainer.scrollLeft += 1;
+
+        const maxScroll = scrollContainer.scrollWidth / 3;
+        if (scrollContainer.scrollLeft >= maxScroll) {
+          scrollContainer.scrollLeft = 0;
+        }
+      }
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [isTestimoniPaused, data.alumnis.length]);
+
+  // Drag and Press handlers
+  const handleMouseDown = (e, ref, setPaused) => {
+    if (!ref.current) return;
+    isDragging.current = true;
+    startX.current = e.pageX;
+    scrollLeft.current = ref.current.scrollLeft;
+    setPaused(true);
+    ref.current.style.cursor = 'grabbing';
+  };
+
+  const handleTouchStart = (e, ref, setPaused) => {
+    if (!ref.current) return;
+    isDragging.current = true;
+    startX.current = e.touches[0].pageX;
+    scrollLeft.current = ref.current.scrollLeft;
+    setPaused(true);
+  };
+
+  const handleMouseMove = (e, ref) => {
+    if (!isDragging.current || !ref.current) return;
+    e.preventDefault();
+    const x = e.pageX;
+    const walk = (x - startX.current) * 2;
+    ref.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleTouchMove = (e, ref) => {
+    if (!isDragging.current || !ref.current) return;
+    const x = e.touches[0].pageX;
+    const walk = (x - startX.current) * 2;
+    ref.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleMouseUp = (ref, setPaused) => {
+    if (!ref.current) return;
+    isDragging.current = false;
+    setPaused(false);
+    ref.current.style.cursor = 'grab';
+  };
+
+  const handleTouchEnd = (setPaused) => {
+    isDragging.current = false;
+    setPaused(false);
+  };
+
   return (
     <div className="min-h-screen bg-white font-poppins overflow-x-hidden">
       {/* Navbar - Transparent at hero, blue when scrolled */}
@@ -179,9 +321,11 @@ const HomepageFixed = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">
             <Link to="/" className="flex items-center gap-2 md:gap-3">
-              <div className="h-8 w-8 md:h-12 md:w-12 bg-white rounded-lg flex items-center justify-center text-[#0D76BE] font-bold text-xs md:text-base">
-                SMK
-              </div>
+              <img
+                src={schoolLogo}
+                alt="SMK Kristen 5 Klaten"
+                className="h-8 w-8 md:h-12 md:w-12 object-contain"
+              />
               <div className="leading-tight">
                 <div className="text-[10px] md:text-xs text-white">SEKOLAH MENENGAH KEJURUAN</div>
                 <div className="text-sm md:text-lg font-bold text-white">KRISTEN 5 KLATEN</div>
@@ -246,9 +390,11 @@ const HomepageFixed = () => {
               {/* Sidebar Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/20">
                 <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center text-[#0D76BE] font-bold text-sm">
-                    SMK
-                  </div>
+                  <img
+                    src={schoolLogo}
+                    alt="SMK Kristen 5 Klaten"
+                    className="h-10 w-10 object-contain"
+                  />
                   <div className="leading-tight">
                     <div className="text-sm font-bold text-white">SMK KRISTEN 5</div>
                     <div className="text-xs text-white/80">KLATEN</div>
@@ -403,13 +549,22 @@ const HomepageFixed = () => {
                   <div className="inline-block w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : (
-                <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                <div
+                  ref={jurusanCardsRef}
+                  className="overflow-x-scroll pb-4 scrollbar-hide"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                >
+                  <div className="flex gap-4 md:gap-6 pr-4 md:pr-6">
                     {data.jurusans.map((jurusan, index) => (
-                  <Link
-                    key={jurusan._id}
-                    to={`/jurusan/${jurusan.slug}`}
-                    className="relative flex-shrink-0 w-[280px] h-[280px] md:w-[400px] md:h-[400px] rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 snap-center cursor-pointer"
-                  >
+                      <Link
+                        key={jurusan._id}
+                        to={`/jurusan/${jurusan.slug}`}
+                        className="relative flex-shrink-0 w-[280px] h-[280px] md:w-[400px] md:h-[400px] rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 snap-center cursor-pointer"
+                      >
                     <div
                       className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                       style={{
@@ -463,8 +618,9 @@ const HomepageFixed = () => {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                      </Link>
                     ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -572,10 +728,27 @@ const HomepageFixed = () => {
             <p className="text-gray-600">Belum ada data prestasi</p>
           </div>
         ) : (
-          <div className="relative">
+          <div
+            ref={prestasiRef}
+            className="overflow-x-scroll"
+            style={{
+              cursor: 'grab',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+            onMouseDown={(e) => handleMouseDown(e, prestasiRef, setIsPrestasiPaused)}
+            onMouseMove={(e) => handleMouseMove(e, prestasiRef)}
+            onMouseUp={() => handleMouseUp(prestasiRef, setIsPrestasiPaused)}
+            onMouseLeave={() => handleMouseUp(prestasiRef, setIsPrestasiPaused)}
+            onTouchStart={(e) => handleTouchStart(e, prestasiRef, setIsPrestasiPaused)}
+            onTouchMove={(e) => handleTouchMove(e, prestasiRef)}
+            onTouchEnd={() => handleTouchEnd(setIsPrestasiPaused)}
+          >
             {prestasiNeedsScroll ? (
-              <div className="flex gap-4 md:gap-6 animate-scroll-left">
-                {[...data.prestasis, ...data.prestasis].map((prestasi, index) => (
+              <div className="flex gap-4 md:gap-6"
+              >
+                {[...data.prestasis, ...data.prestasis, ...data.prestasis].map((prestasi, index) => (
                   <div
                     key={`${prestasi._id}-${index}`}
                     className="flex-shrink-0 w-[280px] h-[280px] md:w-[400px] md:h-[400px] bg-gray-800 rounded-xl md:rounded-2xl overflow-hidden flex flex-col p-4 md:p-6 text-white"
@@ -743,43 +916,27 @@ const HomepageFixed = () => {
             <p className="text-gray-600">Belum ada data testimoni</p>
           </div>
         ) : (
-          <div className="space-y-4 md:space-y-8">
-            {/* Row 1: Scroll to Left */}
-            <div className="flex gap-4 md:gap-6 animate-scroll-left">
+          <div
+            ref={testimoniRef}
+            className="overflow-x-scroll"
+            style={{
+              cursor: 'grab',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+            onMouseDown={(e) => handleMouseDown(e, testimoniRef, setIsTestimoniPaused)}
+            onMouseMove={(e) => handleMouseMove(e, testimoniRef)}
+            onMouseUp={() => handleMouseUp(testimoniRef, setIsTestimoniPaused)}
+            onMouseLeave={() => handleMouseUp(testimoniRef, setIsTestimoniPaused)}
+            onTouchStart={(e) => handleTouchStart(e, testimoniRef, setIsTestimoniPaused)}
+            onTouchMove={(e) => handleTouchMove(e, testimoniRef)}
+            onTouchEnd={() => handleTouchEnd(setIsTestimoniPaused)}
+          >
+            <div className="flex gap-4 md:gap-6">
               {/* Duplicate cards for infinite scroll */}
-              {[...data.alumnis, ...data.alumnis].map((alumni, index) => (
-                <div key={`row1-${index}`} className="bg-transparent rounded-xl md:rounded-2xl p-4 md:p-8 border border-gray-800 aspect-square flex flex-col flex-shrink-0 w-[280px] md:w-[400px]" style={{ borderWidth: '0.7px' }}>
-                  <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pb-4 md:pb-6 border-b border-gray-800" style={{ borderBottomWidth: '0.7px' }}>
-                    <img
-                      src={alumni.photo || 'https://i.pravatar.cc/150'}
-                      alt={alumni.name}
-                      className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
-                    />
-                    <div>
-                      <h4 className="font-bold text-gray-800 text-sm md:text-base">{alumni.name}</h4>
-                      <p className="text-[10px] md:text-xs text-gray-600 uppercase">
-                        {alumni.currentOccupation || 'ALUMNI'}
-                        {alumni.company && ` AT ${alumni.company.toUpperCase()}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-700 leading-relaxed text-sm md:text-lg mb-3 md:mb-4 flex-1">
-                    {alumni.testimonial}
-                  </p>
-
-                  <div className="text-[10px] md:text-xs text-gray-500 italic">
-                    -{alumni.jurusan || 'ALUMNI'} {alumni.graduationYear || '2022'}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Row 2: Scroll to Right */}
-            <div className="flex gap-4 md:gap-6 animate-scroll-right">
-              {/* Duplicate cards for infinite scroll */}
-              {[...data.alumnis, ...data.alumnis].map((alumni, index) => (
-                <div key={`row2-${index}`} className="bg-transparent rounded-xl md:rounded-2xl p-4 md:p-8 border border-gray-800 aspect-square flex flex-col flex-shrink-0 w-[280px] md:w-[400px]" style={{ borderWidth: '0.7px' }}>
+              {[...data.alumnis, ...data.alumnis, ...data.alumnis].map((alumni, index) => (
+                <div key={`testimoni-${index}`} className="bg-transparent rounded-xl md:rounded-2xl p-4 md:p-8 border border-gray-800 aspect-square flex flex-col flex-shrink-0 w-[280px] md:w-[400px]" style={{ borderWidth: '0.7px' }}>
                   <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pb-4 md:pb-6 border-b border-gray-800" style={{ borderBottomWidth: '0.7px' }}>
                     <img
                       src={alumni.photo || 'https://i.pravatar.cc/150'}
@@ -815,9 +972,11 @@ const HomepageFixed = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-16 w-16 bg-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                  SMK
-                </div>
+                <img
+                  src={schoolLogo}
+                  alt="SMK Kristen 5 Klaten"
+                  className="h-16 w-16 object-contain"
+                />
                 <div>
                   <div className="text-2xl font-bold">SMK KRISTEN 5</div>
                   <div className="text-xl">KLATEN</div>

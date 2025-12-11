@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useSchoolLogo } from '../../hooks/useContact';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const JurusanList = () => {
   const navigate = useNavigate();
+  const { logo: schoolLogo } = useSchoolLogo();
   const [jurusans, setJurusans] = useState([]);
   const [loading, setLoading] = useState(true);
   const horizontalSectionRef = useRef(null);
@@ -107,12 +109,15 @@ const JurusanList = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 md:h-20">
             <Link to="/" className="flex items-center gap-2 md:gap-3 z-50">
-              <div className="h-10 w-10 md:h-12 md:w-12 bg-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-sm md:text-lg">
-                SMK
-              </div>
+              <img
+                src={schoolLogo}
+                alt="SMK Kristen 5 Klaten"
+                className="h-8 w-8 md:h-12 md:w-12 object-contain"
+              />
               <div className="leading-tight">
-                <div className="text-xs md:text-sm font-bold text-white">SMK KRISTEN 5</div>
-                <div className="text-xs md:text-sm text-white/80">KLATEN</div>
+                <div className="text-[10px] md:text-xs text-white">SEKOLAH MENENGAH KEJURUAN</div>
+                <div className="text-sm md:text-lg font-bold text-white">KRISTEN 5 KLATEN</div>
+                <div className="text-[10px] md:text-xs text-white/80">SMK Krisma Bisa</div>
               </div>
             </Link>
 
@@ -180,9 +185,11 @@ const JurusanList = () => {
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between p-4 border-b border-white/20">
                 <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center text-[#0D76BE] font-bold text-sm">
-                    SMK
-                  </div>
+                  <img
+                    src={schoolLogo}
+                    alt="SMK Kristen 5 Klaten"
+                    className="h-10 w-10 object-contain"
+                  />
                   <div className="leading-tight">
                     <div className="text-sm font-bold text-white">SMK KRISTEN 5</div>
                     <div className="text-xs text-white/80">KLATEN</div>
@@ -368,9 +375,11 @@ const JurusanList = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-16 w-16 bg-yellow-400 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                  SMK
-                </div>
+                <img
+                  src={schoolLogo}
+                  alt="SMK Kristen 5 Klaten"
+                  className="h-16 w-16 object-contain"
+                />
                 <div>
                   <div className="text-2xl font-bold">SMK KRISTEN 5</div>
                   <div className="text-xl">KLATEN</div>

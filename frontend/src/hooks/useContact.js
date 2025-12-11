@@ -10,11 +10,14 @@ export const useContact = () => {
     const fetchContact = async () => {
       try {
         setLoading(true);
+        console.log('🔍 [useContact] Fetching contact info...');
         const response = await api.get('/api/contact');
+        console.log('✅ [useContact] Response received:', response.data);
+        console.log('📸 [useContact] School Logo URL:', response.data.data?.schoolLogo);
         setContactInfo(response.data.data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching contact info:', err);
+        console.error('❌ [useContact] Error fetching contact info:', err);
         setError(err.response?.data?.message || 'Gagal memuat informasi kontak');
       } finally {
         setLoading(false);
@@ -30,8 +33,14 @@ export const useContact = () => {
 export const useSchoolLogo = () => {
   const { contactInfo, loading, error } = useContact();
 
+  console.log('🎨 [useSchoolLogo] contactInfo:', contactInfo);
+  console.log('🎨 [useSchoolLogo] contactInfo?.schoolLogo:', contactInfo?.schoolLogo);
+
+  const logo = contactInfo?.schoolLogo || '/logo.svg';
+  console.log('🎨 [useSchoolLogo] Final logo URL:', logo);
+
   return {
-    logo: contactInfo?.schoolLogo || '/logo.svg', // fallback to default logo
+    logo,
     loading,
     error
   };
