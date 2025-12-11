@@ -107,9 +107,28 @@ router.get('/stats', protect, async (req, res) => {
       }
     ]);
 
+    // Get today's date range
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const totalLogs = await AuditLog.countDocuments();
     const successLogs = await AuditLog.countDocuments({ status: 'success' });
     const failedLogs = await AuditLog.countDocuments({ status: 'failed' });
+
+    // Today's stats
+    const todayLogs = await AuditLog.countDocuments({
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+    const todaySuccess = await AuditLog.countDocuments({
+      createdAt: { $gte: today, $lt: tomorrow },
+      status: 'success'
+    });
+    const todayFailed = await AuditLog.countDocuments({
+      createdAt: { $gte: today, $lt: tomorrow },
+      status: 'failed'
+    });
 
     res.status(200).json({
       success: true,
@@ -117,6 +136,9 @@ router.get('/stats', protect, async (req, res) => {
         totalLogs,
         successLogs,
         failedLogs,
+        todayLogs,
+        todaySuccess,
+        todayFailed,
         activityBreakdown: stats
       }
     });

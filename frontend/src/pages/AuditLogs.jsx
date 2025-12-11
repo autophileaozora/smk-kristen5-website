@@ -17,6 +17,8 @@ const AuditLogs = () => {
     action: '',
     resource: '',
     status: '',
+    startDate: '',
+    endDate: '',
     page: 1
   });
 
@@ -33,6 +35,8 @@ const AuditLogs = () => {
       if (filters.action) queryParams.append('action', filters.action);
       if (filters.resource) queryParams.append('resource', filters.resource);
       if (filters.status) queryParams.append('status', filters.status);
+      if (filters.startDate) queryParams.append('startDate', filters.startDate);
+      if (filters.endDate) queryParams.append('endDate', filters.endDate);
       queryParams.append('page', filters.page);
       queryParams.append('limit', 20);
 
@@ -128,9 +132,10 @@ const AuditLogs = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Aktivitas</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.totalLogs.toLocaleString()}</p>
+              <div className="flex-1">
+                <p className="text-3xl font-bold text-gray-900">{stats.todayLogs?.toLocaleString() || 0}</p>
+                <p className="text-sm text-gray-600 mt-1">Hari Ini</p>
+                <p className="text-xs text-gray-400 mt-2">{stats.totalLogs.toLocaleString()} Total</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,9 +147,10 @@ const AuditLogs = () => {
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Berhasil</p>
-                <p className="text-3xl font-bold text-green-600">{stats.successLogs.toLocaleString()}</p>
+              <div className="flex-1">
+                <p className="text-3xl font-bold text-green-600">{stats.todaySuccess?.toLocaleString() || 0}</p>
+                <p className="text-sm text-gray-600 mt-1">Hari Ini</p>
+                <p className="text-xs text-gray-400 mt-2">{stats.successLogs.toLocaleString()} Total</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,9 +162,10 @@ const AuditLogs = () => {
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Gagal</p>
-                <p className="text-3xl font-bold text-red-600">{stats.failedLogs.toLocaleString()}</p>
+              <div className="flex-1">
+                <p className="text-3xl font-bold text-red-600">{stats.todayFailed?.toLocaleString() || 0}</p>
+                <p className="text-sm text-gray-600 mt-1">Hari Ini</p>
+                <p className="text-xs text-gray-400 mt-2">{stats.failedLogs.toLocaleString()} Total</p>
               </div>
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,7 +180,7 @@ const AuditLogs = () => {
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Aksi</label>
             <select
@@ -225,6 +232,28 @@ const AuditLogs = () => {
               <option value="success">Berhasil</option>
               <option value="failed">Gagal</option>
             </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Dari Tanggal</label>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sampai Tanggal</label>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => handleFilterChange('endDate', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
       </div>
