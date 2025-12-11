@@ -325,9 +325,6 @@ export default function JurusanDetail() {
               <h1 className="text-3xl md:text-5xl font-bold text-white mb-2" style={{ fontFamily: 'Russo One, sans-serif' }}>
                 {jurusan.name?.toUpperCase()}
               </h1>
-              <p className="text-white/90 text-sm md:text-base">
-                {jurusan.description || 'Program keahlian yang fokus pada teknologi komputer dan jaringan'}
-              </p>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
@@ -26,7 +26,6 @@ const HomepageFixed = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isPrestasiPaused, setIsPrestasiPaused] = useState(false);
   const [isTestimoniPaused, setIsTestimoniPaused] = useState(false);
-  const [jurusanScrollProgress, setJurusanScrollProgress] = useState(0);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
   const jurusanSectionRef = useRef(null);
@@ -145,38 +144,10 @@ const HomepageFixed = () => {
       lastScrollY.current = currentScrollY;
     };
 
-    const handleWheel = (e) => {
-      const jurusanCards = jurusanCardsRef.current;
-      if (!jurusanCards) return;
-
-      const cardsRect = jurusanCards.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const maxScroll = jurusanCards.scrollWidth - jurusanCards.clientWidth;
-      const currentHorizontalScroll = jurusanCards.scrollLeft;
-
-      // Check if cards are fully visible in viewport
-      const isCardsVisible = cardsRect.top <= 100 && cardsRect.bottom <= windowHeight;
-
-      if (isCardsVisible) {
-        // Scrolling down and has more cards to show
-        if (e.deltaY > 0 && currentHorizontalScroll < maxScroll) {
-          e.preventDefault();
-          jurusanCards.scrollLeft += e.deltaY;
-        }
-        // Scrolling up and not at the start
-        else if (e.deltaY < 0 && currentHorizontalScroll > 0) {
-          e.preventDefault();
-          jurusanCards.scrollLeft += e.deltaY;
-        }
-      }
-    };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('wheel', handleWheel);
       clearTimeout(scrollTimeout.current);
     };
   }, [data.jurusans.length]);
@@ -528,43 +499,33 @@ const HomepageFixed = () => {
         </div>
       )}
 
-      {/* Kompetensi Jurusan - Simple Horizontal Scroll */}
+      {/* Kompetensi Jurusan - Simple Grid */}
       {data.jurusans.length > 0 && (
         <section
           ref={jurusanSectionRef}
           data-section="jurusan"
-          className="relative bg-white py-20 overflow-hidden"
+          className="relative bg-white py-20"
         >
-          <div className="w-full">
-            <div className="container mx-auto px-4">
-              <div className="mb-8 md:mb-12">
-                <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Russo One, sans-serif' }}>KOMPETENSI JURUSAN</h2>
-                <p className="text-gray-600 uppercase text-xs md:text-sm tracking-wide">
-                  PILIH JURUSAN YANG SESUAI DENGAN BAKAT & MINAT ANDA
-                </p>
-              </div>
+          <div className="container mx-auto px-4">
+            <div className="mb-8 md:mb-12">
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Russo One, sans-serif' }}>KOMPETENSI JURUSAN</h2>
+              <p className="text-gray-600 uppercase text-xs md:text-sm tracking-wide">
+                PILIH JURUSAN YANG SESUAI DENGAN BAKAT & MINAT ANDA
+              </p>
+            </div>
 
-              {loading ? (
-                <div className="text-center py-20">
-                  <div className="inline-block w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              ) : (
-                <div
-                  ref={jurusanCardsRef}
-                  className="overflow-x-scroll pb-4 scrollbar-hide"
-                  style={{
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                    WebkitOverflowScrolling: 'touch'
-                  }}
-                >
-                  <div className="flex gap-4 md:gap-6 pr-4 md:pr-6">
-                    {data.jurusans.map((jurusan, index) => (
-                      <Link
-                        key={jurusan._id}
-                        to={`/jurusan/${jurusan.slug}`}
-                        className="relative flex-shrink-0 w-[280px] h-[280px] md:w-[400px] md:h-[400px] rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 snap-center cursor-pointer"
-                      >
+            {loading ? (
+              <div className="text-center py-20">
+                <div className="inline-block w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {data.jurusans.map((jurusan, index) => (
+                  <Link
+                    key={jurusan._id}
+                    to={`/jurusan/${jurusan.slug}`}
+                    className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 cursor-pointer hover:shadow-2xl"
+                  >
                     <div
                       className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                       style={{
@@ -618,12 +579,10 @@ const HomepageFixed = () => {
                         </div>
                       </div>
                     </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
