@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 
@@ -8,8 +8,7 @@ const Sidebar = () => {
   const [pendingArticlesCount, setPendingArticlesCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
 
   const isActive = (path) => location.pathname === path;
 
@@ -56,11 +55,6 @@ const Sidebar = () => {
     { name: 'Running Text', path: '/admin/running-text', icon: '📢' },
     { name: 'Prestasi', path: '/admin/prestasi', icon: '🏆' },
   ];
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   return (
     <>
@@ -195,17 +189,6 @@ const Sidebar = () => {
               </svg>
             </div>
           </Link>
-
-          {/* Logout Button */}
-          <div className="p-4 pt-0">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <span className="text-xl">🚪</span>
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
         </div>
       </aside>
     </>

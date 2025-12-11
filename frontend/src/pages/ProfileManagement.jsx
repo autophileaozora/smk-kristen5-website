@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 
 const ProfileManagement = () => {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'password'
@@ -169,23 +171,37 @@ const ProfileManagement = () => {
 
       {/* User Info Card */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center space-x-4">
-          <div className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center">
-            <span className="text-primary-600 font-bold text-3xl">
-              {user?.name?.charAt(0).toUpperCase()}
-            </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center">
+              <span className="text-primary-600 font-bold text-3xl">
+                {user?.name?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{user?.name}</h2>
+              <p className="text-gray-600">{user?.email}</p>
+              <span className={`mt-2 inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                user?.role === 'administrator'
+                  ? 'bg-purple-100 text-purple-800'
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
+                {user?.role === 'administrator' ? 'Administrator' : 'Admin Siswa'}
+              </span>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{user?.name}</h2>
-            <p className="text-gray-600">{user?.email}</p>
-            <span className={`mt-2 inline-block px-3 py-1 rounded-full text-sm font-medium ${
-              user?.role === 'administrator'
-                ? 'bg-purple-100 text-purple-800'
-                : 'bg-blue-100 text-blue-800'
-            }`}>
-              {user?.role === 'administrator' ? 'Administrator' : 'Admin Siswa'}
-            </span>
-          </div>
+          <button
+            onClick={async () => {
+              await logout();
+              navigate('/login');
+            }}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
         </div>
       </div>
 
