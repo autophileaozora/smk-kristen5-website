@@ -182,12 +182,24 @@ const Articles = () => {
   const handleCreateArticle = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/api/articles', formData);
+      // Prepare data - convert empty strings to null for optional fields
+      const createData = {
+        title: formData.title,
+        content: formData.content,
+        excerpt: formData.excerpt,
+        categoryJurusan: formData.categoryJurusan || null,
+        categoryTopik: formData.categoryTopik || null,
+        featuredImage: formData.featuredImage || null,
+        status: formData.status,
+      };
+
+      await api.post('/api/articles', createData);
       showToast('Artikel berhasil dibuat', 'success');
       setShowCreateModal(false);
       resetForm();
       fetchArticles();
     } catch (error) {
+      console.error('Create error:', error.response || error);
       showToast(error.response?.data?.message || 'Gagal membuat artikel', 'error');
     }
   };
@@ -195,12 +207,23 @@ const Articles = () => {
   const handleUpdateArticle = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/api/articles/${selectedArticle._id}`, formData);
+      // Prepare data - convert empty strings to null for optional fields
+      const updateData = {
+        title: formData.title,
+        content: formData.content,
+        excerpt: formData.excerpt,
+        categoryJurusan: formData.categoryJurusan || null,
+        categoryTopik: formData.categoryTopik || null,
+        featuredImage: formData.featuredImage || null,
+      };
+
+      await api.put(`/api/articles/${selectedArticle._id}`, updateData);
       showToast('Artikel berhasil diupdate', 'success');
       setShowEditModal(false);
       resetForm();
       fetchArticles();
     } catch (error) {
+      console.error('Update error:', error.response || error);
       showToast(error.response?.data?.message || 'Gagal update artikel', 'error');
     }
   };
@@ -707,7 +730,21 @@ const Articles = () => {
                             </button>
                           )}
 
-                          {/* Approve (Admin) */}
+                          {/* Publish (Admin untuk draft) */}
+                          {isAdmin && article.status === 'draft' && (
+                            <button
+                              onClick={() => {
+                                handleApproveArticle(article._id);
+                                setOpenDropdown(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-green-50 flex items-center gap-2"
+                            >
+                              <span>✓</span>
+                              <span>Publish</span>
+                            </button>
+                          )}
+
+                          {/* Approve (Admin untuk pending) */}
                           {isAdmin && article.status === 'pending' && (
                             <button
                               onClick={() => {
@@ -721,8 +758,8 @@ const Articles = () => {
                             </button>
                           )}
 
-                          {/* Reject (Admin) */}
-                          {isAdmin && article.status === 'pending' && (
+                          {/* Reject (Admin untuk draft dan pending) */}
+                          {isAdmin && (article.status === 'pending' || article.status === 'draft') && (
                             <button
                               onClick={() => {
                                 handleRejectArticle(article._id);

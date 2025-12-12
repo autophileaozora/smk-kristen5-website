@@ -337,7 +337,7 @@ router.put('/:id', protect, async (req, res) => {
     article.content = content || article.content;
     article.excerpt = excerpt || article.excerpt;
     if (categoryJurusan !== undefined) article.categoryJurusan = categoryJurusan || null;
-    if (categoryTopik) article.categoryTopik = categoryTopik;
+    if (categoryTopik !== undefined) article.categoryTopik = categoryTopik || null;
     if (featuredImage !== undefined) {
       article.featuredImage = featuredImage ? { url: featuredImage } : undefined;
     }
