@@ -58,6 +58,11 @@ const Articles = () => {
   const [toast, setToast] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null); // Track which card's dropdown is open
 
+  // Bulk delete states
+  const [selectedArticles, setSelectedArticles] = useState([]);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+
   // Helper function to format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -240,6 +245,43 @@ const Articles = () => {
     }
   };
 
+  // Bulk delete functions
+  const toggleSelectArticle = (articleId) => {
+    setSelectedArticles(prev =>
+      prev.includes(articleId)
+        ? prev.filter(id => id !== articleId)
+        : [...prev, articleId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedArticles.length === articles.length) {
+      setSelectedArticles([]);
+    } else {
+      setSelectedArticles(articles.map(article => article._id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(
+        selectedArticles.map(id => api.delete(`/api/articles/${id}`))
+      );
+      showToast(`${selectedArticles.length} artikel berhasil dihapus`, 'success');
+      setShowBulkDeleteModal(false);
+      setSelectedArticles([]);
+      setIsSelectMode(false);
+      fetchArticles();
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Gagal menghapus artikel', 'error');
+    }
+  };
+
+  const cancelSelectMode = () => {
+    setIsSelectMode(false);
+    setSelectedArticles([]);
+  };
+
   const handleSubmitForApproval = async (articleId) => {
     try {
       await api.patch(`/api/articles/${articleId}/submit`);
@@ -378,13 +420,57 @@ const Articles = () => {
             {isAdmin ? 'Kelola semua artikel' : 'Kelola artikel yang Anda buat'}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
-        >
-          <span className="text-xl">+</span>
-          <span>Buat Artikel</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {!isSelectMode ? (
+            <>
+              <button
+                onClick={() => setIsSelectMode(true)}
+                className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>Pilih Multiple</span>
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+              >
+                <span className="text-xl">+</span>
+                <span>Buat Artikel</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-sm text-gray-600 font-medium">
+                {selectedArticles.length} artikel dipilih
+              </span>
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                {selectedArticles.length === articles.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
+              </button>
+              {selectedArticles.length > 0 && (
+                <button
+                  onClick={() => setShowBulkDeleteModal(true)}
+                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Hapus ({selectedArticles.length})</span>
+                </button>
+              )}
+              <button
+                onClick={cancelSelectMode}
+                className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+              >
+                Batal
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Search + Filter */}
@@ -657,15 +743,37 @@ const Articles = () => {
           articles.map((article) => (
             <div
               key={article._id}
-              className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow"
+              className={`bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-all ${
+                isSelectMode && selectedArticles.includes(article._id) ? 'ring-2 ring-blue-500' : ''
+              }`}
             >
+              {/* Select Mode Checkbox Overlay */}
+              {isSelectMode && (
+                <div className="absolute top-2 left-2 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedArticles.includes(article._id)}
+                    onChange={() => toggleSelectArticle(article._id)}
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  />
+                </div>
+              )}
+
               {/* Featured Image */}
               {article.featuredImage && (
-                <img
-                  src={typeof article.featuredImage === 'string' ? article.featuredImage : article.featuredImage.url}
-                  alt={article.title}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="relative">
+                  <img
+                    src={typeof article.featuredImage === 'string' ? article.featuredImage : article.featuredImage.url}
+                    alt={article.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  {isSelectMode && (
+                    <div
+                      onClick={() => toggleSelectArticle(article._id)}
+                      className="absolute inset-0 bg-black/10 cursor-pointer hover:bg-black/20 transition-colors"
+                    />
+                  )}
+                </div>
               )}
 
               {/* Content */}
@@ -1055,6 +1163,41 @@ const Articles = () => {
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               Hapus
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Modal */}
+      <Modal
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        title="Konfirmasi Hapus Multiple"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Apakah Anda yakin ingin menghapus{' '}
+            <span className="font-semibold text-red-600">{selectedArticles.length} artikel</span>?
+          </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p className="text-sm text-yellow-800">
+              ⚠️ <strong>Perhatian:</strong> Semua artikel yang dipilih akan dihapus secara permanen dan tidak dapat dikembalikan.
+            </p>
+          </div>
+          <p className="text-sm text-red-600 font-semibold">Aksi ini tidak dapat dibatalkan!</p>
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setShowBulkDeleteModal(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
+            >
+              Hapus {selectedArticles.length} Artikel
             </button>
           </div>
         </div>
