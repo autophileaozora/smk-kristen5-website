@@ -2,22 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar */
+/* Hide scrollbar for all browsers */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Smooth transitions */

@@ -363,9 +363,10 @@ export default function JurusanDetail() {
                     {/* Description */}
                     <div className="mb-8">
                       <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">Deskripsi</h3>
-                      <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-                        {jurusan.description}
-                      </p>
+                      <div
+                        className="text-gray-700 leading-relaxed text-sm md:text-base prose max-w-none"
+                        dangerouslySetInnerHTML={{ __html: jurusan.description }}
+                      />
                     </div>
 
                     {/* Visi */}
@@ -668,7 +669,7 @@ export default function JurusanDetail() {
       </section>
 
       {/* Footer - Same as Homepage */}
-      <footer className="bg-[#0D76BE] text-white py-12">
+      <footer className="bg-gray-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
             <div>
@@ -707,12 +708,17 @@ export default function JurusanDetail() {
               <p className="text-sm md:text-base">Telp: (0272) 123456</p>
             </div>
           </div>
-
-          <div className="border-t border-white/20 mt-8 pt-8 text-center">
-            <p className="text-xs md:text-sm">&copy; 2024 SMK Kristen 5 Klaten. All rights reserved.</p>
-          </div>
         </div>
       </footer>
+
+      {/* Copyright Section */}
+      <div className="bg-[#0D76BE] text-white py-4">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -34,7 +34,7 @@ const articleSchema = new mongoose.Schema(
     categoryTopik: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
-      required: [true, 'Topic category is required'],
+      default: null, // Optional - for general articles
     },
     status: {
       type: String,

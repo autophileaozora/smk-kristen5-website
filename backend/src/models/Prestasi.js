@@ -47,6 +47,10 @@ const prestasiSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    showInRunningText: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

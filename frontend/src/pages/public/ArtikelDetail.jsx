@@ -582,12 +582,17 @@ const ArtikelDetail = () => {
               </ul>
             </div>
           </div>
-
-          <div className="border-t border-white/20 mt-8 pt-8 text-center text-sm text-white/60">
-            <p>&copy; 2024 SMK Kristen 5 Klaten. All rights reserved.</p>
-          </div>
         </div>
       </footer>
+
+      {/* Copyright Section */}
+      <div className="bg-[#0D76BE] text-white py-4">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

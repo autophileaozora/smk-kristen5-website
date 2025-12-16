@@ -70,7 +70,8 @@ router.put('/', protect, async (req, res) => {
       socialMedia,
       mapUrl,
       heroImage,
-      schoolLogo
+      schoolLogo,
+      principal
     } = req.body;
 
     // Find current contact or create new one
@@ -87,6 +88,7 @@ router.put('/', protect, async (req, res) => {
         mapUrl,
         heroImage,
         schoolLogo,
+        principal,
         isCurrent: true
       });
     } else {
@@ -102,6 +104,9 @@ router.put('/', protect, async (req, res) => {
       // Allow empty string for images (to delete them)
       if (heroImage !== undefined) contact.heroImage = heroImage;
       if (schoolLogo !== undefined) contact.schoolLogo = schoolLogo;
+
+      // Update principal information
+      if (principal !== undefined) contact.principal = principal;
 
       await contact.save();
     }

@@ -36,7 +36,14 @@ const auditLogSchema = new mongoose.Schema(
         'alumni',
         'category',
         'videoHero',
-        'file'
+        'file',
+        'partner',
+        'socialMedia',
+        'cta',
+        'about',
+        'mataPelajaran',
+        'fasilitas',
+        'contact'
       ],
     },
     resourceId: {

@@ -20,11 +20,24 @@ const Categories = () => {
   });
 
   // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterType, setFilterType] = useState(''); // '' = all, 'jurusan', 'topik'
 
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  // Debounce search input (wait 500ms after user stops typing)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   const fetchCategories = async () => {
     try {
@@ -123,9 +136,24 @@ const Categories = () => {
   };
 
   // Filter categories
-  const filteredCategories = filterType
-    ? categories.filter(cat => cat.type === filterType)
-    : categories;
+  const filteredCategories = categories.filter(cat => {
+    // Filter by type
+    if (filterType && cat.type !== filterType) {
+      return false;
+    }
+
+    // Filter by search query
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
+      return (
+        cat.name.toLowerCase().includes(query) ||
+        cat.slug.toLowerCase().includes(query) ||
+        (cat.description && cat.description.toLowerCase().includes(query))
+      );
+    }
+
+    return true;
+  });
 
   return (
     <div className="p-6">
@@ -153,8 +181,23 @@ const Categories = () => {
         </button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="bg-white rounded-lg shadow mb-6 p-4">
+      {/* Search and Filter */}
+      <div className="bg-white rounded-lg shadow mb-6 p-6">
+        {/* Search Bar */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Cari Kategori
+          </label>
+          <input
+            type="text"
+            placeholder="Cari berdasarkan nama, slug, atau deskripsi..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
+          />
+        </div>
+
+        {/* Filter Tabs */}
         <div className="flex gap-2">
           <button
             onClick={() => setFilterType('')}
@@ -187,6 +230,21 @@ const Categories = () => {
             🏷️ Topik ({categories.filter(c => c.type === 'topik').length})
           </button>
         </div>
+
+        {/* Reset Filter Button */}
+        {(filterType || searchQuery) && (
+          <div className="mt-4">
+            <button
+              onClick={() => {
+                setFilterType('');
+                setSearchQuery('');
+              }}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Reset Filter
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Categories Table */}

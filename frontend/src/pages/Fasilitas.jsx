@@ -13,6 +13,10 @@ const Fasilitas = () => {
   const [fasilitasToDelete, setFasilitasToDelete] = useState(null);
   const [toast, setToast] = useState(null);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -29,6 +33,17 @@ const Fasilitas = () => {
     fetchFasilitass();
     fetchJurusans();
   }, []);
+
+  // Debounce search input (wait 500ms after user stops typing)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   const fetchFasilitass = async () => {
     try {
@@ -138,6 +153,19 @@ const Fasilitas = () => {
     return category;
   };
 
+  // Filter fasilitas based on search query
+  const filteredFasilitas = fasilitass.filter(fasilitas => {
+    if (!debouncedSearch) return true;
+
+    const query = debouncedSearch.toLowerCase();
+    return (
+      fasilitas.name.toLowerCase().includes(query) ||
+      fasilitas.description.toLowerCase().includes(query) ||
+      (fasilitas.location && fasilitas.location.toLowerCase().includes(query)) ||
+      getCategoryLabel(fasilitas.category).toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -163,15 +191,39 @@ const Fasilitas = () => {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Cari Fasilitas
+        </label>
+        <input
+          type="text"
+          placeholder="Cari berdasarkan nama, kategori, lokasi, atau deskripsi..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
+        />
+        {searchQuery && (
+          <div className="mt-3">
+            <button
+              onClick={() => setSearchQuery('')}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Clear Search
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : fasilitass.length === 0 ? (
+        ) : filteredFasilitas.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            Belum ada fasilitas
+            {searchQuery ? 'Tidak ada fasilitas yang sesuai pencarian' : 'Belum ada fasilitas'}
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
@@ -198,7 +250,7 @@ const Fasilitas = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {fasilitass.map((fasilitas) => (
+              {filteredFasilitas.map((fasilitas) => (
                 <tr key={fasilitas._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center">

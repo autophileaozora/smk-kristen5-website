@@ -26,7 +26,13 @@ const KontakManagement = () => {
     },
     mapUrl: '',
     heroImage: '',
-    schoolLogo: ''
+    schoolLogo: '',
+    principal: {
+      name: '',
+      title: 'Kepala Sekolah',
+      photo: '',
+      message: ''
+    }
   });
 
   useEffect(() => {
@@ -57,7 +63,13 @@ const KontakManagement = () => {
         },
         mapUrl: data.mapUrl || '',
         heroImage: data.heroImage || '',
-        schoolLogo: data.schoolLogo || ''
+        schoolLogo: data.schoolLogo || '',
+        principal: data.principal || {
+          name: '',
+          title: 'Kepala Sekolah',
+          photo: '',
+          message: ''
+        }
       });
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal memuat informasi kontak', 'error');
@@ -90,6 +102,15 @@ const KontakManagement = () => {
         ...prev,
         socialMedia: {
           ...prev.socialMedia,
+          [key]: value
+        }
+      }));
+    } else if (name.startsWith('principal.')) {
+      const key = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        principal: {
+          ...prev.principal,
           [key]: value
         }
       }));
@@ -375,6 +396,72 @@ const KontakManagement = () => {
                 folder="smk-kristen5/hero"
                 previewClassName="h-40 w-auto"
               />
+            </div>
+          </div>
+
+          {/* Principal Information */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Kepala Sekolah</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Informasi ini akan ditampilkan di card "Sambutan Kepala Sekolah" pada halaman beranda
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nama Kepala Sekolah
+                </label>
+                <input
+                  type="text"
+                  name="principal.name"
+                  value={formData.principal.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Contoh: Drs. Suparno, M.Pd"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Jabatan
+                </label>
+                <input
+                  type="text"
+                  name="principal.title"
+                  value={formData.principal.title}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Kepala Sekolah"
+                />
+              </div>
+
+              <ImageUpload
+                label="Foto Kepala Sekolah"
+                value={formData.principal.photo}
+                onChange={(url) => setFormData(prev => ({
+                  ...prev,
+                  principal: { ...prev.principal, photo: url }
+                }))}
+                folder="smk-kristen5/principal"
+                previewClassName="h-32 w-32 rounded-lg object-cover"
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pesan Sambutan (Ringkas)
+                </label>
+                <textarea
+                  name="principal.message"
+                  value={formData.principal.message}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Tulis pesan sambutan singkat yang akan ditampilkan di card homepage (maksimal 100 karakter akan ditampilkan)"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Pesan ini akan ditampilkan sebagai preview di card homepage. Untuk sambutan lengkap, gunakan halaman "About Management → Sambutan"
+                </p>
+              </div>
             </div>
           </div>
 

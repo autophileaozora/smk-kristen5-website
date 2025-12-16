@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
+import RichTextEditor from '../components/RichTextEditor';
 
 const Jurusan = () => {
   const [jurusans, setJurusans] = useState([]);
@@ -315,7 +316,10 @@ const Jurusan = () => {
                   {/* Description */}
                   <div className="mb-4">
                     <h4 className="text-sm font-semibold text-gray-700 mb-1">Deskripsi</h4>
-                    <p className="text-sm text-gray-600 line-clamp-3">{jurusan.description}</p>
+                    <div
+                      className="text-sm text-gray-600 line-clamp-3 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: jurusan.description }}
+                    />
                   </div>
 
                   {/* Vision */}
@@ -438,16 +442,13 @@ const Jurusan = () => {
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Deskripsi *
                     </label>
-                    <textarea
+                    <RichTextEditor
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onChange={(value) => setFormData({ ...formData, description: value })}
                       placeholder="Deskripsi singkat tentang jurusan..."
-                      required
                     />
                   </div>
 

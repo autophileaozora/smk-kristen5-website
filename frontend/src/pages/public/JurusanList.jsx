@@ -61,7 +61,7 @@ const JurusanList = () => {
 
   const fetchJurusans = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/jurusan`);
+      const response = await axios.get(`${API_URL}/api/jurusan/active`);
       setJurusans(response.data.data.jurusans || []);
     } catch (error) {
       console.error('Error fetching jurusans:', error);
@@ -117,7 +117,6 @@ const JurusanList = () => {
               <div className="leading-tight">
                 <div className="text-[10px] md:text-xs text-white">SEKOLAH MENENGAH KEJURUAN</div>
                 <div className="text-sm md:text-lg font-bold text-white">KRISTEN 5 KLATEN</div>
-                <div className="text-[10px] md:text-xs text-white/80">SMK Krisma Bisa</div>
               </div>
             </Link>
 
@@ -370,7 +369,7 @@ const JurusanList = () => {
       </section>
 
       {/* Footer - From Homepage */}
-      <footer className="bg-[#0D76BE] text-white py-12">
+      <footer className="bg-gray-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
@@ -413,6 +412,15 @@ const JurusanList = () => {
           </div>
         </div>
       </footer>
+
+      {/* Copyright Section */}
+      <div className="bg-[#0D76BE] text-white py-4">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

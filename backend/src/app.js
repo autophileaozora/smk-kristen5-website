@@ -99,6 +99,10 @@ import fasilitasRoutes from './routes/fasilitas.js';
 import contactRoutes from './routes/contact.js';
 import auditLogRoutes from './routes/auditLogs.js';
 import uploadRoutes from './routes/upload.js';
+import socialMediaRoutes from './routes/socialMedia.js';
+import partnerRoutes from './routes/partner.js';
+import ctaRoutes from './routes/cta.js';
+import aboutRoutes from './routes/about.js';
 
 // Mount routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -117,6 +121,10 @@ app.use('/api/fasilitas', fasilitasRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/social-media', socialMediaRoutes);
+app.use('/api/partners', partnerRoutes);
+app.use('/api/cta', ctaRoutes);
+app.use('/api/about', aboutRoutes);
 
 // Root route
 app.get('/', (req, res) => {

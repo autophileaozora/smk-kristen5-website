@@ -11,7 +11,10 @@ const Alumni = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedJurusan, setSelectedJurusan] = useState('');
   const [years, setYears] = useState([]);
   const [jurusans, setJurusans] = useState([]);
 
@@ -37,7 +40,9 @@ const Alumni = () => {
       setLoading(true);
       const params = {};
       if (selectedYear) params.graduationYear = selectedYear;
-      
+      if (selectedJurusan) params.jurusan = selectedJurusan;
+      if (debouncedSearch) params.search = debouncedSearch;
+
       const response = await api.get('/api/alumni', { params });
       setAlumni(response.data.data.alumni);
     } catch (error) {
@@ -71,7 +76,18 @@ const Alumni = () => {
     fetchAlumni();
     fetchYears();
     fetchJurusans();
-  }, [selectedYear]);
+  }, [selectedYear, selectedJurusan, debouncedSearch]);
+
+  // Debounce search input (wait 500ms after user stops typing)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   // Show toast notification
   const showToast = (message, type = 'success') => {
@@ -233,10 +249,25 @@ const Alumni = () => {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-        <div className="flex gap-4 items-center">
-          <div className="flex-1">
+      {/* Search and Filters */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        {/* Search Bar */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Cari Alumni
+          </label>
+          <input
+            type="text"
+            placeholder="Cari berdasarkan nama, pekerjaan, perusahaan, universitas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
+          />
+        </div>
+
+        {/* Filters Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Filter by Tahun Lulus
             </label>
@@ -251,15 +282,41 @@ const Alumni = () => {
               ))}
             </select>
           </div>
-          {selectedYear && (
-            <button
-              onClick={() => setSelectedYear('')}
-              className="mt-7 px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by Jurusan
+            </label>
+            <select
+              value={selectedJurusan}
+              onChange={(e) => setSelectedJurusan(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
             >
-              Reset Filter
-            </button>
-          )}
+              <option value="">Semua Jurusan</option>
+              {jurusans.map((jurusan) => (
+                <option key={jurusan._id} value={jurusan.code}>
+                  {jurusan.code} - {jurusan.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {/* Reset Filters Button */}
+        {(selectedYear || selectedJurusan || searchQuery) && (
+          <div className="mt-4">
+            <button
+              onClick={() => {
+                setSelectedYear('');
+                setSelectedJurusan('');
+                setSearchQuery('');
+              }}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Reset Semua Filter
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Loading State */}
@@ -612,12 +669,14 @@ const Alumni = () => {
         <div className="text-center py-12">
           <div className="text-6xl mb-4">👨‍🎓</div>
           <h3 className="text-xl font-semibold text-gray-700 mb-2">
-            {selectedYear ? `Belum ada alumni tahun ${selectedYear}` : 'Belum ada alumni'}
+            {(selectedYear || selectedJurusan || searchQuery) ? 'Tidak ada alumni yang sesuai filter' : 'Belum ada alumni'}
           </h3>
           <p className="text-gray-500 mb-4">
-            {selectedYear ? 'Coba pilih tahun lain atau tambahkan alumni baru' : 'Tambahkan alumni pertama sekarang!'}
+            {(selectedYear || selectedJurusan || searchQuery)
+              ? 'Coba ubah filter pencarian atau tambahkan alumni baru'
+              : 'Tambahkan alumni pertama sekarang!'}
           </p>
-          {!selectedYear && (
+          {!(selectedYear || selectedJurusan || searchQuery) && (
             <button
               onClick={openCreateModal}
               className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"

@@ -248,19 +248,14 @@ router.post('/', protect, async (req, res) => {
       });
     }
 
-    if (!categoryTopik) {
-      return res.status(400).json({
-        success: false,
-        message: 'Topic category is required',
-      });
-    }
+    // categoryTopik is optional - can be null for general articles
 
     const article = await Article.create({
       title,
       content,
       excerpt,
       categoryJurusan: categoryJurusan || null,
-      categoryTopik,
+      categoryTopik: categoryTopik || null,
       featuredImage: featuredImage ? { url: featuredImage } : undefined,
       author: req.user.id,
       status: 'draft',

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Lazy load all components for better performance
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -19,12 +20,20 @@ const Fasilitas = lazy(() => import('./pages/Fasilitas'));
 const KontakManagement = lazy(() => import('./pages/KontakManagement'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const ProfileManagement = lazy(() => import('./pages/ProfileManagement'));
+const SocialMedia = lazy(() => import('./pages/SocialMedia'));
+const Partner = lazy(() => import('./pages/Partner'));
+const CTAManagement = lazy(() => import('./pages/CTAManagement'));
+const AboutManagement = lazy(() => import('./pages/AboutManagement'));
 const HomepageFixed = lazy(() => import('./pages/public/HomepageFixed'));
 const JurusanList = lazy(() => import('./pages/public/JurusanList'));
 const JurusanDetail = lazy(() => import('./pages/public/JurusanDetail'));
 const Artikel = lazy(() => import('./pages/public/Artikel'));
 const ArtikelDetail = lazy(() => import('./pages/public/ArtikelDetail'));
 const Kontak = lazy(() => import('./pages/public/Kontak'));
+const Sejarah = lazy(() => import('./pages/public/Sejarah'));
+const VisiMisi = lazy(() => import('./pages/public/VisiMisi'));
+const Sambutan = lazy(() => import('./pages/public/Sambutan'));
+const Tentang = lazy(() => import('./pages/public/Tentang'));
 
 // Loading component
 const LoadingFallback = () => (
@@ -38,9 +47,10 @@ const LoadingFallback = () => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<LoadingFallback />}>
-        <Routes>
+    <HelmetProvider>
+      <BrowserRouter>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomepageFixed />} />
           <Route path="/jurusan" element={<JurusanList />} />
@@ -48,6 +58,10 @@ function App() {
           <Route path="/artikel" element={<Artikel />} />
           <Route path="/artikel/:slug" element={<ArtikelDetail />} />
           <Route path="/kontak" element={<Kontak />} />
+          <Route path="/sejarah" element={<Sejarah />} />
+          <Route path="/visi-misi" element={<VisiMisi />} />
+          <Route path="/sambutan" element={<Sambutan />} />
+          <Route path="/tentang" element={<Tentang />} />
           <Route path="/login" element={<Login />} />
 
           {/* Protected Routes - Admin Panel */}
@@ -67,6 +81,10 @@ function App() {
             <Route path="mata-pelajaran" element={<MataPelajaran />} />
             <Route path="fasilitas" element={<Fasilitas />} />
             <Route path="kontak" element={<KontakManagement />} />
+            <Route path="social-media" element={<SocialMedia />} />
+            <Route path="partners" element={<Partner />} />
+            <Route path="cta" element={<CTAManagement />} />
+            <Route path="about" element={<AboutManagement />} />
             <Route path="categories" element={<Categories />} />
             <Route path="users" element={<Users />} />
             <Route path="audit-logs" element={<AuditLogs />} />
@@ -78,6 +96,7 @@ function App() {
         </Routes>
       </Suspense>
     </BrowserRouter>
+    </HelmetProvider>
   );
 }
 

@@ -60,7 +60,7 @@ router.get('/:id', async (req, res) => {
 // @access  Protected + Admin
 router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, res) => {
   try {
-    const { title, description, category, level, date, participants } = req.body;
+    const { title, description, category, level, date, participants, showInRunningText } = req.body;
 
     if (!title || !description || !date || !participants) {
       return res.status(400).json({
@@ -76,6 +76,7 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
       level: level || 'sekolah',
       date,
       participants,
+      showInRunningText: showInRunningText || false,
       createdBy: req.user.id,
     };
 
@@ -144,7 +145,7 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
       });
     }
 
-    const { title, description, category, level, date, participants, image } = req.body;
+    const { title, description, category, level, date, participants, image, showInRunningText } = req.body;
 
     prestasi.title = title || prestasi.title;
     prestasi.description = description || prestasi.description;
@@ -152,6 +153,11 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
     prestasi.level = level || prestasi.level;
     prestasi.date = date || prestasi.date;
     prestasi.participants = participants || prestasi.participants;
+
+    // Handle showInRunningText (explicitly check for undefined to allow false value)
+    if (showInRunningText !== undefined) {
+      prestasi.showInRunningText = showInRunningText;
+    }
 
     // Upload new image to Cloudinary if provided
     if (req.file) {

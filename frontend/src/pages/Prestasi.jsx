@@ -21,6 +21,7 @@ const Prestasi = () => {
     date: '',
     participants: '',
     image: '',
+    showInRunningText: false,
   });
 
   useEffect(() => {
@@ -54,6 +55,7 @@ const Prestasi = () => {
       date: '',
       participants: '',
       image: '',
+      showInRunningText: false,
     });
     setShowModal(true);
   };
@@ -69,6 +71,7 @@ const Prestasi = () => {
       date: prestasi.date ? prestasi.date.split('T')[0] : '',
       participants: prestasi.participants,
       image: prestasi.image || '',
+      showInRunningText: prestasi.showInRunningText || false,
     });
     setShowModal(true);
   };
@@ -196,13 +199,18 @@ const Prestasi = () => {
                 {/* Content */}
                 <div className="p-4">
                   {/* Badges */}
-                  <div className="flex gap-2 mb-2">
+                  <div className="flex gap-2 mb-2 flex-wrap">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadge(prestasi.category)}`}>
                       {prestasi.category}
                     </span>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getLevelBadge(prestasi.level)}`}>
                       {prestasi.level}
                     </span>
+                    {prestasi.showInRunningText && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 flex items-center gap-1">
+                        📢 Running Text
+                      </span>
+                    )}
                   </div>
 
                   {/* Title */}
@@ -373,6 +381,30 @@ const Prestasi = () => {
                       required
                     />
                   </div>
+
+                  {/* Show in Running Text Checkbox */}
+                  <div className="flex items-center gap-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="showInRunningText"
+                      checked={formData.showInRunningText}
+                      onChange={(e) => setFormData({ ...formData, showInRunningText: e.target.checked })}
+                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    />
+                    <label htmlFor="showInRunningText" className="text-sm font-medium text-gray-700 cursor-pointer">
+                      Tampilkan di Running Text
+                    </label>
+                  </div>
+
+                  {/* Preview text if checkbox is checked */}
+                  {formData.showInRunningText && formData.participants && formData.title && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-xs font-medium text-gray-600 mb-1">Preview Running Text:</p>
+                      <p className="text-sm text-gray-800">
+                        Selamat atas prestasi {formData.participants} - {formData.title}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer */}

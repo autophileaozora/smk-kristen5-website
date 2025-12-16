@@ -15,7 +15,22 @@
       "Bash(git --version:*)",
       "Bash(git config:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(dir:*)",
+      "Bash(npm start)",
+      "Bash(tasklist:*)",
+      "Bash(del \"frontend\\src\\pages\\public\\HomepageFixed_backup.jsx\")",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(ping:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git rm:*)",
+      "Bash(del \"c:\\Users\\aozora\\Music\\project\\backend\\seedPartners.js\")",
+      "Bash(del seedPartners.js)",
+      "Bash(del backendseedCTA.js)"
     ],
     "deny": [],
     "ask": []

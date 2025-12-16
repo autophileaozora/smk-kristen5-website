@@ -120,15 +120,6 @@ const Login = () => {
               {loading ? 'Loading...' : 'Login'}
             </button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 mb-2 font-semibold">Demo Credentials:</p>
-            <div className="space-y-1 text-xs text-gray-600">
-              <p>👨‍💼 Admin: admin@smk.com / Admin123!</p>
-              <p>👨‍🎓 Siswa: siswa1@smk.com / Siswa123!</p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

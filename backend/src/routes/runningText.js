@@ -1,5 +1,6 @@
 import express from 'express';
 import RunningText from '../models/RunningText.js';
+import Prestasi from '../models/Prestasi.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
 import AuditLog from '../models/AuditLog.js';
@@ -27,16 +28,36 @@ router.get('/', async (req, res) => {
 });
 
 // @route   GET /api/running-text/active
-// @desc    Get only active running texts
+// @desc    Get only active running texts (includes prestasi with showInRunningText)
 // @access  Public
 router.get('/active', async (req, res) => {
   try {
+    // Get active running texts
     const runningTexts = await RunningText.find({ isActive: true })
       .sort({ order: 1 });
 
+    // Get prestasi that are marked to show in running text
+    const prestasis = await Prestasi.find({ showInRunningText: true })
+      .sort({ date: -1 })
+      .limit(10); // Limit to latest 10 achievements
+
+    // Create prestasi running text messages
+    const prestasiTexts = prestasis.map(prestasi => ({
+      _id: `prestasi-${prestasi._id}`,
+      text: `Selamat atas prestasi ${prestasi.participants} - ${prestasi.title}`,
+      link: null,
+      order: 999, // Put prestasi at the end
+      isActive: true,
+      source: 'prestasi', // Mark as coming from prestasi
+      prestasiId: prestasi._id
+    }));
+
+    // Combine running texts and prestasi texts
+    const combinedTexts = [...runningTexts, ...prestasiTexts];
+
     res.status(200).json({
       success: true,
-      data: { runningTexts },
+      data: { runningTexts: combinedTexts },
     });
   } catch (error) {
     res.status(500).json({

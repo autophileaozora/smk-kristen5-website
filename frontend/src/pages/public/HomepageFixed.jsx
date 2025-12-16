@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
+import SEO from '../../components/SEO';
 
 const HomepageFixed = () => {
   const navigate = useNavigate();
@@ -14,6 +15,10 @@ const HomepageFixed = () => {
     ekskuls: [],
     alumnis: [],
     videoHero: null,
+    partners: [],
+    cta: null,
+    principal: null,
+    articles: [],
   });
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,14 +31,18 @@ const HomepageFixed = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isPrestasiPaused, setIsPrestasiPaused] = useState(false);
   const [isTestimoniPaused, setIsTestimoniPaused] = useState(false);
+  const [isPartnerPaused, setIsPartnerPaused] = useState(false);
+  const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
+  const [isArticleFading, setIsArticleFading] = useState(false);
+  const [showPrincipalModal, setShowPrincipalModal] = useState(false);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
   const jurusanSectionRef = useRef(null);
-  const jurusanCardsRef = useRef(null);
   const invitingSectionRef = useRef(null);
   const row2Ref = useRef(null);
   const prestasiRef = useRef(null);
   const testimoniRef = useRef(null);
+  const partnerRef = useRef(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
@@ -156,13 +165,17 @@ const HomepageFixed = () => {
     try {
       setLoading(true);
 
-      const [runningTextRes, jurusanRes, prestasiRes, ekskulRes, alumniRes, videoRes] = await Promise.all([
+      const [runningTextRes, jurusanRes, prestasiRes, ekskulRes, alumniRes, videoRes, partnerRes, ctaRes, contactRes, articlesRes] = await Promise.all([
         api.get('/api/running-text/active').catch(() => ({ data: { data: { runningTexts: [] } } })),
-        api.get('/api/jurusan').catch(() => ({ data: { data: { jurusans: [] } } })),
+        api.get('/api/jurusan/active').catch(() => ({ data: { data: { jurusans: [] } } })),
         api.get('/api/prestasi').catch(() => ({ data: { data: { prestasis: [] } } })),
         api.get('/api/ekskul/active').catch(() => ({ data: { data: { ekskuls: [] } } })),
         api.get('/api/alumni/featured').catch(() => ({ data: { data: { alumnis: [] } } })),
         api.get('/api/video-hero/active').catch(() => ({ data: { data: { videoHero: null } } })),
+        api.get('/api/partners/active').catch(() => ({ data: { data: { partners: [] } } })),
+        api.get('/api/cta/active').catch(() => ({ data: { data: { cta: null } } })),
+        api.get('/api/contact').catch(() => ({ data: { data: null } })),
+        api.get('/api/articles?status=published&limit=3').catch(() => ({ data: { data: { articles: [] } } })),
       ]);
 
       // Backend returns "alumni" not "alumnis"
@@ -171,13 +184,20 @@ const HomepageFixed = () => {
       // Backend returns "videos" array, get first active video
       const videoHeroData = videoRes.data.data.videos?.[0] || videoRes.data.data.videoHero || null;
 
+      // Get principal info from contact
+      const principalData = contactRes.data.data?.principal || null;
+
       setData({
         runningTexts: runningTextRes.data.data.runningTexts || [],
-        jurusans: (jurusanRes.data.data.jurusans || []).filter(j => j.isActive),
+        jurusans: jurusanRes.data.data.jurusans || [],
         prestasis: (prestasiRes.data.data.prestasis || []).slice(0, 6),
         ekskuls: ekskulRes.data.data.ekskuls || [],
         alumnis: alumniData,
         videoHero: videoHeroData,
+        partners: partnerRes.data.data.partners || [],
+        cta: ctaRes.data.data.cta || null,
+        principal: principalData,
+        articles: (articlesRes.data.data.articles || []).slice(0, 3),
       });
     } catch (err) {
       console.error('Error:', err);
@@ -189,7 +209,7 @@ const HomepageFixed = () => {
   // Check if prestasi needs scrolling (more cards than can fit in viewport)
   const prestasiNeedsScroll = data.prestasis.length > 3;
 
-  // Auto-scroll effect for Prestasi
+  // Auto-scroll effect for Prestasi - scrolling to the right
   useEffect(() => {
     if (!prestasiRef.current || isPrestasiPaused || !prestasiNeedsScroll) return;
 
@@ -198,12 +218,12 @@ const HomepageFixed = () => {
 
     const scroll = () => {
       if (scrollContainer && !isPrestasiPaused) {
-        scrollContainer.scrollLeft += 1;
+        scrollContainer.scrollLeft -= 1; // Scroll right (decrease scrollLeft)
 
-        // Reset scroll when reaching 1/3 point (seamless loop)
-        const maxScroll = scrollContainer.scrollWidth / 3;
-        if (scrollContainer.scrollLeft >= maxScroll) {
-          scrollContainer.scrollLeft = 0;
+        // Reset scroll when reaching the beginning (seamless loop)
+        if (scrollContainer.scrollLeft <= 0) {
+          const maxScroll = scrollContainer.scrollWidth / 3;
+          scrollContainer.scrollLeft = maxScroll;
         }
       }
       animationId = requestAnimationFrame(scroll);
@@ -235,6 +255,45 @@ const HomepageFixed = () => {
     animationId = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animationId);
   }, [isTestimoniPaused, data.alumnis.length]);
+
+  // Auto-scroll effect for Partner
+  useEffect(() => {
+    if (!partnerRef.current || isPartnerPaused || data.partners.length === 0) return;
+
+    const scrollContainer = partnerRef.current;
+    let animationId;
+
+    const scroll = () => {
+      if (scrollContainer && !isPartnerPaused) {
+        scrollContainer.scrollLeft += 1;
+
+        const maxScroll = scrollContainer.scrollWidth / 3;
+        if (scrollContainer.scrollLeft >= maxScroll) {
+          scrollContainer.scrollLeft = 0;
+        }
+      }
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPartnerPaused, data.partners.length]);
+
+  // Auto-fade article carousel
+  useEffect(() => {
+    if (data.articles.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setIsArticleFading(true);
+
+      setTimeout(() => {
+        setCurrentArticleIndex((prev) => (prev + 1) % data.articles.length);
+        setIsArticleFading(false);
+      }, 500); // 500ms fade duration
+    }, 5000); // Change article every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [data.articles.length]);
 
   // Drag and Press handlers
   const handleMouseDown = (e, ref, setPaused) => {
@@ -282,8 +341,15 @@ const HomepageFixed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-poppins overflow-x-hidden">
-      {/* Navbar - Transparent at hero, blue when scrolled */}
+    <>
+      <SEO
+        title="SMK Kristen 5 Klaten - SMK Krisma | Sekolah Kejuruan Terbaik di Klaten"
+        description="SMK Kristen 5 Klaten (Krisma) adalah sekolah menengah kejuruan terbaik di Klaten dengan jurusan unggulan, fasilitas modern, dan prestasi gemilang. Daftar sekarang!"
+        keywords="SMK di Klaten, SMK Kristen 5, SMK Krisma, Krisma, sekolah klaten, SMK terbaik klaten, jurusan SMK klaten, pendaftaran SMK klaten, SMK Kristen Klaten, sekolah kejuruan klaten"
+        url="/"
+      />
+      <div className="min-h-screen bg-white font-poppins overflow-x-hidden">
+        {/* Navbar - Transparent at hero, blue when scrolled */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         navbarVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
@@ -294,19 +360,20 @@ const HomepageFixed = () => {
             <Link to="/" className="flex items-center gap-2 md:gap-3">
               <img
                 src={schoolLogo}
-                alt="SMK Kristen 5 Klaten"
+                alt="Logo SMK Kristen 5 Klaten - SMK Krisma"
                 className="h-8 w-8 md:h-12 md:w-12 object-contain"
+                loading="eager"
               />
               <div className="leading-tight">
                 <div className="text-[10px] md:text-xs text-white">SEKOLAH MENENGAH KEJURUAN</div>
                 <div className="text-sm md:text-lg font-bold text-white">KRISTEN 5 KLATEN</div>
-                <div className="text-[10px] md:text-xs text-white/80">SMK Krisma Bisa</div>
               </div>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
               <Link to="/" className="text-white hover:text-yellow-400 transition-colors">Beranda</Link>
               <Link to="/jurusan" className="text-white hover:text-yellow-400 transition-colors">Jurusan</Link>
+              <Link to="/tentang" className="text-white hover:text-yellow-400 transition-colors">Tentang</Link>
               <Link to="/artikel" className="text-white hover:text-yellow-400 transition-colors">Artikel</Link>
               <Link to="/kontak" className="text-white hover:text-yellow-400 transition-colors">Kontak</Link>
             </div>
@@ -399,6 +466,13 @@ const HomepageFixed = () => {
                     Jurusan
                   </Link>
                   <Link
+                    to="/tentang"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
+                  >
+                    Tentang
+                  </Link>
+                  <Link
                     to="/artikel"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
@@ -465,7 +539,7 @@ const HomepageFixed = () => {
                   transform: 'translate(-50%, -50%)',
                 }}
               />
-              <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-black/50 pointer-events-none"></div>
             </>
           ) : (
             <>
@@ -474,7 +548,7 @@ const HomepageFixed = () => {
                 alt="Hero"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="absolute inset-0 bg-black/50"></div>
             </>
           )}
         </div>
@@ -483,6 +557,92 @@ const HomepageFixed = () => {
           <div className="max-w-4xl">
             {/* Teks dan elemen di atas video dihapus */}
           </div>
+        </div>
+
+        {/* Cards Container - 2 Rows - Responsive */}
+        <div className="absolute bottom-4 md:bottom-6 left-4 right-4 md:left-auto md:right-6 z-20 flex flex-col gap-3 md:gap-4 max-w-[420px] md:max-w-none md:w-auto mx-auto md:mx-0">
+          {/* Row 1: Sambutan Kepala Sekolah */}
+          {data.principal && data.principal.name && (
+            <div>
+              {/* Judul Card */}
+              <h3 className="text-white font-bold text-xs md:text-sm mb-1.5 md:mb-2 px-1">Sambutan Kepala Sekolah</h3>
+
+              <button onClick={() => setShowPrincipalModal(true)} className="block group w-full text-left">
+                <div className="backdrop-blur-xl bg-white/20 rounded-xl md:rounded-2xl shadow-2xl p-2 md:p-3 w-full md:w-[420px] h-[100px] md:h-[140px] border border-white/30 hover:bg-white/25 transition-all duration-300 overflow-hidden cursor-pointer">
+                  <div className="flex gap-2 md:gap-3 h-full">
+                    {/* Foto Kepala Sekolah - Kiri */}
+                    {data.principal.photo && (
+                      <img
+                        src={data.principal.photo}
+                        alt={`${data.principal.name} - Kepala Sekolah SMK Kristen 5 Klaten`}
+                        className="w-20 h-20 md:w-28 md:h-28 object-cover rounded-lg md:rounded-xl flex-shrink-0"
+                        loading="lazy"
+                      />
+                    )}
+
+                    {/* Konten - Kanan - Top aligned */}
+                    <div className="flex-1 flex flex-col py-0.5 md:py-1 min-w-0">
+                      {/* Nama - 1 baris truncate */}
+                      <p className="text-xs md:text-sm font-semibold text-white truncate mb-1">
+                        {data.principal.name}
+                      </p>
+
+                      {/* Sambutan - 3 mobile / 4 desktop */}
+                      <p className="text-[10px] md:text-xs text-white/95 line-clamp-3 md:line-clamp-4 leading-relaxed">
+                        {data.principal.message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Row 2: Artikel Terbaru - Hidden on mobile */}
+          {data.articles.length > 0 && (
+            <div className="hidden md:block">
+              {/* Judul Card */}
+              <h3 className="text-white font-bold text-sm mb-2 px-1">Artikel Terbaru</h3>
+
+              <Link
+                to={`/artikel/${data.articles[currentArticleIndex]?.slug}`}
+                className="block group"
+              >
+                <div className="backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl p-3 w-[420px] h-[140px] border border-white/30 hover:bg-white/25 transition-all duration-300 overflow-hidden">
+                  <div
+                    className={`transition-opacity duration-500 ${
+                      isArticleFading ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  >
+                    <div className="flex gap-3 h-full">
+                      {/* Foto Artikel - Kiri - Same size as principal photo */}
+                      {data.articles[currentArticleIndex]?.image && (
+                        <img
+                          src={data.articles[currentArticleIndex].image}
+                          alt={`${data.articles[currentArticleIndex].title} - SMK Krisma Klaten`}
+                          className="w-28 h-28 object-cover rounded-xl flex-shrink-0"
+                          loading="lazy"
+                        />
+                      )}
+
+                      {/* Konten - Kanan - Top aligned */}
+                      <div className="flex-1 flex flex-col py-1 min-w-0">
+                        {/* Judul - 1 baris truncate */}
+                        <h4 className="text-sm font-semibold text-white truncate group-hover:text-white/90 transition-colors mb-1">
+                          {data.articles[currentArticleIndex]?.title}
+                        </h4>
+
+                        {/* Konten - 4 baris truncate */}
+                        <p className="text-xs text-white/95 line-clamp-4 leading-relaxed">
+                          {data.articles[currentArticleIndex]?.content?.replace(/<[^>]*>/g, '')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -504,7 +664,7 @@ const HomepageFixed = () => {
         <section
           ref={jurusanSectionRef}
           data-section="jurusan"
-          className="relative bg-white py-20"
+          className="relative bg-white py-16 md:py-24"
         >
           <div className="container mx-auto px-4">
             <div className="mb-8 md:mb-12">
@@ -669,7 +829,7 @@ const HomepageFixed = () => {
       </section>
 
       {/* Prestasi - Conditional auto-scroll */}
-      <section className="py-20 bg-cream overflow-hidden">
+      <section className="py-16 md:py-24 bg-cream overflow-hidden">
         <div className="container mx-auto px-4 mb-12">
           <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Russo One, sans-serif' }}>PRESTASI</h2>
           <p className="text-xs md:text-base text-gray-700 mb-6 md:mb-8 max-w-4xl leading-relaxed">
@@ -729,8 +889,9 @@ const HomepageFixed = () => {
                     <div className="w-full h-[120px] md:h-[180px] mb-2 md:mb-3">
                       <img
                         src={prestasi.image || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=600&fit=crop'}
-                        alt={prestasi.title}
+                        alt={`${prestasi.title} - Prestasi SMK Kristen 5 Klaten`}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
 
@@ -766,8 +927,9 @@ const HomepageFixed = () => {
                       <div className="w-full h-[45%] mb-2 md:mb-3">
                         <img
                           src={prestasi.image || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=600&fit=crop'}
-                          alt={prestasi.title}
+                          alt={`${prestasi.title} - Prestasi SMK Kristen 5 Klaten`}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                       </div>
 
@@ -785,7 +947,7 @@ const HomepageFixed = () => {
       </section>
 
       {/* Ekstrakurikuler */}
-      <section className="py-20 bg-white">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-8 md:mb-16 text-right" style={{ fontFamily: 'Russo One, sans-serif' }}>EKSTRAKURIKULER</h2>
 
@@ -857,7 +1019,7 @@ const HomepageFixed = () => {
       </section>
 
       {/* Testimoni Alumni - 2 Rows with Infinite Scroll */}
-      <section className="py-20 bg-cream overflow-hidden">
+      <section className="py-16 md:py-24 bg-cream overflow-hidden">
         <div className="container mx-auto px-4 mb-12">
           <h2 className="text-2xl md:text-5xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Russo One, sans-serif' }}>TESTIMONI DAN CERITA ALUMNI</h2>
           <p className="text-xs md:text-base text-gray-700">
@@ -899,8 +1061,9 @@ const HomepageFixed = () => {
                   <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pb-4 md:pb-6 border-b border-gray-800" style={{ borderBottomWidth: '0.7px' }}>
                     <img
                       src={alumni.photo || 'https://i.pravatar.cc/150'}
-                      alt={alumni.name}
+                      alt={`${alumni.name} - Alumni SMK Krisma Klaten`}
                       className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
+                      loading="lazy"
                     />
                     <div>
                       <h4 className="font-bold text-gray-800 text-sm md:text-base">{alumni.name}</h4>
@@ -925,8 +1088,100 @@ const HomepageFixed = () => {
         )}
       </section>
 
+      {/* Partners Section */}
+      {data.partners.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Partner Kerjasama
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Bekerjasama dengan berbagai perusahaan dan institusi terkemuka untuk menyediakan peluang terbaik bagi siswa kami
+              </p>
+            </div>
+
+            {/* Scrolling Logos Container */}
+            <div
+              ref={partnerRef}
+              className="overflow-x-scroll"
+              style={{
+                cursor: 'grab',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={(e) => handleMouseDown(e, partnerRef, setIsPartnerPaused)}
+              onMouseMove={(e) => handleMouseMove(e, partnerRef)}
+              onMouseUp={() => handleMouseUp(partnerRef, setIsPartnerPaused)}
+              onMouseLeave={() => handleMouseUp(partnerRef, setIsPartnerPaused)}
+              onTouchStart={(e) => handleTouchStart(e, partnerRef, setIsPartnerPaused)}
+              onTouchMove={(e) => handleTouchMove(e, partnerRef)}
+              onTouchEnd={() => handleTouchEnd(setIsPartnerPaused)}
+            >
+              <div className="flex gap-12">
+                {/* Triple the logos for seamless loop */}
+                {[...data.partners, ...data.partners, ...data.partners].map((partner, index) => (
+                  <div
+                    key={`partner-${index}`}
+                    className="flex-shrink-0 flex items-center justify-center p-4"
+                    style={{ width: '200px', height: '100px' }}
+                  >
+                    <img
+                      src={partner.logo}
+                      alt={`Logo ${partner.name} - Partner SMK Kristen 5 Klaten`}
+                      className="max-w-full max-h-full w-auto h-auto object-contain grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+                      title={`${partner.name} - Mitra Industri SMK Krisma`}
+                      style={{ maxWidth: '180px', maxHeight: '80px' }}
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CTA Section */}
+      {data.cta && (
+        <section
+          className="py-16 md:py-24 relative overflow-hidden"
+          style={{
+            backgroundColor: data.cta.backgroundColor || '#0D76BE',
+            backgroundImage: data.cta.backgroundImage ? `url(${data.cta.backgroundImage})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {/* Overlay for better text readability when background image is used */}
+          {data.cta.backgroundImage && (
+            <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+          )}
+
+          <div className="container mx-auto px-4 text-center relative z-10">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {data.cta.title}
+            </h2>
+            {data.cta.subtitle && (
+              <p className="text-xl md:text-2xl text-white mb-8 max-w-3xl mx-auto">
+                {data.cta.subtitle}
+              </p>
+            )}
+            <a
+              href={data.cta.buttonLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-white text-gray-900 font-bold px-8 py-4 rounded-lg text-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              {data.cta.buttonText}
+            </a>
+          </div>
+        </section>
+      )}
+
       {/* Footer */}
-      <footer className="bg-[#0D76BE] text-white py-12">
+      <footer className="bg-gray-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
@@ -969,6 +1224,15 @@ const HomepageFixed = () => {
           </div>
         </div>
       </footer>
+
+      {/* Copyright Section */}
+      <div className="bg-[#0D76BE] text-white py-4">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
 
       {/* Animations */}
       <style>{`
@@ -1016,7 +1280,7 @@ const HomepageFixed = () => {
                   placeholder="Cari artikel SMK KRISTEN 5 KLATEN..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter' && searchQuery.trim()) {
                       navigate(`/artikel?q=${encodeURIComponent(searchQuery.trim())}`);
                       setShowSearchModal(false);
@@ -1046,7 +1310,47 @@ const HomepageFixed = () => {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Principal Modal - Glassmorphism Transparent */}
+      {showPrincipalModal && data.principal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowPrincipalModal(false)}>
+          <div className="backdrop-blur-xl bg-white/20 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/30" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Content */}
+            <div className="p-6 md:p-8">
+              {/* Principal Info Section - Centered Layout */}
+              <div className="flex flex-col items-center text-center mb-6">
+                {/* Photo - Round and on top */}
+                {data.principal.photo && (
+                  <div className="mb-4">
+                    <img
+                      src={data.principal.photo}
+                      alt={`${data.principal.name} - Kepala Sekolah SMK Kristen 5 Klaten`}
+                      className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full shadow-xl border-3 border-white/50"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
+                {/* Name and Position - Below photo */}
+                <div>
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-1">{data.principal.name}</h3>
+                  <p className="text-sm md:text-base text-white/90 font-semibold">Kepala Sekolah</p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-white/30 mb-6"></div>
+
+              {/* Message Content */}
+              <div className="text-white/95 leading-relaxed whitespace-pre-line text-sm md:text-base">
+                {data.principal.message}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+    </>
   );
 };
 

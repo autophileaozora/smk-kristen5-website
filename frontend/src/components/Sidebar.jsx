@@ -49,6 +49,10 @@ const Sidebar = () => {
     { name: 'Manajemen User', path: '/admin/users', icon: '👤' },
     { name: 'Audit Log', path: '/admin/audit-logs', icon: '📋' },
     { name: 'Kontak', path: '/admin/kontak', icon: '📞' },
+    { name: 'Sosial Media', path: '/admin/social-media', icon: '🌐' },
+    { name: 'Partner', path: '/admin/partners', icon: '🤝' },
+    { name: 'CTA', path: '/admin/cta', icon: '📣' },
+    { name: 'Tentang', path: '/admin/about', icon: '📖' },
   ] : [
     { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
     { name: 'Artikel Saya', path: '/admin/my-articles', icon: '📝' },

@@ -653,7 +653,7 @@ const Artikel = () => {
       </section>
 
       {/* Footer - Same as Homepage */}
-      <footer className="bg-[#0D76BE] text-white py-12">
+      <footer className="bg-gray-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
@@ -696,6 +696,15 @@ const Artikel = () => {
           </div>
         </div>
       </footer>
+
+      {/* Copyright Section */}
+      <div className="bg-[#0D76BE] text-white py-4">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

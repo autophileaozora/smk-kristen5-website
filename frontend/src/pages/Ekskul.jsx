@@ -10,6 +10,10 @@ const Ekskul = () => {
   const [currentEkskul, setCurrentEkskul] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -49,6 +53,17 @@ const Ekskul = () => {
   useEffect(() => {
     fetchEkskuls();
   }, []);
+
+  // Debounce search input (wait 500ms after user stops typing)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   // Show toast notification
   const showToast = (message, type = 'success') => {
@@ -168,6 +183,21 @@ const Ekskul = () => {
     return cat ? `inline-block px-2 py-1 text-xs font-semibold rounded-full ${cat.color}` : '';
   };
 
+  // Filter ekskuls based on search query
+  const filteredEkskuls = ekskuls.filter(ekskul => {
+    if (!debouncedSearch) return true;
+
+    const query = debouncedSearch.toLowerCase();
+    return (
+      ekskul.name.toLowerCase().includes(query) ||
+      ekskul.description.toLowerCase().includes(query) ||
+      ekskul.coach.toLowerCase().includes(query) ||
+      ekskul.schedule.toLowerCase().includes(query) ||
+      (ekskul.location && ekskul.location.toLowerCase().includes(query)) ||
+      categories.find(c => c.value === ekskul.category)?.label.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="p-6">
       {/* Toast Notification */}
@@ -194,6 +224,30 @@ const Ekskul = () => {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Cari Ekstrakurikuler
+        </label>
+        <input
+          type="text"
+          placeholder="Cari berdasarkan nama, kategori, pembina, jadwal, atau lokasi..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
+        />
+        {searchQuery && (
+          <div className="mt-3">
+            <button
+              onClick={() => setSearchQuery('')}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Clear Search
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Loading State */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
@@ -202,7 +256,7 @@ const Ekskul = () => {
       ) : (
         /* Ekskul Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ekskuls.map((ekskul) => (
+          {filteredEkskuls.map((ekskul) => (
             <div key={ekskul._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
               {/* Image */}
               {ekskul.image && (
@@ -460,21 +514,25 @@ const Ekskul = () => {
       )}
 
       {/* Empty State */}
-      {!loading && ekskuls.length === 0 && (
+      {!loading && filteredEkskuls.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🎯</div>
           <h3 className="text-xl font-semibold text-gray-700 mb-2">
-            Belum ada ekstrakurikuler
+            {searchQuery ? 'Tidak ada ekstrakurikuler yang sesuai pencarian' : 'Belum ada ekstrakurikuler'}
           </h3>
           <p className="text-gray-500 mb-4">
-            Tambahkan ekstrakurikuler pertama sekarang!
+            {searchQuery
+              ? 'Coba ubah kata kunci pencarian atau tambahkan ekstrakurikuler baru'
+              : 'Tambahkan ekstrakurikuler pertama sekarang!'}
           </p>
-          <button
-            onClick={openCreateModal}
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
-          >
-            Tambah Ekstrakurikuler
-          </button>
+          {!searchQuery && (
+            <button
+              onClick={openCreateModal}
+              className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            >
+              Tambah Ekstrakurikuler
+            </button>
+          )}
         </div>
       )}
     </div>

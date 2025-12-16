@@ -75,6 +75,27 @@ const contactSchema = new mongoose.Schema({
     trim: true
   },
 
+  // Principal Information
+  principal: {
+    name: {
+      type: String,
+      trim: true
+    },
+    title: {
+      type: String,
+      trim: true,
+      default: 'Kepala Sekolah'
+    },
+    photo: {
+      type: String,
+      trim: true
+    },
+    message: {
+      type: String,
+      trim: true
+    }
+  },
+
   // Single instance flag (we only want one contact info document)
   isCurrent: {
     type: Boolean,
