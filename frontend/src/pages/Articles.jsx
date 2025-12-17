@@ -743,18 +743,21 @@ const Articles = () => {
           articles.map((article) => (
             <div
               key={article._id}
-              className={`bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-all ${
+              onClick={() => isSelectMode && toggleSelectArticle(article._id)}
+              className={`bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-all relative ${
+                isSelectMode ? 'cursor-pointer' : ''
+              } ${
                 isSelectMode && selectedArticles.includes(article._id) ? 'ring-2 ring-blue-500' : ''
               }`}
             >
               {/* Select Mode Checkbox Overlay */}
               {isSelectMode && (
-                <div className="absolute top-2 left-2 z-10">
+                <div className="absolute top-2 left-2 z-10 pointer-events-none">
                   <input
                     type="checkbox"
                     checked={selectedArticles.includes(article._id)}
-                    onChange={() => toggleSelectArticle(article._id)}
-                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                    onChange={() => {}}
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                 </div>
               )}
@@ -767,12 +770,6 @@ const Articles = () => {
                     alt={article.title}
                     className="w-full h-48 object-cover"
                   />
-                  {isSelectMode && (
-                    <div
-                      onClick={() => toggleSelectArticle(article._id)}
-                      className="absolute inset-0 bg-black/10 cursor-pointer hover:bg-black/20 transition-colors"
-                    />
-                  )}
                 </div>
               )}
 
@@ -783,16 +780,17 @@ const Articles = () => {
                   {getStatusBadge(article.status)}
                   
                   {/* 3-Dot Dropdown Menu */}
-                  <div className="relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenDropdown(openDropdown === article._id ? null : article._id);
-                      }}
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <span className="text-xl text-gray-600">⋮</span>
-                    </button>
+                  {!isSelectMode && (
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdown(openDropdown === article._id ? null : article._id);
+                        }}
+                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <span className="text-xl text-gray-600">⋮</span>
+                      </button>
 
                     {/* Dropdown Menu */}
                     {openDropdown === article._id && (
@@ -915,7 +913,8 @@ const Articles = () => {
                         </div>
                       </div>
                     )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Title */}
