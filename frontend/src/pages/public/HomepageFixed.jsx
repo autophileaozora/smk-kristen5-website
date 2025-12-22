@@ -32,6 +32,7 @@ const HomepageFixed = () => {
   const [isPrestasiPaused, setIsPrestasiPaused] = useState(false);
   const [isTestimoniPaused, setIsTestimoniPaused] = useState(false);
   const [isPartnerPaused, setIsPartnerPaused] = useState(false);
+  const [isJurusanPaused, setIsJurusanPaused] = useState(false);
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
   const [isArticleFading, setIsArticleFading] = useState(false);
   const [showPrincipalModal, setShowPrincipalModal] = useState(false);
@@ -43,6 +44,7 @@ const HomepageFixed = () => {
   const prestasiRef = useRef(null);
   const testimoniRef = useRef(null);
   const partnerRef = useRef(null);
+  const jurusanRef = useRef(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
@@ -256,20 +258,48 @@ const HomepageFixed = () => {
     return () => cancelAnimationFrame(animationId);
   }, [isTestimoniPaused, data.alumnis.length]);
 
-  // Auto-scroll effect for Partner
+  // Auto-scroll effect for Jurusan
+  useEffect(() => {
+    if (!jurusanRef.current || isJurusanPaused || data.jurusans.length === 0) return;
+
+    const scrollContainer = jurusanRef.current;
+    let animationId;
+
+    const scroll = () => {
+      if (scrollContainer && !isJurusanPaused) {
+        scrollContainer.scrollLeft += 1;
+
+        const maxScroll = scrollContainer.scrollWidth / 3;
+        if (scrollContainer.scrollLeft >= maxScroll) {
+          scrollContainer.scrollLeft = 0;
+        }
+      }
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [isJurusanPaused, data.jurusans.length]);
+
+  // Auto-scroll effect for Partner (scroll to right/backwards)
   useEffect(() => {
     if (!partnerRef.current || isPartnerPaused || data.partners.length === 0) return;
 
     const scrollContainer = partnerRef.current;
     let animationId;
 
+    // Set initial scroll position to middle section
+    if (scrollContainer.scrollLeft === 0) {
+      scrollContainer.scrollLeft = scrollContainer.scrollWidth / 3;
+    }
+
     const scroll = () => {
       if (scrollContainer && !isPartnerPaused) {
-        scrollContainer.scrollLeft += 1;
+        scrollContainer.scrollLeft -= 1;
 
-        const maxScroll = scrollContainer.scrollWidth / 3;
-        if (scrollContainer.scrollLeft >= maxScroll) {
-          scrollContainer.scrollLeft = 0;
+        // Reset to end of middle section when reaching start
+        if (scrollContainer.scrollLeft <= 0) {
+          scrollContainer.scrollLeft = scrollContainer.scrollWidth / 3;
         }
       }
       animationId = requestAnimationFrame(scroll);
@@ -565,7 +595,7 @@ const HomepageFixed = () => {
           {data.principal && data.principal.name && (
             <div>
               {/* Judul Card */}
-              <h3 className="text-white font-bold text-xs md:text-sm mb-1.5 md:mb-2 px-1">Sambutan Kepala Sekolah</h3>
+              <h3 className="text-white font-bold text-xs md:text-sm mb-1.5 md:mb-2 px-1" style={{ fontFamily: 'Russo One, sans-serif' }}>Sambutan Kepala Sekolah</h3>
 
               <button onClick={() => setShowPrincipalModal(true)} className="block group w-full text-left">
                 <div className="backdrop-blur-xl bg-white/20 rounded-xl md:rounded-2xl shadow-2xl p-2 md:p-3 w-full md:w-[420px] h-[100px] md:h-[140px] border border-white/30 hover:bg-white/25 transition-all duration-300 overflow-hidden cursor-pointer">
@@ -602,7 +632,7 @@ const HomepageFixed = () => {
           {data.articles.length > 0 && (
             <div className="hidden md:block">
               {/* Judul Card */}
-              <h3 className="text-white font-bold text-sm mb-2 px-1">Artikel Terbaru</h3>
+              <h3 className="text-white font-bold text-sm mb-2 px-1" style={{ fontFamily: 'Russo One, sans-serif' }}>Artikel Terbaru</h3>
 
               <Link
                 to={`/artikel/${data.articles[currentArticleIndex]?.slug}`}
@@ -659,12 +689,12 @@ const HomepageFixed = () => {
         </div>
       )}
 
-      {/* Kompetensi Jurusan - Simple Grid */}
+      {/* Kompetensi Jurusan - Draggable Scroll */}
       {data.jurusans.length > 0 && (
         <section
           ref={jurusanSectionRef}
           data-section="jurusan"
-          className="relative bg-white py-16 md:py-24"
+          className="relative bg-white py-16 md:py-24 overflow-hidden"
         >
           <div className="container mx-auto px-4">
             <div className="mb-8 md:mb-12">
@@ -679,12 +709,30 @@ const HomepageFixed = () => {
                 <div className="inline-block w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {data.jurusans.map((jurusan, index) => (
+              <div
+                ref={jurusanRef}
+                className="overflow-x-scroll"
+                style={{
+                  cursor: 'grab',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+                onMouseDown={(e) => handleMouseDown(e, jurusanRef, setIsJurusanPaused)}
+                onMouseMove={(e) => handleMouseMove(e, jurusanRef)}
+                onMouseUp={() => handleMouseUp(jurusanRef, setIsJurusanPaused)}
+                onMouseLeave={() => handleMouseUp(jurusanRef, setIsJurusanPaused)}
+                onTouchStart={(e) => handleTouchStart(e, jurusanRef, setIsJurusanPaused)}
+                onTouchMove={(e) => handleTouchMove(e, jurusanRef)}
+                onTouchEnd={() => handleTouchEnd(setIsJurusanPaused)}
+              >
+                <div className="flex gap-4 md:gap-6">
+                  {/* Duplicate cards for infinite scroll */}
+                  {[...data.jurusans, ...data.jurusans, ...data.jurusans].map((jurusan, index) => (
                   <Link
-                    key={jurusan._id}
+                    key={`jurusan-${index}`}
                     to={`/jurusan/${jurusan.slug}`}
-                    className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 cursor-pointer hover:shadow-2xl"
+                    className="relative flex-shrink-0 w-[280px] h-[400px] md:w-[400px] md:h-[400px] rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 cursor-pointer hover:shadow-2xl"
                   >
                     <div
                       className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
@@ -741,92 +789,58 @@ const HomepageFixed = () => {
                     </div>
                   </Link>
                 ))}
+                </div>
               </div>
             )}
           </div>
         </section>
       )}
 
-      {/* Inviting Section - 3 Rows with Parallax Background */}
-      <section ref={invitingSectionRef} className="h-screen flex flex-col relative overflow-hidden">
-        {/* Parallax Background - Fixed to section */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
+      {/* Inviting Section - CTA */}
+      {data.cta && (
+        <section
+          ref={invitingSectionRef}
+          className="relative min-h-screen flex items-center justify-center"
           style={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=1920&h=600&fit=crop)',
-            transform: `translateY(${parallaxOffset}px)`,
-            height: '150%',
-            top: '-25%',
-            backgroundPosition: 'center center'
-          }}
-        />
-
-        {/* Row 1: Black background with 2 columns - 22vh */}
-        <div className="bg-black flex-shrink-0 relative z-10" style={{ height: '22vh' }}>
-          <div className="container mx-auto px-4 h-full flex items-start pt-4 md:pt-8">
-            <div className="grid grid-cols-1 md:grid-cols-10 gap-4 md:gap-12 w-full">
-              <div className="text-white md:col-span-4">
-                <h3 className="text-lg md:text-3xl font-bold leading-tight">
-                  RAGU ATAU BELUM TAU MINAT BAKAT KAMU?
-                </h3>
-              </div>
-              <div className="text-white md:col-span-6">
-                <p className="text-sm md:text-lg leading-relaxed">
-                  KAMI MENYEDIAKAN PLATFORM AGAR ANDA BISA MENEMUKAN BAKAT MINAT SESUAI PASSION ANDA
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Transparent to show parallax background - 66vh */}
-        <div
-          ref={row2Ref}
-          className="relative flex-shrink-0 z-10"
-          style={{
-            height: '66vh'
+            backgroundColor: data.cta.backgroundColor || '#0D76BE',
+            backgroundImage: data.cta.backgroundImage ? `url(${data.cta.backgroundImage})` : 'none',
+            backgroundPosition: 'center center',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
           }}
         >
-          <div className="absolute inset-0 bg-black/30"></div>
+          {/* Overlay untuk keterbacaan teks */}
+          {data.cta.backgroundImage && (
+            <div className="absolute inset-0 bg-black/40"></div>
+          )}
 
-          <div className="relative container mx-auto px-4 h-full flex items-center justify-center">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-xl md:text-4xl font-bold text-white mb-4 md:mb-8 leading-tight">
-                MARI DISKUSIKAN BAKAT & MINAT KAMU,<br />
-                KAMI AKAN MEMBANTU MENEMUKAN SESUAI<br />
-                PASSION ANDA
+          {/* Content */}
+          <div ref={row2Ref} className="relative z-10 container mx-auto px-4 py-20">
+            <div className="max-w-5xl mx-auto text-center">
+              {/* Title */}
+              <h2 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight">
+                {data.cta.title || 'MARI DISKUSIKAN BAKAT & MINAT KAMU,\nKAMI AKAN MEMBANTU MENEMUKAN SESUAI\nPASSION ANDA'}
               </h2>
 
+              {/* Subtitle */}
+              {data.cta.subtitle && (
+                <p className="text-sm md:text-lg lg:text-xl text-white mb-8 md:mb-12 max-w-4xl mx-auto leading-relaxed opacity-95">
+                  {data.cta.subtitle}
+                </p>
+              )}
+
+              {/* Button */}
               <Link
-                to="/daftar"
-                className="inline-block px-6 py-2.5 md:px-12 md:py-4 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full font-bold text-sm md:text-lg transition-colors"
+                to={data.cta.buttonLink || '/kontak'}
+                className="inline-block px-8 py-3 md:px-16 md:py-5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-full font-bold text-base md:text-xl transition-all duration-300 shadow-2xl hover:shadow-yellow-500/50 hover:scale-105 uppercase"
               >
-                PENDAFTARAN
+                {data.cta.buttonText || 'Diskusi'}
               </Link>
             </div>
           </div>
-        </div>
-
-        {/* Row 3: Black background with loading bar - 12vh */}
-        <div className="bg-black flex-shrink-0 relative z-10" style={{ height: '12vh' }}>
-          <div className="container mx-auto px-4 h-full flex items-center">
-            {/* Loading bar - full width with container padding */}
-            <div className="w-full">
-              {/* Progress bar */}
-              <div className="w-full h-3 bg-gray-800 overflow-hidden">
-                <div
-                  className="h-full bg-yellow-400 transition-all duration-300"
-                  style={{ width: `${invitingSectionProgress}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-          {/* Loading text - bottom right corner with yellow color */}
-          <p className="absolute bottom-4 right-8 text-yellow-400 font-semibold text-lg">
-            {Math.round(invitingSectionProgress)}%
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Prestasi - Conditional auto-scroll */}
       <section className="py-16 md:py-24 bg-cream overflow-hidden">
@@ -870,7 +884,8 @@ const HomepageFixed = () => {
                 {[...data.prestasis, ...data.prestasis, ...data.prestasis].map((prestasi, index) => (
                   <div
                     key={`${prestasi._id}-${index}`}
-                    className="flex-shrink-0 w-[280px] h-[280px] md:w-[400px] md:h-[400px] bg-gray-800 rounded-xl md:rounded-2xl overflow-hidden flex flex-col p-4 md:p-6 text-white"
+                    className="flex-shrink-0 w-[280px] h-[400px] md:w-[400px] md:h-[400px] bg-transparent rounded-xl md:rounded-2xl border border-gray-800 overflow-hidden flex flex-col p-4 md:p-6 text-gray-900"
+                    style={{ borderWidth: '0.7px' }}
                   >
                     {/* Zona A: Header Identitas */}
                     <div className="text-xs md:text-sm font-normal mb-1 md:mb-2">
@@ -878,7 +893,7 @@ const HomepageFixed = () => {
                     </div>
 
                     {/* Separator */}
-                    <div className="w-full h-px bg-white/30 mb-2 md:mb-3"></div>
+                    <div className="w-full h-px bg-gray-800 mb-2 md:mb-3" style={{ height: '0.7px' }}></div>
 
                     {/* Zona B: Judul Prestasi Utama */}
                     <h3 className="text-sm md:text-lg font-bold leading-tight mb-2 md:mb-3">
@@ -886,11 +901,11 @@ const HomepageFixed = () => {
                     </h3>
 
                     {/* Zona C: Gambar Ilustrasi (Landscape) */}
-                    <div className="w-full h-[120px] md:h-[180px] mb-2 md:mb-3">
+                    <div className="w-full h-[180px] md:h-[180px] mb-2 md:mb-3">
                       <img
                         src={prestasi.image || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=600&fit=crop'}
                         alt={`${prestasi.title} - Prestasi SMK Kristen 5 Klaten`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover rounded-lg"
                         loading="lazy"
                       />
                     </div>
@@ -908,7 +923,8 @@ const HomepageFixed = () => {
                   {data.prestasis.map((prestasi, index) => (
                     <div
                       key={prestasi._id}
-                      className="w-full aspect-square bg-gray-800 rounded-xl md:rounded-2xl overflow-hidden flex flex-col p-4 md:p-6 text-white"
+                      className="w-full h-[400px] md:h-auto md:aspect-square bg-transparent rounded-xl md:rounded-2xl border border-gray-800 overflow-hidden flex flex-col p-4 md:p-6 text-gray-900"
+                      style={{ borderWidth: '0.7px' }}
                     >
                       {/* Zona A: Header Identitas */}
                       <div className="text-xs md:text-sm font-normal mb-1 md:mb-2">
@@ -916,7 +932,7 @@ const HomepageFixed = () => {
                       </div>
 
                       {/* Separator */}
-                      <div className="w-full h-px bg-white/30 mb-2 md:mb-3"></div>
+                      <div className="w-full h-px bg-gray-800 mb-2 md:mb-3" style={{ height: '0.7px' }}></div>
 
                       {/* Zona B: Judul Prestasi Utama */}
                       <h3 className="text-sm md:text-lg font-bold leading-tight mb-2 md:mb-3">
@@ -924,11 +940,11 @@ const HomepageFixed = () => {
                       </h3>
 
                       {/* Zona C: Gambar Ilustrasi (Landscape) */}
-                      <div className="w-full h-[45%] mb-2 md:mb-3">
+                      <div className="w-full h-[180px] md:h-[45%] mb-2 md:mb-3">
                         <img
                           src={prestasi.image || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=600&fit=crop'}
                           alt={`${prestasi.title} - Prestasi SMK Kristen 5 Klaten`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover rounded-lg"
                           loading="lazy"
                         />
                       </div>
@@ -1057,7 +1073,7 @@ const HomepageFixed = () => {
             <div className="flex gap-4 md:gap-6">
               {/* Duplicate cards for infinite scroll */}
               {[...data.alumnis, ...data.alumnis, ...data.alumnis].map((alumni, index) => (
-                <div key={`testimoni-${index}`} className="bg-transparent rounded-xl md:rounded-2xl p-4 md:p-8 border border-gray-800 aspect-square flex flex-col flex-shrink-0 w-[280px] md:w-[400px]" style={{ borderWidth: '0.7px' }}>
+                <div key={`testimoni-${index}`} className="bg-transparent rounded-xl md:rounded-2xl p-4 md:p-8 border border-gray-800 flex flex-col flex-shrink-0 w-[280px] h-[400px] md:w-[400px] md:h-[400px]" style={{ borderWidth: '0.7px' }}>
                   <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pb-4 md:pb-6 border-b border-gray-800" style={{ borderBottomWidth: '0.7px' }}>
                     <img
                       src={alumni.photo || 'https://i.pravatar.cc/150'}
@@ -1139,43 +1155,6 @@ const HomepageFixed = () => {
                 ))}
               </div>
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* CTA Section */}
-      {data.cta && (
-        <section
-          className="py-16 md:py-24 relative overflow-hidden"
-          style={{
-            backgroundColor: data.cta.backgroundColor || '#0D76BE',
-            backgroundImage: data.cta.backgroundImage ? `url(${data.cta.backgroundImage})` : 'none',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          {/* Overlay for better text readability when background image is used */}
-          {data.cta.backgroundImage && (
-            <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-          )}
-
-          <div className="container mx-auto px-4 text-center relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              {data.cta.title}
-            </h2>
-            {data.cta.subtitle && (
-              <p className="text-xl md:text-2xl text-white mb-8 max-w-3xl mx-auto">
-                {data.cta.subtitle}
-              </p>
-            )}
-            <a
-              href={data.cta.buttonLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block bg-white text-gray-900 font-bold px-8 py-4 rounded-lg text-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              {data.cta.buttonText}
-            </a>
           </div>
         </section>
       )}

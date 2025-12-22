@@ -5,7 +5,7 @@ const aboutSchema = new mongoose.Schema(
     section: {
       type: String,
       required: [true, 'Section is required'],
-      enum: ['sejarah', 'visi-misi', 'sambutan'],
+      enum: ['sejarah', 'visi-misi'],
       unique: true,
     },
     title: {
@@ -19,21 +19,6 @@ const aboutSchema = new mongoose.Schema(
       required: [true, 'Content is required'],
     },
     image: {
-      type: String, // Cloudinary URL
-      default: null,
-    },
-    // For sambutan section
-    authorName: {
-      type: String,
-      trim: true,
-      maxlength: [100, 'Author name cannot exceed 100 characters'],
-    },
-    authorTitle: {
-      type: String,
-      trim: true,
-      maxlength: [100, 'Author title cannot exceed 100 characters'],
-    },
-    authorPhoto: {
       type: String, // Cloudinary URL
       default: null,
     },

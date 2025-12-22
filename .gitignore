@@ -40,6 +40,9 @@ coverage/
 temp/
 tmp/
 
+# Claude settings
+.claude/settings.local.json
+
 # Frontend specific
 frontend/dist/
 frontend/.vite/

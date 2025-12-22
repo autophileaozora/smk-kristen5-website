@@ -2,13 +2,9 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 const CTAManagement = () => {
-  const [ctas, setCTAs] = useState([]);
+  const [cta, setCTA] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('create');
-  const [currentCTA, setCurrentCTA] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [ctaToDelete, setCTAToDelete] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -19,19 +15,31 @@ const CTAManagement = () => {
     buttonText: '',
     buttonLink: '',
     backgroundImage: '',
-    backgroundColor: '#0D76BE',
-    isActive: true,
   });
 
   useEffect(() => {
-    fetchCTAs();
+    fetchCTA();
   }, []);
 
-  const fetchCTAs = async () => {
+  const fetchCTA = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/cta');
-      setCTAs(response.data.data.ctas);
+      // Try to get active CTA first
+      const activeRes = await api.get('/api/cta/active');
+
+      if (activeRes.data.data.cta) {
+        setCTA(activeRes.data.data.cta);
+        setFormData({
+          title: activeRes.data.data.cta.title,
+          subtitle: activeRes.data.data.cta.subtitle || '',
+          buttonText: activeRes.data.data.cta.buttonText,
+          buttonLink: activeRes.data.data.cta.buttonLink,
+          backgroundImage: activeRes.data.data.cta.backgroundImage || '',
+        });
+      } else {
+        // If no active CTA, create one
+        await createDefaultCTA();
+      }
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal memuat CTA', 'error');
     } finally {
@@ -39,53 +47,34 @@ const CTAManagement = () => {
     }
   };
 
+  const createDefaultCTA = async () => {
+    try {
+      const defaultData = {
+        title: 'MARI DISKUSIKAN BAKAT & MINAT KAMU,\nKAMI AKAN MEMBANTU MENEMUKAN SESUAI\nPASSION ANDA',
+        subtitle: 'Kami siap membantu Anda menemukan jurusan yang tepat',
+        buttonText: 'Diskusi',
+        buttonLink: '/kontak',
+        backgroundImage: '',
+        isActive: true,
+      };
+
+      const response = await api.post('/api/cta', defaultData);
+      setCTA(response.data.data.cta);
+      setFormData({
+        title: response.data.data.cta.title,
+        subtitle: response.data.data.cta.subtitle || '',
+        buttonText: response.data.data.cta.buttonText,
+        buttonLink: response.data.data.cta.buttonLink,
+        backgroundImage: response.data.data.cta.backgroundImage || '',
+      });
+    } catch (error) {
+      showToast('Gagal membuat CTA default', 'error');
+    }
+  };
+
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  };
-
-  const openCreateModal = () => {
-    setModalMode('create');
-    setFormData({
-      title: '',
-      subtitle: '',
-      buttonText: '',
-      buttonLink: '',
-      backgroundImage: '',
-      backgroundColor: '#0D76BE',
-      isActive: true,
-    });
-    setShowModal(true);
-  };
-
-  const openEditModal = (cta) => {
-    setModalMode('edit');
-    setCurrentCTA(cta);
-    setFormData({
-      title: cta.title,
-      subtitle: cta.subtitle || '',
-      buttonText: cta.buttonText,
-      buttonLink: cta.buttonLink,
-      backgroundImage: cta.backgroundImage || '',
-      backgroundColor: cta.backgroundColor || '#0D76BE',
-      isActive: cta.isActive,
-    });
-    setShowModal(true);
-  };
-
-  const openDeleteModal = (cta) => {
-    setCTAToDelete(cta);
-    setShowDeleteModal(true);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setCurrentCTA(null);
-  };
-
-  const closeDeleteModal = () => {
-    setShowDeleteModal(false);
-    setCTAToDelete(null);
   };
 
   const handleBackgroundUpload = async (e) => {
@@ -105,16 +94,25 @@ const CTAManagement = () => {
     try {
       setUploading(true);
       const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
+      uploadFormData.append('image', file);
 
-      const response = await api.post('/api/upload/image', uploadFormData, {
+      const response = await api.post('/api/upload/image?folder=smk-kristen5/cta', uploadFormData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      setFormData(prev => ({ ...prev, backgroundImage: response.data.data.url }));
-      showToast('Background berhasil diupload', 'success');
+      // Update form data with new image URL
+      const imageUrl = response.data.data.url;
+      const newFormData = { ...formData, backgroundImage: imageUrl };
+      setFormData(newFormData);
+
+      // Auto-save to database
+      await api.put(`/api/cta/${cta._id}`, newFormData);
+      showToast('Background berhasil diupload dan disimpan!', 'success');
+
+      // Refresh CTA data
+      fetchCTA();
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal upload background', 'error');
     } finally {
@@ -126,44 +124,38 @@ const CTAManagement = () => {
     e.preventDefault();
 
     if (!formData.title || !formData.buttonText || !formData.buttonLink) {
-      showToast('Title, Button Text, dan Button Link harus diisi', 'error');
+      showToast('Mohon lengkapi semua field yang wajib diisi', 'error');
       return;
     }
 
     try {
-      if (modalMode === 'create') {
-        await api.post('/api/cta', formData);
-        showToast('CTA berhasil dibuat!', 'success');
-      } else {
-        await api.put(`/api/cta/${currentCTA._id}`, formData);
-        showToast('CTA berhasil diupdate!', 'success');
-      }
-
-      fetchCTAs();
-      closeModal();
+      setSaving(true);
+      await api.put(`/api/cta/${cta._id}`, formData);
+      showToast('CTA berhasil diupdate!', 'success');
+      fetchCTA();
     } catch (error) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan CTA', 'error');
+      showToast(error.response?.data?.message || 'Gagal update CTA', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
+  const removeBackground = async () => {
     try {
-      await api.delete(`/api/cta/${ctaToDelete._id}`);
-      showToast('CTA berhasil dihapus!', 'success');
-      fetchCTAs();
-      closeDeleteModal();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Gagal menghapus CTA', 'error');
-    }
-  };
+      setSaving(true);
+      const newFormData = { ...formData, backgroundImage: '' };
+      setFormData(newFormData);
 
-  const toggleActive = async (id, currentStatus) => {
-    try {
-      await api.put(`/api/cta/${id}`, { isActive: !currentStatus });
-      showToast('Status berhasil diubah!', 'success');
-      fetchCTAs();
+      // Auto-save to database
+      await api.put(`/api/cta/${cta._id}`, newFormData);
+      showToast('Background berhasil dihapus!', 'success');
+
+      // Refresh CTA data
+      fetchCTA();
     } catch (error) {
-      showToast(error.response?.data?.message || 'Gagal mengubah status', 'error');
+      showToast(error.response?.data?.message || 'Gagal menghapus background', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -179,262 +171,152 @@ const CTAManagement = () => {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">CTA Management</h1>
-          <p className="text-gray-600 mt-1">Kelola Call-to-Action section di homepage</p>
-        </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <span className="text-xl">➕</span>
-          <span>Tambah CTA</span>
-        </button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Edit CTA Section</h1>
+        <p className="text-gray-600 mt-1">Kelola Call-to-Action section di homepage</p>
       </div>
 
-      {/* CTA Cards */}
-      <div className="space-y-4">
-        {loading ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="inline-block w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-2 text-gray-600">Memuat data...</p>
-          </div>
-        ) : ctas.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-            <p>Belum ada CTA. Klik tombol "Tambah CTA" untuk mulai.</p>
-          </div>
-        ) : (
-          ctas.map((cta) => (
-            <div key={cta._id} className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">{cta.title}</h3>
-                      <button
-                        onClick={() => toggleActive(cta._id, cta.isActive)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          cta.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {cta.isActive ? 'Aktif' : 'Nonaktif'}
-                      </button>
-                    </div>
-                    {cta.subtitle && (
-                      <p className="text-gray-600 mb-3">{cta.subtitle}</p>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Button:</span>
-                        <span>{cta.buttonText}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Link:</span>
-                        <a href={cta.buttonLink} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">
-                          {cta.buttonLink}
-                        </a>
-                      </div>
-                    </div>
-                    {cta.backgroundImage && (
-                      <div className="mt-3">
-                        <img src={cta.backgroundImage} alt="Background" className="h-24 w-auto rounded-lg object-cover" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
+      {/* Form */}
+      {loading ? (
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="inline-block w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-2 text-gray-600">Memuat data...</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Judul CTA <span className="text-red-500">*</span>
+                <span className="text-xs text-gray-500 ml-2">(Gunakan \n untuk membuat baris baru)</span>
+              </label>
+              <textarea
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="MARI DISKUSIKAN BAKAT & MINAT KAMU,\nKAMI AKAN MEMBANTU MENEMUKAN SESUAI\nPASSION ANDA"
+                rows="4"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Teks besar yang akan ditampilkan di tengah section</p>
+            </div>
+
+            {/* Subtitle */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Subtitle
+              </label>
+              <input
+                type="text"
+                value={formData.subtitle}
+                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Kami siap membantu Anda menemukan jurusan yang tepat"
+              />
+              <p className="text-xs text-gray-500 mt-1">Teks kecil di bawah judul (seperti text di bawah KOMPETENSI JURUSAN)</p>
+            </div>
+
+            {/* Button Text */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Teks Button <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.buttonText}
+                onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Diskusi"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Teks yang muncul di button kuning</p>
+            </div>
+
+            {/* Button Link */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Link Button <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.buttonLink}
+                onChange={(e) => setFormData({ ...formData, buttonLink: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="/kontak atau /daftar"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Halaman tujuan saat button diklik</p>
+            </div>
+
+            {/* Background Image */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Background Parallax
+              </label>
+
+              {formData.backgroundImage ? (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <img
+                      src={formData.backgroundImage}
+                      alt="Background preview"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
                     <button
-                      onClick={() => openEditModal(cta)}
-                      className="px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => openDeleteModal(cta)}
-                      className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      type="button"
+                      onClick={removeBackground}
+                      className="absolute top-2 right-2 px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600"
                     >
                       Hapus
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                {modalMode === 'create' ? 'Tambah CTA' : 'Edit CTA'}
-              </h2>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Title <span className="text-red-500">*</span>
-                  </label>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
                   <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Ragu atau belum tau minat bakat kamu?"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subtitle
-                  </label>
-                  <textarea
-                    value={formData.subtitle}
-                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    rows="2"
-                    maxLength="500"
-                    placeholder="Deskripsi tambahan..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Button Text <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.buttonText}
-                      onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Konsultasi Sekarang"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Button Link <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.buttonLink}
-                      onChange={(e) => setFormData({ ...formData, buttonLink: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="/kontak atau https://..."
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Background Image (Optional)
-                  </label>
-                  <div className="flex items-center gap-4">
-                    {formData.backgroundImage && (
-                      <img src={formData.backgroundImage} alt="Preview" className="h-24 w-auto object-cover border rounded-lg" />
-                    )}
-                    <div className="flex-1">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleBackgroundUpload}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                      {uploading && (
-                        <p className="text-sm text-gray-600 mt-1">Mengupload...</p>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Format: JPG, PNG (Max 5MB)</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Background Color
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={formData.backgroundColor}
-                      onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                      className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={formData.backgroundColor}
-                      onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="#0D76BE"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                  />
-                  <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
-                    Aktifkan CTA ini (CTA lain akan dinonaktifkan otomatis)
-                  </label>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBackgroundUpload}
+                    className="hidden"
+                    id="background-upload"
                     disabled={uploading}
+                  />
+                  <label
+                    htmlFor="background-upload"
+                    className="cursor-pointer"
                   >
-                    {uploading ? 'Mengupload...' : 'Simpan'}
-                  </button>
+                    {uploading ? (
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="mt-2 text-sm text-gray-600">Mengupload...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="mt-2 text-sm text-gray-600">Klik untuk upload background image</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                      </div>
+                    )}
+                  </label>
                 </div>
-              </form>
+              )}
+              <p className="text-xs text-gray-500 mt-1">Gambar parallax di background CTA section (optional)</p>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && ctaToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Hapus</h2>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus CTA <strong>{ctaToDelete.title}</strong>?
-            </p>
-            <div className="flex gap-3">
+            {/* Submit Button */}
+            <div className="flex gap-3 pt-4 border-t">
               <button
-                onClick={closeDeleteModal}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                type="submit"
+                disabled={saving}
+                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Batal
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Hapus
+                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>

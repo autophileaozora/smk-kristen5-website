@@ -68,12 +68,20 @@ const Kontak = () => {
       const currentScrollY = window.scrollY;
       setIsScrolled(currentScrollY > 50);
 
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      // Show navbar when at top
+      if (currentScrollY < 100) {
+        clearTimeout(scrollTimeout.current);
+        setNavbarVisible(true);
+      }
+      // Hide navbar on scroll down
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         clearTimeout(scrollTimeout.current);
         scrollTimeout.current = setTimeout(() => {
           setNavbarVisible(false);
-        }, 500);
-      } else {
+        }, 300);
+      }
+      // Show navbar on scroll up
+      else if (currentScrollY < lastScrollY) {
         clearTimeout(scrollTimeout.current);
         setNavbarVisible(true);
       }

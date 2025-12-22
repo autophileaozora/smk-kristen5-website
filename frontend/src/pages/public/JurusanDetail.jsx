@@ -21,23 +21,31 @@ export default function JurusanDetail() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [navbarVisible, setNavbarVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       setIsScrolled(currentScrollY > 50);
 
-      // Simple navbar hide on scroll down
-      if (currentScrollY > 100) {
-        setNavbarVisible(false);
-      } else {
+      // Show navbar when at top
+      if (currentScrollY < 100) {
         setNavbarVisible(true);
       }
+      // Hide navbar on scroll down
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setNavbarVisible(false);
+      }
+      // Show navbar on scroll up
+      else if (currentScrollY < lastScrollY) {
+        setNavbarVisible(true);
+      }
+      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   useEffect(() => {
     fetchJurusanDetail();

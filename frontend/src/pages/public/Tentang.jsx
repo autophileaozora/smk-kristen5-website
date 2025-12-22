@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
@@ -7,26 +7,60 @@ const Tentang = () => {
   const [sections, setSections] = useState({
     sejarah: null,
     visiMisi: null,
-    sambutan: null,
   });
+  const [contactInfo, setContactInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('sejarah');
   const { logo: schoolLogo } = useSchoolLogo();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [navbarVisible, setNavbarVisible] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const scrollTimeout = useRef(null);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 50);
+
+      // Show navbar when at top
+      if (currentScrollY < 100) {
+        clearTimeout(scrollTimeout.current);
+        setNavbarVisible(true);
+      }
+      // Hide navbar on scroll down
+      else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          setNavbarVisible(false);
+        }, 300);
+      }
+      // Show navbar on scroll up
+      else if (currentScrollY < lastScrollY.current) {
+        clearTimeout(scrollTimeout.current);
+        setNavbarVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [sejarahRes, visiMisiRes, sambutanRes] = await Promise.all([
+        const [sejarahRes, visiMisiRes, contactRes] = await Promise.all([
           api.get('/api/about/sejarah').catch(() => ({ data: { data: { about: null } } })),
           api.get('/api/about/visi-misi').catch(() => ({ data: { data: { about: null } } })),
-          api.get('/api/about/sambutan').catch(() => ({ data: { data: { about: null } } })),
+          api.get('/api/contact').catch(() => ({ data: { data: null } })),
         ]);
 
         setSections({
           sejarah: sejarahRes.data.data.about,
           visiMisi: visiMisiRes.data.data.about,
-          sambutan: sambutanRes.data.data.about,
         });
+        setContactInfo(contactRes.data.data);
       } catch (error) {
         console.error('Error fetching about data:', error);
       } finally {
@@ -37,252 +71,317 @@ const Tentang = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-600 border-t-transparent mx-auto"></div>
           <p className="mt-4 text-gray-600">Memuat...</p>
         </div>
       </div>
     );
   }
 
+  const tabs = [
+    { id: 'sejarah', label: 'SEJARAH', data: sections.sejarah },
+    { id: 'visi-misi', label: 'VISI & MISI', data: sections.visiMisi },
+    { id: 'sambutan', label: 'SAMBUTAN', data: contactInfo?.principal }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-6'
-        }`}
-      >
+    <div className="min-h-screen bg-white">
+      {/* Navbar - From Homepage */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        navbarVisible ? 'translate-y-0' : '-translate-y-full'
+      } ${
+        isScrolled ? 'bg-[#0D76BE] shadow-md' : 'bg-transparent'
+      }`}>
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-3">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            <Link to="/" className="flex items-center gap-2 md:gap-3">
               <img
                 src={schoolLogo}
-                alt="SMK Kristen 5 Klaten"
-                className="h-12 w-12 object-contain"
+                alt="Logo SMK Kristen 5 Klaten - SMK Krisma"
+                className="h-8 w-8 md:h-12 md:w-12 object-contain"
+                loading="eager"
               />
-              <div className={`transition-colors ${isScrolled ? 'text-gray-900' : 'text-white'}`}>
-                <div className="text-xl font-bold">SMK KRISTEN 5</div>
-                <div className="text-sm">KLATEN</div>
+              <div className="leading-tight">
+                <div className="text-[10px] md:text-xs text-white">SEKOLAH MENENGAH KEJURUAN</div>
+                <div className="text-sm md:text-lg font-bold text-white">KRISTEN 5 KLATEN</div>
               </div>
             </Link>
 
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden md:flex items-center gap-8">
+              <Link to="/" className="text-white hover:text-yellow-400 transition-colors">Beranda</Link>
+              <Link to="/jurusan" className="text-white hover:text-yellow-400 transition-colors">Jurusan</Link>
+              <Link to="/tentang" className="text-white hover:text-yellow-400 transition-colors">Tentang</Link>
+              <Link to="/artikel" className="text-white hover:text-yellow-400 transition-colors">Artikel</Link>
+              <Link to="/kontak" className="text-white hover:text-yellow-400 transition-colors">Kontak</Link>
+            </div>
+
+            <div className="flex items-center gap-2 md:gap-4">
               <Link
-                to="/"
-                className={`transition-colors ${
-                  isScrolled ? 'text-gray-700 hover:text-primary-600' : 'text-white hover:text-yellow-400'
-                }`}
+                to="/daftar"
+                className="hidden md:inline-block px-3 py-1.5 md:px-6 md:py-2.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full font-medium transition-colors text-xs md:text-base"
               >
-                Beranda
+                PENDAFTARAN
               </Link>
-              <Link
-                to="/tentang"
-                className={`font-semibold ${
-                  isScrolled ? 'text-primary-600' : 'text-yellow-400'
-                }`}
+
+              {/* Hamburger Menu Button - Mobile Only */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 text-white focus:outline-none"
+                aria-label="Toggle menu"
               >
-                Tentang
-              </Link>
-              <Link
-                to="/artikel"
-                className={`transition-colors ${
-                  isScrolled ? 'text-gray-700 hover:text-primary-600' : 'text-white hover:text-yellow-400'
-                }`}
-              >
-                Artikel
-              </Link>
-              <Link
-                to="/kontak"
-                className={`transition-colors ${
-                  isScrolled ? 'text-gray-700 hover:text-primary-600' : 'text-white hover:text-yellow-400'
-                }`}
-              >
-                Kontak
-              </Link>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 bg-gradient-to-br from-primary-600 to-primary-800 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Tentang Kami</h1>
-            <p className="text-xl text-gray-100">
-              Mengenal lebih dekat SMK Kristen 5 Klaten
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* Mobile Sidebar Menu */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Backdrop Overlay */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
 
-      {/* Quick Navigation */}
-      <section className="py-8 bg-white sticky top-16 z-40 shadow-md">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center space-x-4 md:space-x-8">
-            <a
-              href="#sejarah"
-              className="px-4 py-2 text-sm md:text-base text-gray-700 hover:text-primary-600 transition-colors"
-            >
-              📜 Sejarah
-            </a>
-            <a
-              href="#visi-misi"
-              className="px-4 py-2 text-sm md:text-base text-gray-700 hover:text-primary-600 transition-colors"
-            >
-              🎯 Visi & Misi
-            </a>
-            <a
-              href="#sambutan"
-              className="px-4 py-2 text-sm md:text-base text-gray-700 hover:text-primary-600 transition-colors"
-            >
-              👤 Sambutan
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Sejarah Section */}
-      {sections.sejarah && (
-        <section id="sejarah" className="py-16 scroll-mt-32">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                {sections.sejarah.title}
-              </h2>
-              {sections.sejarah.image && (
-                <div className="mb-8">
+          {/* Sidebar */}
+          <div className="fixed top-0 right-0 h-full w-[280px] bg-[#0D76BE] z-50 md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl">
+            <div className="flex flex-col h-full">
+              {/* Sidebar Header */}
+              <div className="flex items-center justify-between p-4 border-b border-white/20">
+                <div className="flex items-center gap-2">
                   <img
-                    src={sections.sejarah.image}
-                    alt={sections.sejarah.title}
-                    className="w-full h-auto rounded-lg shadow-lg"
+                    src={schoolLogo}
+                    alt="SMK Kristen 5 Klaten"
+                    className="h-10 w-10 object-contain"
                   />
+                  <div className="leading-tight">
+                    <div className="text-sm font-bold text-white">SMK KRISTEN 5</div>
+                    <div className="text-xs text-white/80">KLATEN</div>
+                  </div>
                 </div>
-              )}
-              <div className="bg-white rounded-lg shadow-lg p-8 md:p-12">
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Menu Items */}
+              <nav className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-2">
+                  <Link
+                    to="/"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
+                  >
+                    Beranda
+                  </Link>
+                  <Link
+                    to="/jurusan"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
+                  >
+                    Jurusan
+                  </Link>
+                  <Link
+                    to="/tentang"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
+                  >
+                    Tentang
+                  </Link>
+                  <Link
+                    to="/artikel"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
+                  >
+                    Artikel
+                  </Link>
+                  <Link
+                    to="/kontak"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
+                  >
+                    Kontak
+                  </Link>
+                </div>
+
+                {/* CTA Button */}
+                <div className="mt-6">
+                  <Link
+                    to="/daftar"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block w-full px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-full font-bold text-center transition-colors"
+                  >
+                    PENDAFTARAN
+                  </Link>
+                </div>
+              </nav>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Hero Section - From Kontak */}
+      <section className="relative pt-16 h-[70vh] md:h-[75vh] flex items-center justify-center overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0">
+          <img
+            src={sections.sejarah?.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&h=1080&fit=crop'}
+            alt="Tentang SMK Kristen 5 Klaten"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0D76BE]/90 to-[#0D76BE]/70"></div>
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 container mx-auto px-4 text-center text-white">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">TENTANG KAMI</h1>
+          <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow">
+            Mengenal lebih dekat SMK Kristen 5 Klaten - Sejarah, Visi, Misi, dan Sambutan Kepala Sekolah
+          </p>
+        </div>
+      </section>
+
+      {/* Tabs Section */}
+      <section className={`sticky z-40 bg-white border-b border-gray-200 shadow-sm transition-all duration-300 ${
+        navbarVisible ? 'top-16 md:top-20' : 'top-0'
+      }`}>
+        <div className="container mx-auto px-4">
+          <div className="flex overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-4 text-sm md:text-base font-semibold whitespace-nowrap transition-all ${
+                  activeTab === tab.id
+                    ? 'text-[#0D76BE] border-b-2 border-[#0D76BE]'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Content Sections */}
+      <section className="py-12 md:py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+
+            {/* Sejarah Tab */}
+            {activeTab === 'sejarah' && sections.sejarah && (
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                  {sections.sejarah.title}
+                </h2>
+
+                {sections.sejarah.image && (
+                  <div className="mb-8">
+                    <img
+                      src={sections.sejarah.image}
+                      alt={sections.sejarah.title}
+                      className="w-full h-auto rounded-lg"
+                    />
+                  </div>
+                )}
+
                 <div
                   className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: sections.sejarah.content }}
                 />
               </div>
-            </div>
-          </div>
-        </section>
-      )}
+            )}
 
-      {/* Visi Misi Section */}
-      {sections.visiMisi && (
-        <section id="visi-misi" className="py-16 bg-gray-100 scroll-mt-32">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                {sections.visiMisi.title}
-              </h2>
-              {sections.visiMisi.image && (
-                <div className="mb-8">
-                  <img
-                    src={sections.visiMisi.image}
-                    alt={sections.visiMisi.title}
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
-                </div>
-              )}
-              <div className="bg-white rounded-lg shadow-lg p-8 md:p-12">
+            {/* Visi Misi Tab */}
+            {activeTab === 'visi-misi' && sections.visiMisi && (
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                  {sections.visiMisi.title}
+                </h2>
+
+                {sections.visiMisi.image && (
+                  <div className="mb-8">
+                    <img
+                      src={sections.visiMisi.image}
+                      alt={sections.visiMisi.title}
+                      className="w-full h-auto rounded-lg"
+                    />
+                  </div>
+                )}
+
                 <div
                   className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: sections.visiMisi.content }}
                 />
               </div>
-            </div>
-          </div>
-        </section>
-      )}
+            )}
 
-      {/* Sambutan Section */}
-      {sections.sambutan && (
-        <section id="sambutan" className="py-16 scroll-mt-32">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                {sections.sambutan.title}
-              </h2>
+            {/* Sambutan Tab */}
+            {activeTab === 'sambutan' && contactInfo?.principal && (
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                  Sambutan Kepala Sekolah
+                </h2>
 
-              {/* Principal Photo and Info */}
-              {(sections.sambutan.authorPhoto || sections.sambutan.authorName) && (
-                <div className="bg-white rounded-lg shadow-lg p-8 md:p-12 mb-8">
-                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-                    {sections.sambutan.authorPhoto && (
+                {/* Principal Photo and Info */}
+                <div className="mb-8">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                    {contactInfo.principal.photo && (
                       <div className="flex-shrink-0">
                         <img
-                          src={sections.sambutan.authorPhoto}
-                          alt={sections.sambutan.authorName || 'Kepala Sekolah'}
-                          className="w-48 h-48 object-cover rounded-lg shadow-md"
+                          src={contactInfo.principal.photo}
+                          alt={contactInfo.principal.name || 'Kepala Sekolah'}
+                          className="w-48 h-48 object-cover rounded-lg"
                         />
                       </div>
                     )}
-                    {sections.sambutan.authorName && (
-                      <div className="flex-1 text-center md:text-left">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                          {sections.sambutan.authorName}
-                        </h3>
-                        {sections.sambutan.authorTitle && (
-                          <p className="text-lg text-gray-600 mb-4">
-                            {sections.sambutan.authorTitle}
-                          </p>
-                        )}
-                        <div className="h-1 w-20 bg-primary-600 mx-auto md:mx-0"></div>
-                      </div>
-                    )}
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">
+                        {contactInfo.principal.name}
+                      </h3>
+                      <p className="text-base text-gray-600">
+                        {contactInfo.principal.title}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {sections.sambutan.image && (
-                <div className="mb-8">
-                  <img
-                    src={sections.sambutan.image}
-                    alt={sections.sambutan.title}
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
+                <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {contactInfo.principal.message}
                 </div>
-              )}
 
-              <div className="bg-white rounded-lg shadow-lg p-8 md:p-12">
-                <div
-                  className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: sections.sambutan.content }}
-                />
-
-                {sections.sambutan.authorName && (
-                  <div className="mt-12 text-right border-t pt-8">
-                    <p className="text-gray-900 font-semibold">
-                      {sections.sambutan.authorName}
-                    </p>
-                    {sections.sambutan.authorTitle && (
-                      <p className="text-gray-600">{sections.sambutan.authorTitle}</p>
-                    )}
-                  </div>
-                )}
+                <div className="mt-8 text-right pt-6 border-t border-gray-200">
+                  <p className="text-gray-900 font-semibold">
+                    {contactInfo.principal.name}
+                  </p>
+                  <p className="text-gray-600 text-sm">{contactInfo.principal.title}</p>
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
-      )}
+            )}
 
-      {/* Footer */}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer - From Homepage */}
       <footer className="bg-gray-800 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -303,49 +402,36 @@ const Tentang = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Information</h4>
               <ul className="space-y-3">
-                <li>
-                  <Link to="/tentang" className="hover:text-yellow-400 transition-colors underline">
-                    Tentang Kami
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/jurusan" className="hover:text-yellow-400 transition-colors underline">
-                    Jurusan
-                  </Link>
-                </li>
+                <li><Link to="/sejarah" className="hover:text-yellow-400 transition-colors underline">Sejarah</Link></li>
+                <li><Link to="/sambutan" className="hover:text-yellow-400 transition-colors underline">Sambutan Kepala Sekolah</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-lg font-semibold mb-4">Penanggung Jawab</h4>
               <ul className="space-y-3">
-                <li>
-                  <Link to="/admin" className="hover:text-yellow-400 transition-colors underline">
-                    Admin Content
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login" className="hover:text-yellow-400 transition-colors underline">
-                    Login
-                  </Link>
-                </li>
+                <li><Link to="/admin" className="hover:text-yellow-400 transition-colors underline">Admin Content</Link></li>
+                <li><Link to="/login" className="hover:text-yellow-400 transition-colors underline">Login</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-              <p className="text-sm">SMK Kristen 5 Klaten</p>
-              <p className="text-sm">Jl. Merbabu No. 13, Klaten</p>
-              <p className="text-sm">Jawa Tengah, Indonesia</p>
+              <h4 className="text-lg font-semibold mb-4">Link lainnya</h4>
+              <ul className="space-y-3">
+                <li><a href="#" className="hover:text-yellow-400 transition-colors underline">Lowongan Kerja</a></li>
+                <li><a href="#" className="hover:text-yellow-400 transition-colors underline">BKK Krisma</a></li>
+              </ul>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Copyright */}
+      {/* Copyright Section */}
       <div className="bg-[#0D76BE] text-white py-4">
-        <div className="container mx-auto px-4 text-center text-sm">
-          &copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.
+        <div className="container mx-auto px-4">
+          <div className="text-center text-sm">
+            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </div>

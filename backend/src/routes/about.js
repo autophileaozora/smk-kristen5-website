@@ -34,10 +34,10 @@ router.get('/:section', async (req, res) => {
   try {
     const { section } = req.params;
 
-    if (!['sejarah', 'visi-misi', 'sambutan'].includes(section)) {
+    if (!['sejarah', 'visi-misi'].includes(section)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid section. Must be: sejarah, visi-misi, or sambutan',
+        message: 'Invalid section. Must be: sejarah or visi-misi',
       });
     }
 
@@ -67,7 +67,7 @@ router.get('/:section', async (req, res) => {
 // @access  Protected + Admin
 router.post('/', protect, isAdministrator, async (req, res) => {
   try {
-    const { section, title, content, image, authorName, authorTitle, authorPhoto, isActive } = req.body;
+    const { section, title, content, image, isActive } = req.body;
 
     if (!section || !title || !content) {
       return res.status(400).json({
@@ -76,10 +76,10 @@ router.post('/', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    if (!['sejarah', 'visi-misi', 'sambutan'].includes(section)) {
+    if (!['sejarah', 'visi-misi'].includes(section)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid section. Must be: sejarah, visi-misi, or sambutan',
+        message: 'Invalid section. Must be: sejarah or visi-misi',
       });
     }
 
@@ -94,9 +94,6 @@ router.post('/', protect, isAdministrator, async (req, res) => {
       existingAbout.title = title;
       existingAbout.content = content;
       existingAbout.image = image !== undefined ? image : existingAbout.image;
-      existingAbout.authorName = authorName || existingAbout.authorName;
-      existingAbout.authorTitle = authorTitle || existingAbout.authorTitle;
-      existingAbout.authorPhoto = authorPhoto !== undefined ? authorPhoto : existingAbout.authorPhoto;
       existingAbout.isActive = isActive !== undefined ? isActive : existingAbout.isActive;
       existingAbout.updatedBy = req.user.id;
 
@@ -109,9 +106,6 @@ router.post('/', protect, isAdministrator, async (req, res) => {
         title,
         content,
         image: image || null,
-        authorName: authorName || '',
-        authorTitle: authorTitle || '',
-        authorPhoto: authorPhoto || null,
         isActive: isActive !== undefined ? isActive : true,
         updatedBy: req.user.id,
       });

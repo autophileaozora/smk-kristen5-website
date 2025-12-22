@@ -4,42 +4,48 @@ import RichTextEditor from '../components/RichTextEditor';
 
 const AboutManagement = () => {
   const [aboutSections, setAboutSections] = useState([]);
+  const [contactInfo, setContactInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [currentSection, setCurrentSection] = useState(null);
   const [toast, setToast] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [formData, setFormData] = useState({
     section: 'sejarah',
     title: '',
     content: '',
     image: '',
-    authorName: '',
-    authorTitle: '',
-    authorPhoto: '',
     isActive: true,
   });
 
   const sections = [
     { value: 'sejarah', label: 'Sejarah', icon: '📜' },
     { value: 'visi-misi', label: 'Visi & Misi', icon: '🎯' },
-    { value: 'sambutan', label: 'Sambutan Kepala Sekolah', icon: '👤' },
   ];
 
   useEffect(() => {
     fetchAboutSections();
+    fetchContactInfo();
   }, []);
 
   const fetchAboutSections = async () => {
     try {
-      setLoading(true);
       const response = await api.get('/api/about');
       setAboutSections(response.data.data.aboutSections || []);
     } catch (error) {
-      showToast('Gagal memuat data', 'error');
+      showToast('Gagal memuat data tentang', 'error');
       console.error('Error fetching about sections:', error);
+    }
+  };
+
+  const fetchContactInfo = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/contact');
+      setContactInfo(response.data.data);
+    } catch (error) {
+      console.error('Error fetching contact info:', error);
     } finally {
       setLoading(false);
     }
@@ -58,9 +64,6 @@ const AboutManagement = () => {
         title: section.title,
         content: section.content,
         image: section.image || '',
-        authorName: section.authorName || '',
-        authorTitle: section.authorTitle || '',
-        authorPhoto: section.authorPhoto || '',
         isActive: section.isActive,
       });
     } else {
@@ -70,9 +73,6 @@ const AboutManagement = () => {
         title: '',
         content: '',
         image: '',
-        authorName: '',
-        authorTitle: '',
-        authorPhoto: '',
         isActive: true,
       });
     }
@@ -103,9 +103,9 @@ const AboutManagement = () => {
     try {
       setUploading(true);
       const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
+      uploadFormData.append('image', file);
 
-      const response = await api.post('/api/upload/image', uploadFormData, {
+      const response = await api.post('/api/upload/image?folder=smk-kristen5/about', uploadFormData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -125,46 +125,6 @@ const AboutManagement = () => {
     }
   };
 
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      showToast('File harus berupa gambar', 'error');
-      return;
-    }
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      showToast('Ukuran file maksimal 2MB', 'error');
-      return;
-    }
-
-    try {
-      setUploadingPhoto(true);
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
-
-      const response = await api.post('/api/upload/image', uploadFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      setFormData((prev) => ({
-        ...prev,
-        authorPhoto: response.data.data.url,
-      }));
-
-      showToast('Foto berhasil diupload', 'success');
-    } catch (error) {
-      showToast('Gagal mengupload foto', 'error');
-      console.error('Error uploading photo:', error);
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -308,6 +268,52 @@ const AboutManagement = () => {
         })}
       </div>
 
+      {/* Sambutan Kepala Sekolah from Contact */}
+      {contactInfo?.principal && (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <span className="text-4xl">👤</span>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Sambutan Kepala Sekolah
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Data diambil dari halaman Kontak
+                </p>
+              </div>
+            </div>
+            <a
+              href="/admin/kontak"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              Edit di Kontak
+            </a>
+          </div>
+
+          <div className="flex items-start space-x-4">
+            {contactInfo.principal.photo && (
+              <img
+                src={contactInfo.principal.photo}
+                alt={contactInfo.principal.name}
+                className="w-24 h-24 rounded-lg object-cover"
+              />
+            )}
+            <div className="flex-1">
+              <h4 className="font-medium text-gray-900 mb-1">
+                {contactInfo.principal.name}
+              </h4>
+              <p className="text-sm text-gray-500 mb-2">
+                {contactInfo.principal.title}
+              </p>
+              <p className="text-sm text-gray-600 line-clamp-3">
+                {contactInfo.principal.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -396,73 +402,6 @@ const AboutManagement = () => {
                   </div>
                 )}
               </div>
-
-              {/* Author fields for Sambutan section */}
-              {formData.section === 'sambutan' && (
-                <>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nama Kepala Sekolah
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.authorName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, authorName: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Contoh: Dr. John Doe, M.Pd"
-                      maxLength={100}
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Jabatan
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.authorTitle}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          authorTitle: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Contoh: Kepala Sekolah"
-                      maxLength={100}
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Foto Kepala Sekolah
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      disabled={uploadingPhoto}
-                    />
-                    {uploadingPhoto && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        Mengupload...
-                      </p>
-                    )}
-                    {formData.authorPhoto && (
-                      <div className="mt-2">
-                        <img
-                          src={formData.authorPhoto}
-                          alt="Author Preview"
-                          className="h-40 w-40 object-cover rounded-lg"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
 
               {/* Active Status */}
               <div className="mb-6">
