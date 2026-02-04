@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSchoolLogo } from '../../hooks/useContact';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -20,7 +22,6 @@ const ArtikelDetail = () => {
   const [navbarVisible, setNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const scrollTimeout = useRef(null);
 
   useEffect(() => {
@@ -159,143 +160,8 @@ const ArtikelDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
-      {/* Navbar - Same as Homepage */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        navbarVisible ? 'translate-y-0' : '-translate-y-full'
-      } ${
-        isScrolled ? 'bg-[#0D76BE] shadow-lg' : 'bg-[#0D76BE]'
-      }`}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            <Link to="/" className="flex items-center gap-2 md:gap-3 z-50">
-              <img
-                src={schoolLogo}
-                alt="SMK Kristen 5 Klaten"
-                className="h-8 w-8 md:h-12 md:w-12 object-contain"
-              />
-              <div className="leading-tight">
-                <div className="text-xs md:text-sm font-bold text-white">SMK KRISTEN 5</div>
-                <div className="text-xs md:text-sm text-white">KLATEN</div>
-              </div>
-            </Link>
-
-            <div className="hidden md:flex items-center gap-6 lg:gap-8">
-              <Link to="/" className="text-white hover:text-yellow-400 transition-colors">Beranda</Link>
-              <Link to="/jurusan" className="text-white hover:text-yellow-400 transition-colors">Jurusan</Link>
-              <Link to="/artikel" className="text-yellow-400 font-semibold transition-colors">Artikel</Link>
-              <Link to="/kontak" className="text-white hover:text-yellow-400 transition-colors">Kontak</Link>
-            </div>
-
-            <div className="flex items-center gap-2 md:gap-4">
-              <button
-                onClick={scrollToSearch}
-                className="hidden md:block p-1.5 md:p-2 rounded-full transition-colors hover:bg-white/10 text-white"
-              >
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-              <Link
-                to="/daftar"
-                className="hidden md:inline-block px-3 py-1.5 md:px-6 md:py-2.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full font-medium transition-colors text-xs md:text-base"
-              >
-                PENDAFTARAN
-              </Link>
-
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-white focus:outline-none"
-                aria-label="Toggle menu"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Sidebar Menu */}
-      {isMobileMenuOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          ></div>
-
-          <div className="fixed top-0 right-0 h-full w-[280px] bg-[#0D76BE] z-50 md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between p-4 border-b border-white/20">
-                <div className="flex items-center gap-2">
-                  <img
-                    src={schoolLogo}
-                    alt="SMK Kristen 5 Klaten"
-                    className="h-10 w-10 object-contain"
-                  />
-                  <div className="leading-tight">
-                    <div className="text-sm font-bold text-white">SMK KRISTEN 5</div>
-                    <div className="text-xs text-white/80">KLATEN</div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <nav className="flex-1 px-4 py-6">
-                <Link
-                  to="/"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block py-3 px-4 text-white hover:bg-white/10 rounded-lg transition-colors mb-2"
-                >
-                  Beranda
-                </Link>
-                <Link
-                  to="/jurusan"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block py-3 px-4 text-white hover:bg-white/10 rounded-lg transition-colors mb-2"
-                >
-                  Jurusan
-                </Link>
-                <Link
-                  to="/artikel"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block py-3 px-4 text-yellow-400 bg-white/10 rounded-lg font-semibold mb-2"
-                >
-                  Artikel
-                </Link>
-                <Link
-                  to="/kontak"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block py-3 px-4 text-white hover:bg-white/10 rounded-lg transition-colors mb-2"
-                >
-                  Kontak
-                </Link>
-              </nav>
-
-              <div className="p-4 border-t border-white/20">
-                <Link
-                  to="/daftar"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full font-medium text-center transition-colors"
-                >
-                  PENDAFTARAN
-                </Link>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Navbar */}
+      <Navbar activePage="artikel" visible={navbarVisible} />
 
       {/* Main Content */}
       <div className="pt-20 md:pt-24 pb-16">
@@ -539,60 +405,7 @@ const ArtikelDetail = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-[#0D76BE] text-white">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* School Info */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <img
-                  src={schoolLogo}
-                  alt="SMK Kristen 5 Klaten"
-                  className="h-12 w-12 object-contain"
-                />
-                <div className="leading-tight">
-                  <div className="text-sm font-bold">SMK KRISTEN 5</div>
-                  <div className="text-sm">KLATEN</div>
-                </div>
-              </div>
-              <p className="text-sm text-white/80">
-                Sekolah Menengah Kejuruan yang berfokus pada pendidikan berkualitas dan pengembangan karakter siswa.
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="font-bold mb-4">Tautan Cepat</h3>
-              <ul className="space-y-2 text-sm text-white/80">
-                <li><Link to="/" className="hover:text-yellow-400 transition-colors">Beranda</Link></li>
-                <li><Link to="/jurusan" className="hover:text-yellow-400 transition-colors">Jurusan</Link></li>
-                <li><Link to="/artikel" className="hover:text-yellow-400 transition-colors">Artikel</Link></li>
-                <li><Link to="/kontak" className="hover:text-yellow-400 transition-colors">Kontak</Link></li>
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div>
-              <h3 className="font-bold mb-4">Hubungi Kami</h3>
-              <ul className="space-y-2 text-sm text-white/80">
-                <li>Jl. Pendidikan No. 123</li>
-                <li>Klaten, Jawa Tengah</li>
-                <li>Telp: (0272) 123456</li>
-                <li>Email: info@smkkristen5klaten.sch.id</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Copyright Section */}
-      <div className="bg-[#0D76BE] text-white py-4">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
-          </div>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

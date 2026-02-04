@@ -26,6 +26,11 @@ const jurusanSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Description is required'],
     },
+    shortDescription: {
+      type: String,
+      maxlength: [300, 'Short description cannot exceed 300 characters'],
+      default: '',
+    },
     vision: {
       type: String,
       default: '',

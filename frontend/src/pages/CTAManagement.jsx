@@ -11,9 +11,11 @@ const CTAManagement = () => {
   // Form state
   const [formData, setFormData] = useState({
     title: '',
-    subtitle: '',
-    buttonText: '',
-    buttonLink: '',
+    description: '',
+    primaryButtonText: '',
+    primaryButtonLink: '',
+    secondaryButtonText: '',
+    secondaryButtonLink: '',
     backgroundImage: '',
   });
 
@@ -28,13 +30,16 @@ const CTAManagement = () => {
       const activeRes = await api.get('/api/cta/active');
 
       if (activeRes.data.data.cta) {
-        setCTA(activeRes.data.data.cta);
+        const ctaData = activeRes.data.data.cta;
+        setCTA(ctaData);
         setFormData({
-          title: activeRes.data.data.cta.title,
-          subtitle: activeRes.data.data.cta.subtitle || '',
-          buttonText: activeRes.data.data.cta.buttonText,
-          buttonLink: activeRes.data.data.cta.buttonLink,
-          backgroundImage: activeRes.data.data.cta.backgroundImage || '',
+          title: ctaData.title || '',
+          description: ctaData.description || '',
+          primaryButtonText: ctaData.primaryButtonText || '',
+          primaryButtonLink: ctaData.primaryButtonLink || '',
+          secondaryButtonText: ctaData.secondaryButtonText || '',
+          secondaryButtonLink: ctaData.secondaryButtonLink || '',
+          backgroundImage: ctaData.backgroundImage || '',
         });
       } else {
         // If no active CTA, create one
@@ -50,22 +55,27 @@ const CTAManagement = () => {
   const createDefaultCTA = async () => {
     try {
       const defaultData = {
-        title: 'MARI DISKUSIKAN BAKAT & MINAT KAMU,\nKAMI AKAN MEMBANTU MENEMUKAN SESUAI\nPASSION ANDA',
-        subtitle: 'Kami siap membantu Anda menemukan jurusan yang tepat',
-        buttonText: 'Diskusi',
-        buttonLink: '/kontak',
+        title: 'MARI DISKUSIKAN BAKAT & MINAT KAMU, KAMI AKAN MEMBANTU MENEMUKAN SESUAI PASSION ANDA',
+        description: 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.',
+        primaryButtonText: 'DAFTAR SEKARANG',
+        primaryButtonLink: '/pendaftaran',
+        secondaryButtonText: 'LAYANAN INFORMASI',
+        secondaryButtonLink: '/kontak',
         backgroundImage: '',
         isActive: true,
       };
 
       const response = await api.post('/api/cta', defaultData);
-      setCTA(response.data.data.cta);
+      const ctaData = response.data.data.cta;
+      setCTA(ctaData);
       setFormData({
-        title: response.data.data.cta.title,
-        subtitle: response.data.data.cta.subtitle || '',
-        buttonText: response.data.data.cta.buttonText,
-        buttonLink: response.data.data.cta.buttonLink,
-        backgroundImage: response.data.data.cta.backgroundImage || '',
+        title: ctaData.title || '',
+        description: ctaData.description || '',
+        primaryButtonText: ctaData.primaryButtonText || '',
+        primaryButtonLink: ctaData.primaryButtonLink || '',
+        secondaryButtonText: ctaData.secondaryButtonText || '',
+        secondaryButtonLink: ctaData.secondaryButtonLink || '',
+        backgroundImage: ctaData.backgroundImage || '',
       });
     } catch (error) {
       showToast('Gagal membuat CTA default', 'error');
@@ -123,7 +133,7 @@ const CTAManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.buttonText || !formData.buttonLink) {
+    if (!formData.title || !formData.primaryButtonText || !formData.primaryButtonLink) {
       showToast('Mohon lengkapi semua field yang wajib diisi', 'error');
       return;
     }
@@ -183,140 +193,232 @@ const CTAManagement = () => {
           <p className="mt-2 text-gray-600">Memuat data...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Judul CTA <span className="text-red-500">*</span>
-                <span className="text-xs text-gray-500 ml-2">(Gunakan \n untuk membuat baris baru)</span>
-              </label>
-              <textarea
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="MARI DISKUSIKAN BAKAT & MINAT KAMU,\nKAMI AKAN MEMBANTU MENEMUKAN SESUAI\nPASSION ANDA"
-                rows="4"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">Teks besar yang akan ditampilkan di tengah section</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Form Section */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <h2 className="font-semibold text-gray-900">Konten CTA</h2>
             </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Judul CTA <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="MARI DISKUSIKAN BAKAT & MINAT KAMU, KAMI AKAN MEMBANTU MENEMUKAN SESUAI PASSION ANDA"
+                  rows="3"
+                  required
+                />
+              </div>
 
-            {/* Subtitle */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subtitle
-              </label>
-              <input
-                type="text"
-                value={formData.subtitle}
-                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Kami siap membantu Anda menemukan jurusan yang tepat"
-              />
-              <p className="text-xs text-gray-500 mt-1">Teks kecil di bawah judul (seperti text di bawah KOMPETENSI JURUSAN)</p>
-            </div>
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Deskripsi
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015..."
+                  rows="3"
+                />
+              </div>
 
-            {/* Button Text */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Teks Button <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.buttonText}
-                onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Diskusi"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">Teks yang muncul di button kuning</p>
-            </div>
-
-            {/* Button Link */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Link Button <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.buttonLink}
-                onChange={(e) => setFormData({ ...formData, buttonLink: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="/kontak atau /daftar"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">Halaman tujuan saat button diklik</p>
-            </div>
-
-            {/* Background Image */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Background Parallax
-              </label>
-
-              {formData.backgroundImage ? (
-                <div className="space-y-2">
-                  <div className="relative">
-                    <img
-                      src={formData.backgroundImage}
-                      alt="Background preview"
-                      className="w-full h-48 object-cover rounded-lg"
+              {/* Primary Button Section */}
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-yellow-400 rounded text-xs flex items-center justify-center text-gray-900 font-bold">1</span>
+                  Button Utama (Kuning)
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Teks Button <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.primaryButtonText}
+                      onChange={(e) => setFormData({ ...formData, primaryButtonText: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                      placeholder="DAFTAR SEKARANG"
+                      required
                     />
-                    <button
-                      type="button"
-                      onClick={removeBackground}
-                      className="absolute top-2 right-2 px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600"
-                    >
-                      Hapus
-                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Link Button <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.primaryButtonLink}
+                      onChange={(e) => setFormData({ ...formData, primaryButtonLink: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                      placeholder="/pendaftaran"
+                      required
+                    />
                   </div>
                 </div>
-              ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBackgroundUpload}
-                    className="hidden"
-                    id="background-upload"
-                    disabled={uploading}
-                  />
-                  <label
-                    htmlFor="background-upload"
-                    className="cursor-pointer"
-                  >
-                    {uploading ? (
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="mt-2 text-sm text-gray-600">Mengupload...</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="mt-2 text-sm text-gray-600">Klik untuk upload background image</p>
-                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 mt-1">Gambar parallax di background CTA section (optional)</p>
-            </div>
+              </div>
 
-            {/* Submit Button */}
-            <div className="flex gap-3 pt-4 border-t">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-              </button>
+              {/* Secondary Button Section */}
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-white border-2 border-gray-400 rounded text-xs flex items-center justify-center text-gray-600 font-bold">2</span>
+                  Button Sekunder (Outline)
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Teks Button
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.secondaryButtonText}
+                      onChange={(e) => setFormData({ ...formData, secondaryButtonText: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                      placeholder="LAYANAN INFORMASI"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Link Button
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.secondaryButtonLink}
+                      onChange={(e) => setFormData({ ...formData, secondaryButtonLink: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                      placeholder="/kontak"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Kosongkan jika tidak ingin menampilkan button sekunder</p>
+              </div>
+
+              {/* Background Image */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Background Image
+                </label>
+
+                {formData.backgroundImage ? (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <img
+                        src={formData.backgroundImage}
+                        alt="Background preview"
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeBackground}
+                        className="absolute top-2 right-2 px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary-500 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBackgroundUpload}
+                      className="hidden"
+                      id="background-upload"
+                      disabled={uploading}
+                    />
+                    <label
+                      htmlFor="background-upload"
+                      className="cursor-pointer"
+                    >
+                      {uploading ? (
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                          <p className="mt-2 text-sm text-gray-600">Mengupload...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-600">Klik untuk upload</p>
+                          <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-4 border-t">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Preview Section */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <h2 className="font-semibold text-gray-900">Preview</h2>
             </div>
-          </form>
+            <div className="p-4">
+              <div
+                className="relative rounded-lg overflow-hidden min-h-[300px] flex items-center"
+                style={{
+                  backgroundImage: formData.backgroundImage ? `url(${formData.backgroundImage})` : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              >
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/50"></div>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(30, 30, 30, 0.8) 0%, rgba(30, 30, 30, 0.6) 50%, rgba(255, 221, 85, 0.4) 100%)',
+                  }}
+                ></div>
+
+                {/* Content */}
+                <div className="relative z-10 p-6 max-w-md">
+                  <h2 className="text-lg font-bold text-yellow-300 leading-tight uppercase" style={{ fontFamily: "'Russo One', sans-serif" }}>
+                    {formData.title || 'JUDUL CTA ANDA'}
+                  </h2>
+                  {formData.description && (
+                    <p className="text-white/90 text-xs mt-3 leading-relaxed">
+                      {formData.description}
+                    </p>
+                  )}
+                  <div className="flex gap-3 mt-4 flex-wrap">
+                    <button className="bg-yellow-400 text-black px-4 py-2 rounded text-xs font-semibold uppercase">
+                      {formData.primaryButtonText || 'BUTTON UTAMA'}
+                    </button>
+                    {formData.secondaryButtonText && (
+                      <button className="bg-transparent text-white px-4 py-2 border-2 border-white rounded text-xs font-semibold uppercase">
+                        {formData.secondaryButtonText}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-3 text-center">
+                Preview ini adalah gambaran kasar. Tampilan sebenarnya mungkin sedikit berbeda.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

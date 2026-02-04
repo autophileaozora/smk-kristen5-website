@@ -45,6 +45,7 @@ const Sidebar = () => {
     { name: 'Ekskul', path: '/admin/ekskul', icon: '⚽' },
     { name: 'Alumni', path: '/admin/alumni', icon: '👥' },
     { name: 'Video Hero', path: '/admin/video-hero', icon: '🎬' },
+    { name: 'Hero Slides', path: '/admin/hero-slides', icon: '🖼️' },
     { name: 'Kategori', path: '/admin/categories', icon: '📁' },
     { name: 'Manajemen User', path: '/admin/users', icon: '👤' },
     { name: 'Audit Log', path: '/admin/audit-logs', icon: '📋' },
@@ -52,6 +53,8 @@ const Sidebar = () => {
     { name: 'Sosial Media', path: '/admin/social-media', icon: '🌐' },
     { name: 'Partner', path: '/admin/partners', icon: '🤝' },
     { name: 'CTA', path: '/admin/cta', icon: '📣' },
+    { name: 'Kegiatan', path: '/admin/activities', icon: '🎯' },
+    { name: 'Agenda', path: '/admin/events', icon: '📅' },
     { name: 'Tentang', path: '/admin/about', icon: '📖' },
   ] : [
     { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },

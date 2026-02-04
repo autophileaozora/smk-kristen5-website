@@ -16,6 +16,7 @@ const Jurusan = lazy(() => import('./pages/Jurusan'));
 const Ekskul = lazy(() => import('./pages/Ekskul'));
 const Alumni = lazy(() => import('./pages/Alumni'));
 const VideoHero = lazy(() => import('./pages/VideoHero'));
+const HeroSlides = lazy(() => import('./pages/HeroSlides'));
 const MataPelajaran = lazy(() => import('./pages/MataPelajaran'));
 const Fasilitas = lazy(() => import('./pages/Fasilitas'));
 const KontakManagement = lazy(() => import('./pages/KontakManagement'));
@@ -25,6 +26,8 @@ const SocialMedia = lazy(() => import('./pages/SocialMedia'));
 const Partner = lazy(() => import('./pages/Partner'));
 const CTAManagement = lazy(() => import('./pages/CTAManagement'));
 const AboutManagement = lazy(() => import('./pages/AboutManagement'));
+const Activities = lazy(() => import('./pages/Activities'));
+const Events = lazy(() => import('./pages/Events'));
 const HomepageFixed = lazy(() => import('./pages/public/HomepageFixed'));
 const JurusanList = lazy(() => import('./pages/public/JurusanList'));
 const JurusanDetail = lazy(() => import('./pages/public/JurusanDetail'));
@@ -35,6 +38,7 @@ const Sejarah = lazy(() => import('./pages/public/Sejarah'));
 const VisiMisi = lazy(() => import('./pages/public/VisiMisi'));
 const Sambutan = lazy(() => import('./pages/public/Sambutan'));
 const Tentang = lazy(() => import('./pages/public/Tentang'));
+const SearchPage = lazy(() => import('./pages/public/SearchPage'));
 
 // Loading component
 const LoadingFallback = () => (
@@ -82,6 +86,7 @@ function App() {
           <Route path="/visi-misi" element={<VisiMisi />} />
           <Route path="/sambutan" element={<Sambutan />} />
           <Route path="/tentang" element={<Tentang />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/login" element={<Login />} />
 
           {/* Protected Routes - Admin Panel */}
@@ -98,6 +103,7 @@ function App() {
             <Route path="ekskul" element={<Ekskul />} />
             <Route path="alumni" element={<Alumni />} />
             <Route path="video-hero" element={<VideoHero />} />
+            <Route path="hero-slides" element={<HeroSlides />} />
             <Route path="mata-pelajaran" element={<MataPelajaran />} />
             <Route path="fasilitas" element={<Fasilitas />} />
             <Route path="kontak" element={<KontakManagement />} />
@@ -105,6 +111,8 @@ function App() {
             <Route path="partners" element={<Partner />} />
             <Route path="cta" element={<CTAManagement />} />
             <Route path="about" element={<AboutManagement />} />
+            <Route path="activities" element={<Activities />} />
+            <Route path="events" element={<Events />} />
             <Route path="categories" element={<Categories />} />
             <Route path="users" element={<Users />} />
             <Route path="audit-logs" element={<AuditLogs />} />

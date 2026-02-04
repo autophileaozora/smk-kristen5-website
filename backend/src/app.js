@@ -103,6 +103,9 @@ import socialMediaRoutes from './routes/socialMedia.js';
 import partnerRoutes from './routes/partner.js';
 import ctaRoutes from './routes/cta.js';
 import aboutRoutes from './routes/about.js';
+import heroSlidesRoutes from './routes/heroSlides.js';
+import activitiesRoutes from './routes/activities.js';
+import eventsRoutes from './routes/events.js';
 
 // Mount routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -125,6 +128,9 @@ app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/cta', ctaRoutes);
 app.use('/api/about', aboutRoutes);
+app.use('/api/hero-slides', heroSlidesRoutes);
+app.use('/api/activities', activitiesRoutes);
+app.use('/api/events', eventsRoutes);
 
 // Root route
 app.get('/', (req, res) => {

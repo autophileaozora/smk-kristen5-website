@@ -6,24 +6,37 @@ const ctaSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Title is required'],
       trim: true,
-      maxlength: [200, 'Title cannot exceed 200 characters'],
+      maxlength: [300, 'Title cannot exceed 300 characters'],
     },
-    subtitle: {
+    description: {
       type: String,
       trim: true,
-      maxlength: [500, 'Subtitle cannot exceed 500 characters'],
+      maxlength: [500, 'Description cannot exceed 500 characters'],
       default: '',
     },
-    buttonText: {
+    // Primary button
+    primaryButtonText: {
       type: String,
-      required: [true, 'Button text is required'],
+      required: [true, 'Primary button text is required'],
       trim: true,
-      maxlength: [100, 'Button text cannot exceed 100 characters'],
+      maxlength: [100, 'Primary button text cannot exceed 100 characters'],
     },
-    buttonLink: {
+    primaryButtonLink: {
       type: String,
-      required: [true, 'Button link is required'],
+      required: [true, 'Primary button link is required'],
       trim: true,
+    },
+    // Secondary button
+    secondaryButtonText: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Secondary button text cannot exceed 100 characters'],
+      default: '',
+    },
+    secondaryButtonLink: {
+      type: String,
+      trim: true,
+      default: '',
     },
     backgroundImage: {
       type: String, // Cloudinary URL

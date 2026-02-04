@@ -84,9 +84,9 @@ router.post('/', protect, isAdministrator, uploadMultiple([
   { name: 'galleryImages', maxCount: 10 }
 ]), async (req, res) => {
   try {
-    const { 
-      name, code, description, vision, mission, headOfDepartment, isActive,
-      subjects, facilities, careerProspects, competencies 
+    const {
+      name, code, description, shortDescription, vision, mission, headOfDepartment, isActive,
+      subjects, facilities, careerProspects, competencies
     } = req.body;
 
     if (!name || !code || !description) {
@@ -109,6 +109,7 @@ router.post('/', protect, isAdministrator, uploadMultiple([
       name,
       code: code.toUpperCase(),
       description,
+      shortDescription: shortDescription || '',
       vision: vision || '',
       mission: mission || '',
       headOfDepartment: headOfDepartment || '',
@@ -240,7 +241,7 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
     }
 
     const {
-      name, code, description, vision, mission, headOfDepartment, isActive,
+      name, code, description, shortDescription, vision, mission, headOfDepartment, isActive,
       subjects, facilities, careerProspects, competencies, logo, backgroundImage
     } = req.body;
 
@@ -258,6 +259,7 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
     jurusan.name = name || jurusan.name;
     jurusan.code = code ? code.toUpperCase() : jurusan.code;
     jurusan.description = description || jurusan.description;
+    jurusan.shortDescription = shortDescription !== undefined ? shortDescription : jurusan.shortDescription;
     jurusan.vision = vision !== undefined ? vision : jurusan.vision;
     jurusan.mission = mission !== undefined ? mission : jurusan.mission;
     jurusan.headOfDepartment = headOfDepartment !== undefined ? headOfDepartment : jurusan.headOfDepartment;

@@ -18,6 +18,7 @@ const Jurusan = () => {
     name: '',
     code: '',
     description: '',
+    shortDescription: '',
     vision: '',
     mission: '',
     headOfDepartment: '',
@@ -61,6 +62,7 @@ const Jurusan = () => {
       name: '',
       code: '',
       description: '',
+      shortDescription: '',
       vision: '',
       mission: '',
       headOfDepartment: '',
@@ -84,6 +86,7 @@ const Jurusan = () => {
       name: jurusan.name,
       code: jurusan.code,
       description: jurusan.description,
+      shortDescription: jurusan.shortDescription || '',
       vision: jurusan.vision || '',
       mission: jurusan.mission || '',
       headOfDepartment: jurusan.headOfDepartment || '',
@@ -144,6 +147,7 @@ const Jurusan = () => {
         submitData.append('name', formData.name);
         submitData.append('code', formData.code);
         submitData.append('description', formData.description);
+        submitData.append('shortDescription', formData.shortDescription);
         submitData.append('vision', formData.vision);
         submitData.append('mission', formData.mission);
         submitData.append('headOfDepartment', formData.headOfDepartment);
@@ -448,8 +452,26 @@ const Jurusan = () => {
                     <RichTextEditor
                       value={formData.description}
                       onChange={(value) => setFormData({ ...formData, description: value })}
-                      placeholder="Deskripsi singkat tentang jurusan..."
+                      placeholder="Deskripsi lengkap tentang jurusan..."
                     />
+                  </div>
+
+                  {/* Short Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Deskripsi Singkat (untuk tampilan accordion homepage)
+                    </label>
+                    <textarea
+                      value={formData.shortDescription}
+                      onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                      rows={3}
+                      maxLength={300}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="Deskripsi singkat untuk ditampilkan di accordion homepage (maksimal 300 karakter)..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.shortDescription.length}/300 karakter
+                    </p>
                   </div>
 
                   {/* Vision */}

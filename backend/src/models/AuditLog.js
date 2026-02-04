@@ -36,6 +36,7 @@ const auditLogSchema = new mongoose.Schema(
         'alumni',
         'category',
         'videoHero',
+        'heroSlide',
         'file',
         'partner',
         'socialMedia',
@@ -43,7 +44,11 @@ const auditLogSchema = new mongoose.Schema(
         'about',
         'mataPelajaran',
         'fasilitas',
-        'contact'
+        'contact',
+        'activity_tab',
+        'activity_item',
+        'activity_settings',
+        'event'
       ],
     },
     resourceId: {

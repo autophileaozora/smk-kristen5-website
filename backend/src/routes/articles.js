@@ -249,6 +249,8 @@ router.post('/', protect, async (req, res) => {
     }
 
     // categoryTopik is optional - can be null for general articles
+    // Siswa creates article with "pending" status, Admin creates with "draft"
+    const initialStatus = req.user.role === 'administrator' ? 'draft' : 'pending';
 
     const article = await Article.create({
       title,
@@ -258,7 +260,7 @@ router.post('/', protect, async (req, res) => {
       categoryTopik: categoryTopik || null,
       featuredImage: featuredImage ? { url: featuredImage } : undefined,
       author: req.user.id,
-      status: 'draft',
+      status: initialStatus,
     });
 
     // Audit log
@@ -507,13 +509,15 @@ router.patch('/:id/approve', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    if (article.status !== 'pending') {
+    // Allow both draft and pending articles to be approved/published
+    if (!['draft', 'pending'].includes(article.status)) {
       return res.status(400).json({
         success: false,
-        message: 'Only pending articles can be approved',
+        message: 'Only draft or pending articles can be approved',
       });
     }
 
+    const previousStatus = article.status;
     article.status = 'published';
     article.publishedAt = new Date();
     await article.save();
@@ -526,7 +530,7 @@ router.patch('/:id/approve', protect, isAdministrator, async (req, res) => {
       resourceId: article._id,
       details: {
         action: 'approve_article',
-        previousStatus: 'pending',
+        previousStatus: previousStatus,
         newStatus: 'published',
       },
       ipAddress: req.ip,
@@ -560,13 +564,15 @@ router.patch('/:id/reject', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    if (article.status !== 'pending') {
+    // Allow both draft and pending articles to be rejected
+    if (!['draft', 'pending'].includes(article.status)) {
       return res.status(400).json({
         success: false,
-        message: 'Only pending articles can be rejected',
+        message: 'Only draft or pending articles can be rejected',
       });
     }
 
+    const previousStatus = article.status;
     article.status = 'rejected';
     await article.save();
 
@@ -578,7 +584,7 @@ router.patch('/:id/reject', protect, isAdministrator, async (req, res) => {
       resourceId: article._id,
       details: {
         action: 'reject_article',
-        previousStatus: 'pending',
+        previousStatus: previousStatus,
         newStatus: 'rejected',
       },
       ipAddress: req.ip,

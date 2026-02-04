@@ -95,8 +95,8 @@ router.get('/:id', protect, async (req, res) => {
 
 // @route   POST /api/running-text
 // @desc    Create new running text
-// @access  Protected + Admin
-router.post('/', protect, isAdministrator, async (req, res) => {
+// @access  Protected (Admin & Siswa)
+router.post('/', protect, async (req, res) => {
   try {
     const { text, link, order, isActive } = req.body;
 
@@ -143,8 +143,8 @@ router.post('/', protect, isAdministrator, async (req, res) => {
 
 // @route   PUT /api/running-text/:id
 // @desc    Update running text
-// @access  Protected + Admin
-router.put('/:id', protect, isAdministrator, async (req, res) => {
+// @access  Protected (Admin & Siswa)
+router.put('/:id', protect, async (req, res) => {
   try {
     const runningText = await RunningText.findById(req.params.id);
 
@@ -192,8 +192,8 @@ router.put('/:id', protect, isAdministrator, async (req, res) => {
 
 // @route   DELETE /api/running-text/:id
 // @desc    Delete running text
-// @access  Protected + Admin
-router.delete('/:id', protect, isAdministrator, async (req, res) => {
+// @access  Protected (Admin & Siswa)
+router.delete('/:id', protect, async (req, res) => {
   try {
     const runningText = await RunningText.findById(req.params.id);
 

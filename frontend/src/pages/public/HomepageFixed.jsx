@@ -3,1332 +3,1017 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
 import SEO from '../../components/SEO';
+import Mascot3D from '../../components/Mascot3D';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 
 const HomepageFixed = () => {
   const navigate = useNavigate();
   const { logo: schoolLogo } = useSchoolLogo();
 
   const [data, setData] = useState({
-    runningTexts: [],
     jurusans: [],
-    prestasis: [],
+    articles: [],
     ekskuls: [],
     alumnis: [],
-    videoHero: null,
     partners: [],
+    fasilitas: [],
+    prestasi: [],
+    heroSlides: [],
+    heroSettings: { slideDuration: 5000, autoPlay: true, showIndicators: true },
+    runningText: [],
+    socialMedia: [],
+    contact: null,
     cta: null,
-    principal: null,
-    articles: [],
+    about: null,
+    activityTabs: [],
+    activitySettings: {
+      globalLink: '/kegiatan',
+      globalButtonText: 'Explore Kegiatan Siswa',
+      sectionTitle: 'Pembelajaran & Kegiatan',
+      sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
+    },
+    events: [],
   });
   const [loading, setLoading] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [navbarVisible, setNavbarVisible] = useState(true);
-  const [expandedEkskul, setExpandedEkskul] = useState(0);
-  const [invitingSectionProgress, setInvitingSectionProgress] = useState(0);
-  const [parallaxOffset, setParallaxOffset] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isPrestasiPaused, setIsPrestasiPaused] = useState(false);
-  const [isTestimoniPaused, setIsTestimoniPaused] = useState(false);
-  const [isPartnerPaused, setIsPartnerPaused] = useState(false);
-  const [isJurusanPaused, setIsJurusanPaused] = useState(false);
-  const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
-  const [isArticleFading, setIsArticleFading] = useState(false);
-  const [showPrincipalModal, setShowPrincipalModal] = useState(false);
+  const [activeProgram, setActiveProgram] = useState(0);
+  const [activeActivityTab, setActiveActivityTab] = useState(0);
+  const [activeActivitySlide, setActiveActivitySlide] = useState(0);
+  const [activeEventFilter, setActiveEventFilter] = useState('semua');
+  const [currentTestimonialSlide, setCurrentTestimonialSlide] = useState(0);
+  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+
   const lastScrollY = useRef(0);
-  const scrollTimeout = useRef(null);
-  const jurusanSectionRef = useRef(null);
-  const invitingSectionRef = useRef(null);
-  const row2Ref = useRef(null);
-  const prestasiRef = useRef(null);
-  const testimoniRef = useRef(null);
-  const partnerRef = useRef(null);
-  const jurusanRef = useRef(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
 
+  // Fetch data from API
   useEffect(() => {
-    // Add global styles to hide scrollbar and infinite scroll animation
-    const style = document.createElement('style');
-    style.textContent = `
-      ::-webkit-scrollbar {
-        width: 0px;
-        height: 0px;
-      }
-      * {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      @keyframes scroll-left {
-        0% {
-          transform: translateX(0);
-        }
-        100% {
-          transform: translateX(-33.333%);
-        }
-      }
-      @keyframes scroll-right {
-        0% {
-          transform: translateX(-33.333%);
-        }
-        100% {
-          transform: translateX(0);
-        }
-      }
-      .animate-scroll-left {
-        animation: scroll-left 20s linear infinite;
-      }
-      .animate-scroll-right {
-        animation: scroll-right 20s linear infinite;
-      }
-      .paused {
-        animation-play-state: paused !important;
-      }
-      .dragging {
-        cursor: grabbing !important;
-        user-select: none;
-      }
-      .draggable {
-        cursor: grab;
-      }
-    `;
-    document.head.appendChild(style);
+    const fetchData = async () => {
+      try {
+        const [
+          jurusanRes,
+          articleRes,
+          ekskulRes,
+          alumniRes,
+          partnerRes,
+          fasilitasRes,
+          prestasiRes,
+          heroSlidesRes,
+          heroSettingsRes,
+          runningTextRes,
+          socialMediaRes,
+          contactRes,
+          ctaRes,
+          activityTabsRes,
+          activitySettingsRes,
+          eventsRes,
+        ] = await Promise.all([
+          api.get('/api/jurusan').catch(() => ({ data: { data: [] } })),
+          api.get('/api/articles/public?limit=6').catch(() => ({ data: { data: { articles: [] } } })),
+          api.get('/api/ekskul').catch(() => ({ data: { data: [] } })),
+          api.get('/api/alumni').catch(() => ({ data: { data: [] } })),
+          api.get('/api/partners').catch(() => ({ data: { data: [] } })),
+          api.get('/api/fasilitas').catch(() => ({ data: { data: [] } })),
+          api.get('/api/prestasi').catch(() => ({ data: { data: [] } })),
+          api.get('/api/hero-slides/active').catch(() => ({ data: { data: { slides: [] } } })),
+          api.get('/api/hero-slides/settings/config').catch(() => ({ data: { data: { settings: { slideDuration: 5000, autoPlay: true, showIndicators: true } } } })),
+          api.get('/api/running-text/active').catch(() => ({ data: { data: { runningTexts: [] } } })),
+          api.get('/api/social-media').catch(() => ({ data: { data: [] } })),
+          api.get('/api/contact').catch(() => ({ data: { data: null } })),
+          api.get('/api/cta/active').catch(() => ({ data: { data: { cta: null } } })),
+          api.get('/api/activities/tabs').catch(() => ({ data: { data: { tabs: [] } } })),
+          api.get('/api/activities/settings').catch(() => ({ data: { data: { settings: null } } })),
+          api.get('/api/events/upcoming').catch(() => ({ data: { data: { events: [] } } })),
+        ]);
 
-    return () => {
-      document.head.removeChild(style);
+        setData({
+          jurusans: jurusanRes.data.data?.jurusans || [],
+          articles: articleRes.data.data?.articles || [],
+          ekskuls: ekskulRes.data.data?.ekskuls || [],
+          alumnis: alumniRes.data.data?.alumni || [],
+          partners: partnerRes.data.data?.partners || [],
+          fasilitas: fasilitasRes.data.data?.fasilitas || [],
+          prestasi: prestasiRes.data.data?.prestasis || [],
+          heroSlides: heroSlidesRes.data.data?.slides || [],
+          heroSettings: heroSettingsRes.data.data?.settings || { slideDuration: 5000, autoPlay: true, showIndicators: true },
+          runningText: runningTextRes.data.data?.runningTexts || [],
+          socialMedia: socialMediaRes.data.data?.socialMedia || [],
+          contact: contactRes.data.data || null,
+          cta: ctaRes.data.data?.cta || null,
+          about: null,
+          activityTabs: activityTabsRes.data.data?.tabs || [],
+          activitySettings: activitySettingsRes.data.data?.settings || {
+            globalLink: '/kegiatan',
+            globalButtonText: 'Explore Kegiatan Siswa',
+            sectionTitle: 'Pembelajaran & Kegiatan',
+            sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
+          },
+          events: eventsRes.data.data?.events || [],
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setLoading(false);
+      }
     };
+
+    fetchData();
   }, []);
 
+  // Navbar hide on scroll
   useEffect(() => {
-    fetchData();
-
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const currentScrollY = window.pageYOffset;
 
-      // Navbar visibility logic
-      setIsScrolled(currentScrollY > 50);
-
-      // Hide navbar when scrolling down with longer delay (500ms)
-      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-        clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = setTimeout(() => {
+      if (currentScrollY > 100) {
+        if (currentScrollY > lastScrollY.current) {
           setNavbarVisible(false);
-        }, 500);
-      } else {
-        clearTimeout(scrollTimeout.current);
-        setNavbarVisible(true);
-      }
-
-      // Calculate inviting section scroll progress
-      const invitingSection = invitingSectionRef.current;
-      if (invitingSection) {
-        const rect = invitingSection.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const sectionHeight = rect.height;
-
-        // Section enters viewport at bottom (rect.top = windowHeight)
-        // Section exits viewport at top (rect.bottom = 0)
-        const totalScrollDistance = windowHeight + sectionHeight;
-        const scrolled = windowHeight - rect.top;
-
-        let progress = (scrolled / totalScrollDistance) * 100;
-        progress = Math.max(0, Math.min(100, progress));
-
-        setInvitingSectionProgress(progress);
-      }
-
-      // Calculate parallax offset for row 2
-      const row2 = row2Ref.current;
-      if (row2) {
-        const rect = row2.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-
-        // Calculate parallax effect when element is in viewport
-        if (rect.top < windowHeight && rect.bottom > 0) {
-          const parallax = (windowHeight - rect.top) * 0.5; // 0.5 is the parallax speed
-          setParallaxOffset(parallax);
+        } else {
+          setNavbarVisible(true);
         }
+      } else {
+        setNavbarVisible(true);
       }
 
       lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(scrollTimeout.current);
-    };
-  }, [data.jurusans.length]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-
-      const [runningTextRes, jurusanRes, prestasiRes, ekskulRes, alumniRes, videoRes, partnerRes, ctaRes, contactRes, articlesRes] = await Promise.all([
-        api.get('/api/running-text/active').catch(() => ({ data: { data: { runningTexts: [] } } })),
-        api.get('/api/jurusan/active').catch(() => ({ data: { data: { jurusans: [] } } })),
-        api.get('/api/prestasi').catch(() => ({ data: { data: { prestasis: [] } } })),
-        api.get('/api/ekskul/active').catch(() => ({ data: { data: { ekskuls: [] } } })),
-        api.get('/api/alumni/featured').catch(() => ({ data: { data: { alumnis: [] } } })),
-        api.get('/api/video-hero/active').catch(() => ({ data: { data: { videoHero: null } } })),
-        api.get('/api/partners/active').catch(() => ({ data: { data: { partners: [] } } })),
-        api.get('/api/cta/active').catch(() => ({ data: { data: { cta: null } } })),
-        api.get('/api/contact').catch(() => ({ data: { data: null } })),
-        api.get('/api/articles?status=published&limit=3').catch(() => ({ data: { data: { articles: [] } } })),
-      ]);
-
-      // Backend returns "alumni" not "alumnis"
-      const alumniData = alumniRes.data.data.alumni || alumniRes.data.data.alumnis || [];
-
-      // Backend returns "videos" array, get first active video
-      const videoHeroData = videoRes.data.data.videos?.[0] || videoRes.data.data.videoHero || null;
-
-      // Get principal info from contact
-      const principalData = contactRes.data.data?.principal || null;
-
-      setData({
-        runningTexts: runningTextRes.data.data.runningTexts || [],
-        jurusans: jurusanRes.data.data.jurusans || [],
-        prestasis: (prestasiRes.data.data.prestasis || []).slice(0, 6),
-        ekskuls: ekskulRes.data.data.ekskuls || [],
-        alumnis: alumniData,
-        videoHero: videoHeroData,
-        partners: partnerRes.data.data.partners || [],
-        cta: ctaRes.data.data.cta || null,
-        principal: principalData,
-        articles: (articlesRes.data.data.articles || []).slice(0, 3),
-      });
-    } catch (err) {
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Check if prestasi needs scrolling (more cards than can fit in viewport)
-  const prestasiNeedsScroll = data.prestasis.length > 3;
-
-  // Auto-scroll effect for Prestasi - scrolling to the right
+  // Auto-slide testimonials on mobile
   useEffect(() => {
-    if (!prestasiRef.current || isPrestasiPaused || !prestasiNeedsScroll) return;
-
-    const scrollContainer = prestasiRef.current;
-    let animationId;
-
-    const scroll = () => {
-      if (scrollContainer && !isPrestasiPaused) {
-        scrollContainer.scrollLeft -= 1; // Scroll right (decrease scrollLeft)
-
-        // Reset scroll when reaching the beginning (seamless loop)
-        if (scrollContainer.scrollLeft <= 0) {
-          const maxScroll = scrollContainer.scrollWidth / 3;
-          scrollContainer.scrollLeft = maxScroll;
-        }
-      }
-      animationId = requestAnimationFrame(scroll);
-    };
-
-    animationId = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(animationId);
-  }, [isPrestasiPaused, prestasiNeedsScroll]);
-
-  // Auto-scroll effect for Testimoni
-  useEffect(() => {
-    if (!testimoniRef.current || isTestimoniPaused || data.alumnis.length === 0) return;
-
-    const scrollContainer = testimoniRef.current;
-    let animationId;
-
-    const scroll = () => {
-      if (scrollContainer && !isTestimoniPaused) {
-        scrollContainer.scrollLeft += 1;
-
-        const maxScroll = scrollContainer.scrollWidth / 3;
-        if (scrollContainer.scrollLeft >= maxScroll) {
-          scrollContainer.scrollLeft = 0;
-        }
-      }
-      animationId = requestAnimationFrame(scroll);
-    };
-
-    animationId = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(animationId);
-  }, [isTestimoniPaused, data.alumnis.length]);
-
-  // Auto-scroll effect for Jurusan
-  useEffect(() => {
-    if (!jurusanRef.current || isJurusanPaused || data.jurusans.length === 0) return;
-
-    const scrollContainer = jurusanRef.current;
-    let animationId;
-
-    const scroll = () => {
-      if (scrollContainer && !isJurusanPaused) {
-        scrollContainer.scrollLeft += 1;
-
-        const maxScroll = scrollContainer.scrollWidth / 3;
-        if (scrollContainer.scrollLeft >= maxScroll) {
-          scrollContainer.scrollLeft = 0;
-        }
-      }
-      animationId = requestAnimationFrame(scroll);
-    };
-
-    animationId = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(animationId);
-  }, [isJurusanPaused, data.jurusans.length]);
-
-  // Auto-scroll effect for Partner (scroll to right/backwards)
-  useEffect(() => {
-    if (!partnerRef.current || isPartnerPaused || data.partners.length === 0) return;
-
-    const scrollContainer = partnerRef.current;
-    let animationId;
-
-    // Set initial scroll position to middle section
-    if (scrollContainer.scrollLeft === 0) {
-      scrollContainer.scrollLeft = scrollContainer.scrollWidth / 3;
-    }
-
-    const scroll = () => {
-      if (scrollContainer && !isPartnerPaused) {
-        scrollContainer.scrollLeft -= 1;
-
-        // Reset to end of middle section when reaching start
-        if (scrollContainer.scrollLeft <= 0) {
-          scrollContainer.scrollLeft = scrollContainer.scrollWidth / 3;
-        }
-      }
-      animationId = requestAnimationFrame(scroll);
-    };
-
-    animationId = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(animationId);
-  }, [isPartnerPaused, data.partners.length]);
-
-  // Auto-fade article carousel
-  useEffect(() => {
-    if (data.articles.length <= 1) return;
-
     const interval = setInterval(() => {
-      setIsArticleFading(true);
-
-      setTimeout(() => {
-        setCurrentArticleIndex((prev) => (prev + 1) % data.articles.length);
-        setIsArticleFading(false);
-      }, 500); // 500ms fade duration
-    }, 5000); // Change article every 5 seconds
+      if (window.innerWidth <= 992) {
+        setCurrentTestimonialSlide((prev) => (prev + 1) % 2);
+      }
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [data.articles.length]);
+  }, []);
 
-  // Drag and Press handlers
-  const handleMouseDown = (e, ref, setPaused) => {
-    if (!ref.current) return;
-    isDragging.current = true;
-    startX.current = e.pageX;
-    scrollLeft.current = ref.current.scrollLeft;
-    setPaused(true);
-    ref.current.style.cursor = 'grabbing';
+  // Auto-rotate hero slides based on settings
+  useEffect(() => {
+    if (data.heroSlides.length > 1 && data.heroSettings.autoPlay) {
+      const interval = setInterval(() => {
+        setCurrentHeroSlide((prev) => (prev + 1) % data.heroSlides.length);
+      }, data.heroSettings.slideDuration || 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [data.heroSlides.length, data.heroSettings.slideDuration, data.heroSettings.autoPlay]);
+
+  const toggleProgram = (index) => {
+    setActiveProgram(activeProgram === index ? -1 : index);
   };
 
-  const handleTouchStart = (e, ref, setPaused) => {
-    if (!ref.current) return;
-    isDragging.current = true;
-    startX.current = e.touches[0].pageX;
-    scrollLeft.current = ref.current.scrollLeft;
-    setPaused(true);
+  const switchActivityTab = (index) => {
+    setActiveActivityTab(index);
+    setActiveActivitySlide(0);
   };
 
-  const handleMouseMove = (e, ref) => {
-    if (!isDragging.current || !ref.current) return;
-    e.preventDefault();
-    const x = e.pageX;
-    const walk = (x - startX.current) * 2;
-    ref.current.scrollLeft = scrollLeft.current - walk;
+  const filterEvents = (category) => {
+    setActiveEventFilter(category);
   };
 
-  const handleTouchMove = (e, ref) => {
-    if (!isDragging.current || !ref.current) return;
-    const x = e.touches[0].pageX;
-    const walk = (x - startX.current) * 2;
-    ref.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  const handleMouseUp = (ref, setPaused) => {
-    if (!ref.current) return;
-    isDragging.current = false;
-    setPaused(false);
-    ref.current.style.cursor = 'grab';
-  };
-
-  const handleTouchEnd = (setPaused) => {
-    isDragging.current = false;
-    setPaused(false);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <SEO
-        title="SMK Kristen 5 Klaten - SMK Krisma | Sekolah Kejuruan Terbaik di Klaten"
-        description="SMK Kristen 5 Klaten (Krisma) adalah sekolah menengah kejuruan terbaik di Klaten dengan jurusan unggulan, fasilitas modern, dan prestasi gemilang. Daftar sekarang!"
-        keywords="SMK di Klaten, SMK Kristen 5, SMK Krisma, Krisma, sekolah klaten, SMK terbaik klaten, jurusan SMK klaten, pendaftaran SMK klaten, SMK Kristen Klaten, sekolah kejuruan klaten"
-        url="/"
+        title="SMK Kristen 5 Klaten - Sekolah Menengah Kejuruan"
+        description="SMK Kristen 5 Klaten menyiapkan siswa masuk dunia kerja dengan kurikulum berbasis industri"
       />
-      <div className="min-h-screen bg-white font-poppins overflow-x-hidden">
-        {/* Navbar - Transparent at hero, blue when scrolled */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        navbarVisible ? 'translate-y-0' : '-translate-y-full'
-      } ${
-        isScrolled ? 'bg-[#0D76BE] shadow-md' : 'bg-transparent'
-      }`}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            <Link to="/" className="flex items-center gap-2 md:gap-3">
-              <img
-                src={schoolLogo}
-                alt="Logo SMK Kristen 5 Klaten - SMK Krisma"
-                className="h-8 w-8 md:h-12 md:w-12 object-contain"
-                loading="eager"
-              />
-              <div className="leading-tight">
-                <div className="text-[10px] md:text-xs text-white">SEKOLAH MENENGAH KEJURUAN</div>
-                <div className="text-sm md:text-lg font-bold text-white">KRISTEN 5 KLATEN</div>
-              </div>
-            </Link>
 
-            <div className="hidden md:flex items-center gap-8">
-              <Link to="/" className="text-white hover:text-yellow-400 transition-colors">Beranda</Link>
-              <Link to="/jurusan" className="text-white hover:text-yellow-400 transition-colors">Jurusan</Link>
-              <Link to="/tentang" className="text-white hover:text-yellow-400 transition-colors">Tentang</Link>
-              <Link to="/artikel" className="text-white hover:text-yellow-400 transition-colors">Artikel</Link>
-              <Link to="/kontak" className="text-white hover:text-yellow-400 transition-colors">Kontak</Link>
-            </div>
+      {/* Custom Styles */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Russo+One&display=swap');
 
-            <div className="flex items-center gap-2 md:gap-4">
-              <button
-                onClick={() => setShowSearchModal(true)}
-                className="hidden md:block p-1.5 md:p-2 rounded-full transition-colors hover:bg-white/10 text-white"
-              >
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-              <Link
-                to="/daftar"
-                className="hidden md:inline-block px-3 py-1.5 md:px-6 md:py-2.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full font-medium transition-colors text-xs md:text-base"
-              >
-                PENDAFTARAN
-              </Link>
+        body {
+          font-family: 'Poppins', sans-serif;
+        }
 
-              {/* Hamburger Menu Button - Mobile Only */}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-white focus:outline-none"
-                aria-label="Toggle menu"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+        .russo {
+          font-family: 'Russo One', sans-serif;
+          font-weight: 400;
+        }
 
-      {/* Mobile Sidebar Menu */}
-      {isMobileMenuOpen && (
-        <>
-          {/* Backdrop Overlay */}
-          <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          ></div>
+        @keyframes scrollUp {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-50%); }
+        }
 
-          {/* Sidebar */}
-          <div className="fixed top-0 right-0 h-full w-[280px] bg-[#0D76BE] z-50 md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl">
-            <div className="flex flex-col h-full">
-              {/* Sidebar Header */}
-              <div className="flex items-center justify-between p-4 border-b border-white/20">
-                <div className="flex items-center gap-2">
-                  <img
-                    src={schoolLogo}
-                    alt="SMK Kristen 5 Klaten"
-                    className="h-10 w-10 object-contain"
-                  />
-                  <div className="leading-tight">
-                    <div className="text-sm font-bold text-white">SMK KRISTEN 5</div>
-                    <div className="text-xs text-white/80">KLATEN</div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+        @keyframes scrollDown {
+          0% { transform: translateY(-50%); }
+          100% { transform: translateY(0); }
+        }
 
-              {/* Menu Items */}
-              <nav className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-2">
-                  <Link
-                    to="/"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Beranda
-                  </Link>
-                  <Link
-                    to="/jurusan"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Jurusan
-                  </Link>
-                  <Link
-                    to="/tentang"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Tentang
-                  </Link>
-                  <Link
-                    to="/artikel"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Artikel
-                  </Link>
-                  <Link
-                    to="/kontak"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Kontak
-                  </Link>
-                </div>
+        .animate-scroll-up {
+          animation: scrollUp 30s linear infinite;
+        }
 
-                {/* Search Bar */}
-                <div className="mt-6">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Cari..."
-                      className="w-full px-4 py-3 pr-10 bg-white/10 text-white placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    />
-                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </nav>
+        .animate-scroll-down {
+          animation: scrollDown 30s linear infinite;
+        }
 
-              {/* Bottom Button */}
-              <div className="p-4 border-t border-white/20">
-                <Link
-                  to="/daftar"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-white text-center rounded-full font-bold transition-colors"
-                >
-                  PENDAFTARAN
-                </Link>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+        @keyframes gradientShift {
+          0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 0.8; }
+          33% { transform: translate(30px, -20px) rotate(5deg) scale(1.05); opacity: 0.85; }
+          66% { transform: translate(-20px, 30px) rotate(-5deg) scale(1.03); opacity: 0.9; }
+          100% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 0.8; }
+        }
 
-      {/* Hero Section - FIXED: Video Hero Support (YouTube) */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          {data.videoHero && data.videoHero.youtubeId ? (
+        .animate-gradient {
+          animation: gradientShift 15s ease-in-out infinite;
+        }
+
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
+      `}</style>
+
+      {/* Fixed Navigation */}
+      <Navbar activePage="beranda" visible={navbarVisible} />
+
+      {/* Hero Section */}
+      <section className="relative w-full min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] overflow-hidden">
+        {/* Background Images - Rotating slides */}
+        {(() => {
+          const defaultSlides = [
+            {
+              title: 'SMK YANG MENYIAPKAN SISWA MASUK DUNIA KERJA, BUKAN SEKADAR LULUS',
+              subtitle: 'Kurikulum berbasis industri, praktik langsung, dan pembinaan karakter sejak kelas X.',
+              backgroundImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&h=1080&fit=crop',
+              primaryButtonText: 'BAGIKAN CERITAMU',
+              secondaryButtonText: 'LIHAT LEBIH LANJUT',
+            },
+          ];
+          const slides = data.heroSlides.length > 0 ? data.heroSlides : defaultSlides;
+          const currentSlide = slides[currentHeroSlide] || slides[0];
+
+          return (
             <>
-              <iframe
-                className="pointer-events-none border-0"
-                src={`https://www.youtube.com/embed/${data.videoHero.youtubeId}?autoplay=1&mute=1&loop=1&playlist=${data.videoHero.youtubeId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`}
-                title="Hero Video"
-                allow="autoplay; encrypted-media"
+              {/* Background Images with fade transition */}
+              {slides.map((slide, idx) => (
+                <div
+                  key={idx}
+                  className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
+                    idx === currentHeroSlide ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{ backgroundImage: `url('${slide.backgroundImage}')` }}
+                ></div>
+              ))}
+
+              {/* Gradient Overlay */}
+              <div
+                className="absolute inset-0"
                 style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: '177.77777778vh',
-                  height: '56.25vw',
-                  minHeight: '100%',
-                  minWidth: '100%',
-                  transform: 'translate(-50%, -50%)',
+                  background: 'linear-gradient(160deg, rgba(63, 43, 150, 0.85) 0%, rgba(30, 64, 175, 0.8) 30%, rgba(13, 118, 190, 0.75) 60%, rgba(56, 189, 248, 0.7) 100%)'
                 }}
-              />
-              <div className="absolute inset-0 bg-black/50 pointer-events-none"></div>
-            </>
-          ) : (
-            <>
-              <img
-                src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&h=1080&fit=crop"
-                alt="Hero"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/50"></div>
-            </>
-          )}
-        </div>
+              ></div>
 
-        <div className="relative container mx-auto px-4 pt-20 z-10">
-          <div className="max-w-4xl">
-            {/* Teks dan elemen di atas video dihapus */}
-          </div>
-        </div>
-
-        {/* Cards Container - 2 Rows - Responsive */}
-        <div className="absolute bottom-4 md:bottom-6 left-4 right-4 md:left-auto md:right-6 z-20 flex flex-col gap-3 md:gap-4 max-w-[420px] md:max-w-none md:w-auto mx-auto md:mx-0">
-          {/* Row 1: Sambutan Kepala Sekolah */}
-          {data.principal && data.principal.name && (
-            <div>
-              {/* Judul Card */}
-              <h3 className="text-white font-bold text-xs md:text-sm mb-1.5 md:mb-2 px-1" style={{ fontFamily: 'Russo One, sans-serif' }}>Sambutan Kepala Sekolah</h3>
-
-              <button onClick={() => setShowPrincipalModal(true)} className="block group w-full text-left">
-                <div className="backdrop-blur-xl bg-white/20 rounded-xl md:rounded-2xl shadow-2xl p-2 md:p-3 w-full md:w-[420px] h-[100px] md:h-[140px] border border-white/30 hover:bg-white/25 transition-all duration-300 overflow-hidden cursor-pointer">
-                  <div className="flex gap-2 md:gap-3 h-full">
-                    {/* Foto Kepala Sekolah - Kiri */}
-                    {data.principal.photo && (
-                      <img
-                        src={data.principal.photo}
-                        alt={`${data.principal.name} - Kepala Sekolah SMK Kristen 5 Klaten`}
-                        className="w-20 h-20 md:w-28 md:h-28 object-cover rounded-lg md:rounded-xl flex-shrink-0"
-                        loading="lazy"
-                      />
-                    )}
-
-                    {/* Konten - Kanan - Top aligned */}
-                    <div className="flex-1 flex flex-col py-0.5 md:py-1 min-w-0">
-                      {/* Nama - 1 baris truncate */}
-                      <p className="text-xs md:text-sm font-semibold text-white truncate mb-1">
-                        {data.principal.name}
-                      </p>
-
-                      {/* Sambutan - 3 mobile / 4 desktop */}
-                      <p className="text-[10px] md:text-xs text-white/95 line-clamp-3 md:line-clamp-4 leading-relaxed">
-                        {data.principal.message}
-                      </p>
-                    </div>
+              {/* Running Text - Inside Hero */}
+              {(data.runningText || []).length > 0 && (
+                <div className="absolute top-[72px] left-0 right-0 z-20 bg-yellow-400 text-gray-900 py-1.5 sm:py-2 overflow-hidden">
+                  <div className="flex animate-marquee whitespace-nowrap">
+                    {(data.runningText || []).map((text, textIdx) => (
+                      <span key={textIdx} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
+                        📢 {text.text}
+                      </span>
+                    ))}
+                    {/* Duplicate for seamless loop */}
+                    {(data.runningText || []).map((text, textIdx) => (
+                      <span key={`dup-${textIdx}`} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
+                        📢 {text.text}
+                      </span>
+                    ))}
                   </div>
                 </div>
-              </button>
-            </div>
-          )}
+              )}
 
-          {/* Row 2: Artikel Terbaru - Hidden on mobile */}
-          {data.articles.length > 0 && (
-            <div className="hidden md:block">
-              {/* Judul Card */}
-              <h3 className="text-white font-bold text-sm mb-2 px-1" style={{ fontFamily: 'Russo One, sans-serif' }}>Artikel Terbaru</h3>
-
-              <Link
-                to={`/artikel/${data.articles[currentArticleIndex]?.slug}`}
-                className="block group"
-              >
-                <div className="backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl p-3 w-[420px] h-[140px] border border-white/30 hover:bg-white/25 transition-all duration-300 overflow-hidden">
-                  <div
-                    className={`transition-opacity duration-500 ${
-                      isArticleFading ? 'opacity-0' : 'opacity-100'
-                    }`}
-                  >
-                    <div className="flex gap-3 h-full">
-                      {/* Foto Artikel - Kiri - Same size as principal photo */}
-                      {data.articles[currentArticleIndex]?.image && (
-                        <img
-                          src={data.articles[currentArticleIndex].image}
-                          alt={`${data.articles[currentArticleIndex].title} - SMK Krisma Klaten`}
-                          className="w-28 h-28 object-cover rounded-xl flex-shrink-0"
-                          loading="lazy"
-                        />
-                      )}
-
-                      {/* Konten - Kanan - Top aligned */}
-                      <div className="flex-1 flex flex-col py-1 min-w-0">
-                        {/* Judul - 1 baris truncate */}
-                        <h4 className="text-sm font-semibold text-white truncate group-hover:text-white/90 transition-colors mb-1">
-                          {data.articles[currentArticleIndex]?.title}
-                        </h4>
-
-                        {/* Konten - 4 baris truncate */}
-                        <p className="text-xs text-white/95 line-clamp-4 leading-relaxed">
-                          {data.articles[currentArticleIndex]?.content?.replace(/<[^>]*>/g, '')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {/* Hero Content - Left Aligned */}
+              <div className="absolute top-[55%] left-4 sm:left-8 lg:left-16 transform -translate-y-1/2 text-left z-10 w-11/12 max-w-xl lg:max-w-2xl px-2 sm:px-4">
+                <h1 className="russo text-[16px] sm:text-[18px] md:text-[20px] lg:text-[24px] leading-tight text-white uppercase mb-3 sm:mb-5 drop-shadow-lg transition-all duration-500">
+                  {currentSlide.title}
+                </h1>
+                <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/95 transition-all duration-500">
+                  {currentSlide.subtitle}
+                </p>
+                <div className="flex justify-start gap-3 sm:gap-4 mt-6 sm:mt-9 flex-wrap">
+                  <button className="bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 sm:px-8 py-3 sm:py-[14px] rounded-lg text-[11px] sm:text-xs font-semibold tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+                    {currentSlide.primaryButtonText || 'BAGIKAN CERITAMU'}
+                  </button>
+                  <button className="bg-transparent text-yellow-300 px-5 sm:px-8 py-3 sm:py-[14px] border-2 border-yellow-300 rounded-lg text-[11px] sm:text-xs font-semibold tracking-wide hover:bg-yellow-300/10 transition-all">
+                    {currentSlide.secondaryButtonText || 'LIHAT LEBIH LANJUT'}
+                  </button>
                 </div>
-              </Link>
-            </div>
-          )}
+
+                {/* Slide indicators */}
+                {slides.length > 1 && data.heroSettings.showIndicators && (
+                  <div className="flex justify-start gap-2 mt-6">
+                    {slides.map((_, dotIdx) => (
+                      <button
+                        key={dotIdx}
+                        onClick={() => setCurrentHeroSlide(dotIdx)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          dotIdx === currentHeroSlide ? 'bg-yellow-300 w-6' : 'bg-white/50'
+                        }`}
+                      ></button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        })()}
+
+        {/* Wave SVG - Hidden for now, uncomment className to show */}
+        <div className="hidden absolute bottom-0 left-0 w-full h-48 z-20">
+          <svg viewBox="0 0 1978 275" preserveAspectRatio="none" className="absolute bottom-0 w-full h-full">
+            <path fillRule="evenodd" clipRule="evenodd" d="M1978 219.45L1895.58 201.321C1813.17 183.193 1648.33 146.936 1483.5 146.936C1318.67 146.936 1153.83 183.193 989 219.45C824.167 256.661 659.333 292.918 494.5 265.248C329.667 238.532 164.833 146.936 82.4166 101.138L0 55.3395V275H82.4166C164.833 275 329.667 275 494.5 275C659.333 275 824.167 275 989 275C1153.83 275 1318.67 275 1483.5 275C1648.33 275 1813.17 275 1895.58 275H1978V219.45Z" fill="#f8f8f8"/>
+          </svg>
         </div>
       </section>
 
-      {/* Running Text - Below hero section */}
-      {data.runningTexts.length > 0 && (
-        <div className="bg-[#0D76BE] py-3 overflow-hidden">
-          <div className="animate-marquee-fast whitespace-nowrap">
-            {[...data.runningTexts, ...data.runningTexts, ...data.runningTexts].map((text, index) => (
-              <span key={index} className="text-white mx-8 text-sm font-medium">
-                ● {text.text}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Kompetensi Jurusan - Draggable Scroll */}
-      {data.jurusans.length > 0 && (
-        <section
-          ref={jurusanSectionRef}
-          data-section="jurusan"
-          className="relative bg-white py-16 md:py-24 overflow-hidden"
-        >
-          <div className="container mx-auto px-4">
-            <div className="mb-8 md:mb-12">
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Russo One, sans-serif' }}>KOMPETENSI JURUSAN</h2>
-              <p className="text-gray-600 uppercase text-xs md:text-sm tracking-wide">
-                PILIH JURUSAN YANG SESUAI DENGAN BAKAT & MINAT ANDA
-              </p>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-20">
-                <div className="inline-block w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <div
-                ref={jurusanRef}
-                className="overflow-x-scroll"
-                style={{
-                  cursor: 'grab',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  WebkitOverflowScrolling: 'touch'
-                }}
-                onMouseDown={(e) => handleMouseDown(e, jurusanRef, setIsJurusanPaused)}
-                onMouseMove={(e) => handleMouseMove(e, jurusanRef)}
-                onMouseUp={() => handleMouseUp(jurusanRef, setIsJurusanPaused)}
-                onMouseLeave={() => handleMouseUp(jurusanRef, setIsJurusanPaused)}
-                onTouchStart={(e) => handleTouchStart(e, jurusanRef, setIsJurusanPaused)}
-                onTouchMove={(e) => handleTouchMove(e, jurusanRef)}
-                onTouchEnd={() => handleTouchEnd(setIsJurusanPaused)}
-              >
-                <div className="flex gap-4 md:gap-6">
-                  {/* Duplicate cards for infinite scroll */}
-                  {[...data.jurusans, ...data.jurusans, ...data.jurusans].map((jurusan, index) => (
-                  <Link
-                    key={`jurusan-${index}`}
-                    to={`/jurusan/${jurusan.slug}`}
-                    className="relative flex-shrink-0 w-[280px] h-[400px] md:w-[400px] md:h-[400px] rounded-xl md:rounded-2xl overflow-hidden group transition-all duration-300 cursor-pointer hover:shadow-2xl"
-                  >
-                    <div
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                      style={{
-                        backgroundImage: jurusan.backgroundImage
-                          ? `url(${jurusan.backgroundImage})`
-                          : 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=350&h=450&fit=crop)',
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-[#0D76BE]/40"></div>
-                    </div>
-
-                    <div className="relative h-full p-4 md:p-6 flex flex-col justify-between">
-                      <div className="flex items-start gap-2 md:gap-3">
-                        <div className="bg-gray-900 px-2 py-1 md:px-3 md:py-2 rounded-lg shadow-lg">
-                          <div className="text-white text-base md:text-xl font-bold leading-none">
-                            {String(index + 1).padStart(2, '0')}
-                          </div>
-                        </div>
-                        <div className="text-white text-[10px] md:text-xs uppercase font-bold leading-tight">
-                          JURUSAN<br />
-                          <span className="text-white text-xs md:text-sm">{jurusan.code || 'TKJ'}</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-lg md:text-2xl font-bold text-white mb-2 leading-tight">
-                          {jurusan.name.toUpperCase()}
-                        </h3>
-
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {jurusan.competencies && jurusan.competencies.length > 0 ? (
-                            jurusan.competencies.slice(0, 3).map((comp, idx) => (
-                              <span key={idx} className="text-yellow-400 text-xs font-bold uppercase">
-                                #{comp.replace(/\s+/g, '')}
-                              </span>
-                            ))
-                          ) : (
-                            <>
-                              <span className="text-yellow-400 text-xs font-bold">#TECHNOLOGY</span>
-                              <span className="text-yellow-400 text-xs font-bold">#NETWORK</span>
-                              <span className="text-yellow-400 text-xs font-bold">#ADMINISTRATOR</span>
-                            </>
-                          )}
-                        </div>
-
-                        <div className="inline-flex items-center gap-2 text-white font-bold text-base group-hover:text-yellow-400 transition-all opacity-0 group-hover:opacity-100">
-                          <span>DAFTAR</span>
-                          <svg className="w-5 h-5 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Inviting Section - CTA */}
-      {data.cta && (
-        <section
-          ref={invitingSectionRef}
-          className="relative min-h-screen flex items-center justify-center"
+      {/* Why Section */}
+      <div className="relative w-full overflow-hidden bg-gray-50">
+        {/* Diagonal Overlay SVG */}
+        <div
+          className="absolute top-[-50px] right-0 w-[600px] h-[900px] z-10 pointer-events-none hidden lg:block"
           style={{
-            backgroundColor: data.cta.backgroundColor || '#0D76BE',
-            backgroundImage: data.cta.backgroundImage ? `url(${data.cta.backgroundImage})` : 'none',
-            backgroundPosition: 'center center',
-            backgroundSize: 'cover',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='959' height='1228' viewBox='0 0 959 1228' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='547' height='1292' transform='matrix(0.616893 -0.787047 -0.787047 -0.616893 1016.87 1227.54)' fill='url(%23paint0_linear_1081_4501)'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear_1081_4501' x1='263.766' y1='-0.000141328' x2='263.766' y2='1299.57' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%2355C6FF'/%3E%3Cstop offset='1' stop-color='%23FFFEFA' stop-opacity='0.4'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E")`,
             backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'fixed',
+            backgroundSize: 'contain',
           }}
-        >
-          {/* Overlay untuk keterbacaan teks */}
-          {data.cta.backgroundImage && (
-            <div className="absolute inset-0 bg-black/40"></div>
-          )}
+        ></div>
 
-          {/* Content */}
-          <div ref={row2Ref} className="relative z-10 container mx-auto px-4 py-20">
-            <div className="max-w-5xl mx-auto text-center">
-              {/* Title */}
-              <h2 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight">
-                {data.cta.title || 'MARI DISKUSIKAN BAKAT & MINAT KAMU,\nKAMI AKAN MEMBANTU MENEMUKAN SESUAI\nPASSION ANDA'}
+        <div className="relative z-20 max-w-[1300px] mx-auto px-4 lg:px-20 py-10 lg:py-20">
+          <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-20">
+            {/* Left Content */}
+            <div className="w-full lg:w-[400px] flex-shrink-0">
+              <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">MENGAPA SEKOLAH DI KRISMA</h3>
+              <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-tight text-[#0d76be] mb-3 lg:mb-4">
+                SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL
               </h2>
+              <p className="text-xs lg:text-sm leading-relaxed text-gray-700">
+                SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.
+              </p>
 
-              {/* Subtitle */}
-              {data.cta.subtitle && (
-                <p className="text-sm md:text-lg lg:text-xl text-white mb-8 md:mb-12 max-w-4xl mx-auto leading-relaxed opacity-95">
-                  {data.cta.subtitle}
-                </p>
-              )}
-
-              {/* Button */}
-              <Link
-                to={data.cta.buttonLink || '/kontak'}
-                className="inline-block px-8 py-3 md:px-16 md:py-5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-full font-bold text-base md:text-xl transition-all duration-300 shadow-2xl hover:shadow-yellow-500/50 hover:scale-105 uppercase"
-              >
-                {data.cta.buttonText || 'Diskusi'}
+              <Link to="/tentang" className="inline-flex items-center justify-center px-4 lg:px-6 py-2 lg:py-2.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full mt-4 lg:mt-6 transition-colors">
+                <span className="text-[10px] lg:text-xs font-medium">Baca Profil Sekolah</span>
               </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
-      {/* Prestasi - Conditional auto-scroll */}
-      <section className="py-16 md:py-24 bg-cream overflow-hidden">
-        <div className="container mx-auto px-4 mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Russo One, sans-serif' }}>PRESTASI</h2>
-          <p className="text-xs md:text-base text-gray-700 mb-6 md:mb-8 max-w-4xl leading-relaxed">
-            KAMI SUDAH MEMENANGKAN PENGHARGAAN DAN LOMBA YANG DIIKUTI OLEH SISWA-SISWA TERBAIK SMK KRISTEN 5 KLATEN
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : data.prestasis.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl container mx-auto">
-            <div className="text-5xl mb-4">🏆</div>
-            <p className="text-gray-600">Belum ada data prestasi</p>
-          </div>
-        ) : (
-          <div
-            ref={prestasiRef}
-            className="overflow-x-scroll"
-            style={{
-              cursor: 'grab',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}
-            onMouseDown={(e) => handleMouseDown(e, prestasiRef, setIsPrestasiPaused)}
-            onMouseMove={(e) => handleMouseMove(e, prestasiRef)}
-            onMouseUp={() => handleMouseUp(prestasiRef, setIsPrestasiPaused)}
-            onMouseLeave={() => handleMouseUp(prestasiRef, setIsPrestasiPaused)}
-            onTouchStart={(e) => handleTouchStart(e, prestasiRef, setIsPrestasiPaused)}
-            onTouchMove={(e) => handleTouchMove(e, prestasiRef)}
-            onTouchEnd={() => handleTouchEnd(setIsPrestasiPaused)}
-          >
-            {prestasiNeedsScroll ? (
-              <div className="flex gap-4 md:gap-6"
-              >
-                {[...data.prestasis, ...data.prestasis, ...data.prestasis].map((prestasi, index) => (
-                  <div
-                    key={`${prestasi._id}-${index}`}
-                    className="flex-shrink-0 w-[280px] h-[400px] md:w-[400px] md:h-[400px] bg-transparent rounded-xl md:rounded-2xl border border-gray-800 overflow-hidden flex flex-col p-4 md:p-6 text-gray-900"
-                    style={{ borderWidth: '0.7px' }}
-                  >
-                    {/* Zona A: Header Identitas */}
-                    <div className="text-xs md:text-sm font-normal mb-1 md:mb-2">
-                      {String(index % data.prestasis.length + 1).padStart(3, '0')} {prestasi.students || 'SISWA SMK'}, {prestasi.level?.toUpperCase() || '2024'}
-                    </div>
-
-                    {/* Separator */}
-                    <div className="w-full h-px bg-gray-800 mb-2 md:mb-3" style={{ height: '0.7px' }}></div>
-
-                    {/* Zona B: Judul Prestasi Utama */}
-                    <h3 className="text-sm md:text-lg font-bold leading-tight mb-2 md:mb-3">
-                      {prestasi.title.toUpperCase()}
-                    </h3>
-
-                    {/* Zona C: Gambar Ilustrasi (Landscape) */}
-                    <div className="w-full h-[180px] md:h-[180px] mb-2 md:mb-3">
-                      <img
-                        src={prestasi.image || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=600&fit=crop'}
-                        alt={`${prestasi.title} - Prestasi SMK Kristen 5 Klaten`}
-                        className="w-full h-full object-cover rounded-lg"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    {/* Zona D: Keterangan Proyek */}
-                    <p className="text-xs md:text-sm font-normal line-clamp-2 md:line-clamp-3">
-                      {prestasi.description?.toUpperCase() || 'PRESTASI LUAR BIASA DARI SISWA SMK KRISTEN 5 KLATEN'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="container mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {data.prestasis.map((prestasi, index) => (
-                    <div
-                      key={prestasi._id}
-                      className="w-full h-[400px] md:h-auto md:aspect-square bg-transparent rounded-xl md:rounded-2xl border border-gray-800 overflow-hidden flex flex-col p-4 md:p-6 text-gray-900"
-                      style={{ borderWidth: '0.7px' }}
-                    >
-                      {/* Zona A: Header Identitas */}
-                      <div className="text-xs md:text-sm font-normal mb-1 md:mb-2">
-                        {String(index + 1).padStart(3, '0')} {prestasi.students || 'SISWA SMK'}, {prestasi.level?.toUpperCase() || '2024'}
-                      </div>
-
-                      {/* Separator */}
-                      <div className="w-full h-px bg-gray-800 mb-2 md:mb-3" style={{ height: '0.7px' }}></div>
-
-                      {/* Zona B: Judul Prestasi Utama */}
-                      <h3 className="text-sm md:text-lg font-bold leading-tight mb-2 md:mb-3">
-                        {prestasi.title.toUpperCase()}
-                      </h3>
-
-                      {/* Zona C: Gambar Ilustrasi (Landscape) */}
-                      <div className="w-full h-[180px] md:h-[45%] mb-2 md:mb-3">
-                        <img
-                          src={prestasi.image || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=600&fit=crop'}
-                          alt={`${prestasi.title} - Prestasi SMK Kristen 5 Klaten`}
-                          className="w-full h-full object-cover rounded-lg"
-                          loading="lazy"
-                        />
-                      </div>
-
-                      {/* Zona D: Keterangan Proyek */}
-                      <p className="text-xs md:text-sm font-normal line-clamp-2 md:line-clamp-3">
-                        {prestasi.description?.toUpperCase() || 'PRESTASI LUAR BIASA DARI SISWA SMK KRISTEN 5 KLATEN'}
-                      </p>
+              {/* Alumni Companies */}
+              <div className="mt-6 lg:mt-10">
+                <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide">ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY</h4>
+                <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[400px]">
+                  {(data.partners || []).slice(0, 6).map((partner, idx) => (
+                    <div key={idx} className="bg-white rounded-md p-1.5 lg:p-2.5 h-12 lg:h-16 flex items-center justify-center">
+                      <img src={partner.logo} alt={partner.name} className="max-w-full max-h-full object-contain" />
                     </div>
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Ekstrakurikuler */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-8 md:mb-16 text-right" style={{ fontFamily: 'Russo One, sans-serif' }}>EKSTRAKURIKULER</h2>
-
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="inline-block w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : data.ekskuls.length === 0 ? (
-            <div className="text-center py-20 bg-gray-50 rounded-2xl">
-              <div className="text-5xl mb-4">🎯</div>
-              <p className="text-gray-600">Belum ada data ekstrakurikuler</p>
-            </div>
-          ) : (
-            <div className="w-full md:w-4/5 md:ml-auto space-y-4 md:space-y-6">
-              {data.ekskuls.map((ekskul, index) => (
-                <div key={ekskul._id}>
-                  <button
-                    onClick={() => setExpandedEkskul(expandedEkskul === index ? -1 : index)}
-                    className="w-full flex items-center justify-between py-4 md:py-8 text-left group border-b border-gray-200 focus:outline-none"
-                  >
-                    <div className="flex items-center gap-3 md:gap-6">
-                      <span className="text-gray-400 text-sm md:text-lg font-bold">
-                        {String(index + 1).padStart(3, '0')}
-                      </span>
-                      <h3 className="text-base md:text-2xl font-bold text-gray-800 group-hover:text-yellow-400 transition-colors">
-                        {ekskul.name.toUpperCase()}
-                      </h3>
-                    </div>
-                    <div className="text-2xl md:text-4xl text-gray-400">
-                      {expandedEkskul === index ? '−' : '+'}
-                    </div>
-                  </button>
-
-                  {expandedEkskul === index && (
-                    <div className="py-4 md:py-8">
-                      <div className="flex flex-col md:flex-row gap-4 md:gap-8">
-                        {ekskul.image && (
-                          <img
-                            src={ekskul.image}
-                            alt={ekskul.name}
-                            className="w-full md:w-64 h-48 object-cover rounded-lg flex-shrink-0"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm md:text-base text-gray-700 mb-3 md:mb-4 leading-relaxed">{ekskul.description}</p>
-                          <div className="space-y-2 text-xs md:text-sm text-gray-600">
-                            {ekskul.schedule && (
-                              <div>
-                                <span className="font-semibold">JADWAL : </span>
-                                <span>{ekskul.schedule}</span>
-                              </div>
-                            )}
-                            {ekskul.location && (
-                              <div>
-                                <span className="font-semibold">DRESSCODE : </span>
-                                <span>{ekskul.location}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Testimoni Alumni - 2 Rows with Infinite Scroll */}
-      <section className="py-16 md:py-24 bg-cream overflow-hidden">
-        <div className="container mx-auto px-4 mb-12">
-          <h2 className="text-2xl md:text-5xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Russo One, sans-serif' }}>TESTIMONI DAN CERITA ALUMNI</h2>
-          <p className="text-xs md:text-base text-gray-700">
-            Mereka membuktikan menjadi berhasil adalah hal yang mungkin, kamu bisa menjadi generasi selanjutnya <span className="font-bold">KRISMA BISA</span>.
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : data.alumnis.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl mx-4">
-            <div className="text-5xl mb-4">👥</div>
-            <p className="text-gray-600">Belum ada data testimoni</p>
-          </div>
-        ) : (
-          <div
-            ref={testimoniRef}
-            className="overflow-x-scroll"
-            style={{
-              cursor: 'grab',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}
-            onMouseDown={(e) => handleMouseDown(e, testimoniRef, setIsTestimoniPaused)}
-            onMouseMove={(e) => handleMouseMove(e, testimoniRef)}
-            onMouseUp={() => handleMouseUp(testimoniRef, setIsTestimoniPaused)}
-            onMouseLeave={() => handleMouseUp(testimoniRef, setIsTestimoniPaused)}
-            onTouchStart={(e) => handleTouchStart(e, testimoniRef, setIsTestimoniPaused)}
-            onTouchMove={(e) => handleTouchMove(e, testimoniRef)}
-            onTouchEnd={() => handleTouchEnd(setIsTestimoniPaused)}
-          >
-            <div className="flex gap-4 md:gap-6">
-              {/* Duplicate cards for infinite scroll */}
-              {[...data.alumnis, ...data.alumnis, ...data.alumnis].map((alumni, index) => (
-                <div key={`testimoni-${index}`} className="bg-transparent rounded-xl md:rounded-2xl p-4 md:p-8 border border-gray-800 flex flex-col flex-shrink-0 w-[280px] h-[400px] md:w-[400px] md:h-[400px]" style={{ borderWidth: '0.7px' }}>
-                  <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pb-4 md:pb-6 border-b border-gray-800" style={{ borderBottomWidth: '0.7px' }}>
-                    <img
-                      src={alumni.photo || 'https://i.pravatar.cc/150'}
-                      alt={`${alumni.name} - Alumni SMK Krisma Klaten`}
-                      className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
-                      loading="lazy"
-                    />
-                    <div>
-                      <h4 className="font-bold text-gray-800 text-sm md:text-base">{alumni.name}</h4>
-                      <p className="text-[10px] md:text-xs text-gray-600 uppercase">
-                        {alumni.currentOccupation || 'ALUMNI'}
-                        {alumni.company && ` AT ${alumni.company.toUpperCase()}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-700 leading-relaxed text-sm md:text-lg mb-3 md:mb-4 flex-1">
-                    {alumni.testimonial}
-                  </p>
-
-                  <div className="text-[10px] md:text-xs text-gray-500 italic">
-                    -{alumni.jurusan || 'ALUMNI'} {alumni.graduationYear || '2022'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Partners Section */}
-      {data.partners.length > 0 && (
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Partner Kerjasama
-              </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Bekerjasama dengan berbagai perusahaan dan institusi terkemuka untuk menyediakan peluang terbaik bagi siswa kami
-              </p>
             </div>
 
-            {/* Scrolling Logos Container */}
-            <div
-              ref={partnerRef}
-              className="overflow-x-scroll"
-              style={{
-                cursor: 'grab',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
-              }}
-              onMouseDown={(e) => handleMouseDown(e, partnerRef, setIsPartnerPaused)}
-              onMouseMove={(e) => handleMouseMove(e, partnerRef)}
-              onMouseUp={() => handleMouseUp(partnerRef, setIsPartnerPaused)}
-              onMouseLeave={() => handleMouseUp(partnerRef, setIsPartnerPaused)}
-              onTouchStart={(e) => handleTouchStart(e, partnerRef, setIsPartnerPaused)}
-              onTouchMove={(e) => handleTouchMove(e, partnerRef)}
-              onTouchEnd={() => handleTouchEnd(setIsPartnerPaused)}
-            >
-              <div className="flex gap-12">
-                {/* Triple the logos for seamless loop */}
-                {[...data.partners, ...data.partners, ...data.partners].map((partner, index) => (
-                  <div
-                    key={`partner-${index}`}
-                    className="flex-shrink-0 flex items-center justify-center p-4"
-                    style={{ width: '200px', height: '100px' }}
-                  >
-                    <img
-                      src={partner.logo}
-                      alt={`Logo ${partner.name} - Partner SMK Kristen 5 Klaten`}
-                      className="max-w-full max-h-full w-auto h-auto object-contain grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
-                      title={`${partner.name} - Mitra Industri SMK Krisma`}
-                      style={{ maxWidth: '180px', maxHeight: '80px' }}
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-0 lg:mt-24 lg:ml-auto max-w-[500px] w-full">
+              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-[#008fd7] sm:aspect-square flex flex-col">
+                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.ekskuls || []).length}</div>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">EKSTRAKURIKULER</h4>
+                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                  {(data.ekskuls || []).slice(0, 3).map(e => e.name).join(', ') || 'Loading...'}{(data.ekskuls || []).length > 3 ? ', dan lainnya' : ''}
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-yellow-300 sm:aspect-square flex flex-col">
+                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.fasilitas || []).length}</div>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">FASILITAS</h4>
+                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                  {(data.fasilitas || []).slice(0, 3).map(f => f.name).join(', ') || 'Loading...'}{(data.fasilitas || []).length > 3 ? ', dan lainnya' : ''}
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-red-500 sm:aspect-square flex flex-col">
+                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">27</div>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">TAHUN PENGABDIAN</h4>
+                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                  Melayani pendidikan di Klaten sejak tahun 1999
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-orange-600 sm:aspect-square flex flex-col">
+                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.jurusans || []).length}</div>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">BIDANG KOMPETENSI</h4>
+                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                  {(data.jurusans || []).slice(0, 3).map(j => j.name).join(', ') || 'Loading...'}{(data.jurusans || []).length > 3 ? '' : ''}
+                </p>
               </div>
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <img
-                  src={schoolLogo}
-                  alt="SMK Kristen 5 Klaten"
-                  className="h-16 w-16 object-contain"
-                />
-                <div>
-                  <div className="text-2xl font-bold">SMK KRISTEN 5</div>
-                  <div className="text-xl">KLATEN</div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Information</h4>
-              <ul className="space-y-3">
-                <li><Link to="/sejarah" className="hover:text-yellow-400 transition-colors underline">Sejarah</Link></li>
-                <li><Link to="/sambutan" className="hover:text-yellow-400 transition-colors underline">Sambutan Kepala Sekolah</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Penanggung Jawab</h4>
-              <ul className="space-y-3">
-                <li><Link to="/admin" className="hover:text-yellow-400 transition-colors underline">Admin Content</Link></li>
-                <li><Link to="/login" className="hover:text-yellow-400 transition-colors underline">Login</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Link lainnya</h4>
-              <ul className="space-y-3">
-                <li><a href="#" className="hover:text-yellow-400 transition-colors underline">Lowongan Kerja</a></li>
-                <li><a href="#" className="hover:text-yellow-400 transition-colors underline">BKK Krisma</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Copyright Section */}
-      <div className="bg-[#0D76BE] text-white py-4">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
           </div>
         </div>
       </div>
 
-      {/* Animations */}
-      <style>{`
-        @keyframes marquee-fast {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee-fast {
-          display: inline-block;
-          animation: marquee-fast 40s linear infinite;
-        }
-        .animate-scroll-left {
-          animation: scroll-left 30s linear infinite;
-        }
-        .animate-scroll-left:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
+      {/* Accelerate Section */}
+      <section className="text-center py-10 lg:py-16 px-4 lg:px-5 max-w-3xl mx-auto">
+        <div className="flex justify-center mb-2">
+          <Mascot3D size={100} />
+        </div>
+        <h2 className="text-sm lg:text-lg font-medium text-black mt-3">ACCELERATE YOUR ENTIRE POTENTIAL</h2>
+        <p className="text-[10px] lg:text-xs leading-relaxed text-black font-light mt-3 lg:mt-4">
+          MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA
+        </p>
+      </section>
 
-      {/* Search Modal */}
-      {showSearchModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
-          {/* Backdrop */}
+      {/* Programs Section */}
+      <section className="flex flex-col lg:flex-row items-stretch bg-gray-50 border-t border-b border-gray-300 relative lg:h-[600px] lg:max-h-[600px] overflow-hidden">
+        {/* Left - Image with Gradient Background (Desktop Only) */}
+        <div className="hidden lg:block relative w-1/2 h-full bg-gradient-to-b from-[#0a0a0a] to-[#1a1a2e] overflow-hidden flex-shrink-0">
+          {/* Animated Gradient Glow */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowSearchModal(false);
-              setSearchQuery('');
+            className="absolute top-[-50%] left-[-20%] w-[140%] h-[200%] animate-gradient"
+            style={{
+              background: `radial-gradient(ellipse 800px 600px at 20% 40%, rgba(139, 92, 246, 0.25), transparent),
+                          radial-gradient(ellipse 600px 500px at 80% 60%, rgba(56, 189, 248, 0.2), transparent),
+                          radial-gradient(ellipse 700px 550px at 50% 80%, rgba(168, 85, 247, 0.15), transparent)`,
+              filter: 'blur(80px)',
             }}
           ></div>
 
-          {/* Modal Content */}
-          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Cari artikel SMK KRISTEN 5 KLATEN..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      navigate(`/artikel?q=${encodeURIComponent(searchQuery.trim())}`);
-                      setShowSearchModal(false);
-                      setSearchQuery('');
-                    }
-                  }}
-                  autoFocus
-                  className="flex-1 text-lg outline-none"
-                />
-                <button
-                  onClick={() => {
-                    setShowSearchModal(false);
-                    setSearchQuery('');
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="text-sm text-gray-500">
-                Tekan <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-semibold">Enter</kbd> untuk mencari
-              </div>
-            </div>
+          {/* Image Container */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[85%] h-[420px] border border-white/20 rounded-xl p-2 bg-white/5 backdrop-blur-sm shadow-[0_8px_32px_rgba(139,92,246,0.2)] z-10">
+            <img
+              src={(data.jurusans || [])[activeProgram]?.backgroundImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop'}
+              alt="Program"
+              className="w-full h-full rounded-lg object-cover transition-opacity duration-300"
+            />
           </div>
         </div>
-      )}
 
-      {/* Principal Modal - Glassmorphism Transparent */}
-      {showPrincipalModal && data.principal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowPrincipalModal(false)}>
-          <div className="backdrop-blur-xl bg-white/20 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/30" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Content */}
-            <div className="p-6 md:p-8">
-              {/* Principal Info Section - Centered Layout */}
-              <div className="flex flex-col items-center text-center mb-6">
-                {/* Photo - Round and on top */}
-                {data.principal.photo && (
-                  <div className="mb-4">
-                    <img
-                      src={data.principal.photo}
-                      alt={`${data.principal.name} - Kepala Sekolah SMK Kristen 5 Klaten`}
-                      className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full shadow-xl border-3 border-white/50"
-                      loading="lazy"
-                    />
-                  </div>
+        {/* Right - Accordion */}
+        <div className="flex-1 px-6 lg:px-16 py-10 flex flex-col justify-start gap-4 lg:overflow-y-auto lg:h-[600px]">
+          {(data.jurusans || []).slice(0, 5).map((jurusan, idx) => (
+            <div key={idx} className="pb-4 border-b border-gray-300">
+              <div
+                className="flex justify-between items-center cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={() => toggleProgram(idx)}
+              >
+                <div>
+                  <h3 className="russo text-xl lg:text-2xl text-gray-700">{jurusan.code || jurusan.name.slice(0, 4).toUpperCase()}</h3>
+                  <h4 className="text-xs text-gray-700 font-medium mt-1.5">{jurusan.name}</h4>
+                </div>
+                <span className="text-4xl leading-none text-gray-700 cursor-pointer transition-transform">
+                  {activeProgram === idx ? '−' : '+'}
+                </span>
+              </div>
+
+              {/* Content */}
+              <div
+                className={`overflow-hidden transition-all duration-400 ${
+                  activeProgram === idx ? 'max-h-[600px] pt-4' : 'max-h-0 pt-0'
+                }`}
+              >
+                {/* Mobile Image */}
+                <div className="lg:hidden w-full h-48 mb-4 rounded-lg overflow-hidden">
+                  <img src={jurusan.backgroundImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop'} alt={jurusan.name} className="w-full h-full object-cover" />
+                </div>
+
+                {/* Short Description (plain text) or fallback to full description */}
+                {jurusan.shortDescription ? (
+                  <p className="text-xs leading-relaxed text-gray-700 mb-4">
+                    {jurusan.shortDescription}
+                  </p>
+                ) : (
+                  <div
+                    className="text-xs leading-relaxed text-gray-700 mb-4 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: jurusan.description }}
+                  />
                 )}
 
-                {/* Name and Position - Below photo */}
-                <div>
-                  <h3 className="text-lg md:text-xl font-bold text-white mb-1">{data.principal.name}</h3>
-                  <p className="text-sm md:text-base text-white/90 font-semibold">Kepala Sekolah</p>
+                {/* Career Prospects */}
+                {jurusan.careerProspects && jurusan.careerProspects.length > 0 && (
+                  <div>
+                    <h5 className="text-[11px] font-semibold text-gray-700 tracking-wide mb-2.5">PROSPEK KARIR:</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {jurusan.careerProspects.map((career, cIdx) => (
+                        <span key={cIdx} className="text-[11px] text-gray-600 bg-[#f6f3e4] px-4 py-1.5 rounded font-medium">
+                          {career}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Activities Section */}
+      <section className="bg-[#1e1e1e] py-10 lg:py-[60px] px-4 lg:px-10 relative overflow-hidden">
+        <div className="text-center mb-6 lg:mb-8">
+          <h2 className="text-base lg:text-lg font-bold text-white">{data.activitySettings?.sectionTitle || 'PEMBELAJARAN & KEGIATAN NYATA'}</h2>
+          <p className="text-xs lg:text-sm leading-relaxed text-[#6a6b6d] font-medium max-w-[600px] mx-auto mt-2 px-4">
+            {data.activitySettings?.sectionSubtitle || 'SISWA DILATIH DAN DIDUKUNG DENGAN PROGRAM DAN KOMPETISI YANG MELATIH RASA DAN KEBERANIAN'}
+          </p>
+        </div>
+
+        {/* Tabs */}
+        {(() => {
+          // Fallback data when no tabs from database
+          const fallbackTabs = [
+            { name: 'BELAJAR', items: [
+              { title: 'Praktikum Lab Terpadu', description: 'Siswa mengerjakan proyek langsung di laboratorium dengan peralatan standar industri.', image: 'https://images.unsplash.com/photo-1562774053-701939374585?w=1200&h=600&fit=crop' },
+              { title: 'Proyek Berbasis Masalah', description: 'Pembelajaran melalui studi kasus nyata untuk mengasah kemampuan analisis dan solusi.', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=600&fit=crop' },
+              { title: 'Bimbingan Intensif Ujian', description: 'Program persiapan ujian kompetensi dengan pendampingan guru berpengalaman.', image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1200&h=600&fit=crop' },
+              { title: 'Kelas Sertifikasi Profesi', description: 'Pelatihan khusus untuk mendapatkan sertifikat kompetensi yang diakui industri.', image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&h=600&fit=crop' },
+            ]},
+            { name: 'BERAKSI', items: [
+              { title: 'Bakti Sosial Masyarakat', description: 'Kegiatan pelayanan ke panti asuhan dan masyarakat sekitar untuk membangun kepedulian.', image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&h=600&fit=crop' },
+              { title: 'Aksi Peduli Lingkungan', description: 'Program penghijauan dan pengelolaan sampah untuk kesadaran lingkungan hidup.', image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&h=600&fit=crop' },
+              { title: 'Perayaan Hari Besar', description: 'Pentas seni dan ibadah bersama dalam memperingati hari-hari penting nasional dan keagamaan.', image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&h=600&fit=crop' },
+              { title: 'Latihan Kepemimpinan Siswa', description: 'Program pembentukan karakter melalui kegiatan OSIS dan organisasi kesiswaan.', image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=600&fit=crop' },
+            ]},
+            { name: 'BERPENGALAMAN', items: [
+              { title: 'Magang di Perusahaan', description: 'Praktik kerja langsung di perusahaan mitra selama 3-6 bulan sesuai bidang keahlian.', image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=600&fit=crop' },
+              { title: 'Kunjungan Industri Rutin', description: 'Observasi langsung ke perusahaan untuk memahami dunia kerja profesional.', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=600&fit=crop' },
+              { title: 'Kompetisi Tingkat Nasional', description: 'Mengikuti lomba kompetensi siswa untuk mengukur kemampuan dan meraih prestasi.', image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=600&fit=crop' },
+              { title: 'Study Tour Edukatif', description: 'Kunjungan belajar ke institusi pendidikan dan tempat bersejarah di luar kota.', image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=600&fit=crop' },
+            ]},
+          ];
+
+          const tabs = data.activityTabs.length > 0 ? data.activityTabs : fallbackTabs;
+          const currentTab = tabs[activeActivityTab] || tabs[0];
+          const currentItems = currentTab?.items || [];
+          const currentItem = currentItems[activeActivitySlide] || currentItems[0];
+
+          return (
+            <>
+              <div className="flex justify-center gap-1 lg:gap-2 mb-4 border border-white rounded-full p-1 lg:p-1.5 w-fit mx-auto overflow-x-auto">
+                {tabs.map((tab, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => switchActivityTab(idx)}
+                    className={`px-3 lg:px-7 py-2 lg:py-2.5 rounded-full text-[10px] lg:text-xs text-white font-medium cursor-pointer transition-all whitespace-nowrap ${
+                      activeActivityTab === idx ? 'bg-[rgba(207,233,246,0.17)]' : ''
+                    }`}
+                  >
+                    {tab.name}
+                  </div>
+                ))}
+              </div>
+
+              {currentItem && (
+                <div className="w-full">
+                  {/* Image wrapper with Union.svg overlays */}
+                  <div className="relative w-full h-[250px] sm:h-[350px] lg:h-[450px] pt-3 lg:pt-5 pb-0 px-2 lg:px-10">
+                    <div className="relative w-full h-full overflow-hidden">
+                      {/* Union overlay - Left */}
+                      <div
+                        className="absolute left-[-10px] top-0 w-[45px] h-full z-20 pointer-events-none hidden lg:block"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg width='102' height='460' viewBox='0 0 102 460' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0.699201 61.8604L107.239 -4.68758e-06L107.239 459.091L-2.53722e-06 401.046L0.749997 400.64L-2.55498e-06 400.64L-1.73635e-05 61.8604L0.699201 61.8604Z' fill='%231E1E1E'/%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundSize: '100% 100%',
+                          transform: 'scaleX(-1)',
+                        }}
+                      ></div>
+
+                      {/* Union overlay - Right */}
+                      <div
+                        className="absolute right-[-10px] top-0 w-[45px] h-full z-20 pointer-events-none hidden lg:block"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg width='102' height='460' viewBox='0 0 102 460' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0.699201 61.8604L107.239 -4.68758e-06L107.239 459.091L-2.53722e-06 401.046L0.749997 400.64L-2.55498e-06 400.64L-1.73635e-05 61.8604L0.699201 61.8604Z' fill='%231E1E1E'/%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundSize: '100% 100%',
+                        }}
+                      ></div>
+
+                      {/* Union overlay - Bottom */}
+                      <div
+                        className="absolute bottom-[-100px] left-1/2 w-[45px] h-[200px] z-20 pointer-events-none hidden lg:block"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg width='102' height='460' viewBox='0 0 102 460' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0.699201 61.8604L107.239 -4.68758e-06L107.239 459.091L-2.53722e-06 401.046L0.749997 400.64L-2.55498e-06 400.64L-1.73635e-05 61.8604L0.699201 61.8604Z' fill='%231E1E1E'/%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundSize: '100% 100%',
+                          transform: 'translateX(-50%) rotate(90deg)',
+                        }}
+                      ></div>
+
+                      {/* Image */}
+                      <img
+                        src={currentItem.image}
+                        alt={currentItem.title}
+                        className="w-full h-full object-cover transition-all duration-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Nav Dots - below image, left aligned */}
+                  <div className="flex justify-start gap-2 mt-3 px-4 lg:px-10">
+                    {currentItems.map((_, dot) => (
+                      <button
+                        key={dot}
+                        className={`w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border-0 transition-all ${
+                          activeActivitySlide === dot ? 'bg-[#FDE047]' : 'bg-white/30'
+                        }`}
+                        onClick={() => setActiveActivitySlide(dot)}
+                      ></button>
+                    ))}
+                  </div>
+
+                  {/* Text content */}
+                  <div className="max-w-[600px] pt-3 pb-6 lg:pb-8 px-4 lg:pl-10 lg:pr-0 text-left">
+                    <p className="text-sm lg:text-[15px] leading-relaxed font-medium">
+                      <span className="text-white">{currentItem.title}. </span>
+                      <span className="text-[#bbb]">{currentItem.description}</span>
+                    </p>
+                    <Link to={data.activitySettings?.globalLink || '/artikel'} className="text-[#008fd7] text-xs lg:text-sm font-medium mt-3 lg:mt-4 inline-block hover:text-[#00D9FF] transition-colors">
+                      {data.activitySettings?.globalButtonText || 'Explore Kegiatan Siswa'} &gt;
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="bg-[rgba(30,30,30,0.95)] py-10 lg:py-16 px-4 lg:px-10 relative overflow-hidden">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+            {/* Left - Testimonials */}
+            <div className="flex-1">
+              {/* Desktop: Scrolling columns */}
+              <div className="hidden lg:grid grid-cols-2 gap-5 h-[600px] overflow-hidden">
+                {/* Column 1 */}
+                <div className="flex flex-col gap-5 animate-scroll-up">
+                  {(data.alumnis || []).slice(0, 6).map((alumni, idx) => (
+                    <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg">
+                      <p className="text-xs leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
+                      <div className="flex items-center gap-3.5 mt-5">
+                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} className="w-12 h-12 rounded-full object-cover" />
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
+                          <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
+                        </div>
+                      </div>
+                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-Alumni {alumni.graduationYear}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Column 2 */}
+                <div className="flex flex-col gap-5 animate-scroll-down">
+                  {(data.alumnis || []).slice(0, 6).map((alumni, idx) => (
+                    <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg">
+                      <p className="text-xs leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
+                      <div className="flex items-center gap-3.5 mt-5">
+                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} className="w-12 h-12 rounded-full object-cover" />
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
+                          <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
+                        </div>
+                      </div>
+                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-Alumni {alumni.graduationYear}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="h-px bg-white/30 mb-6"></div>
+              {/* Mobile: 3 cards with slide */}
+              <div className="lg:hidden">
+                <div className="flex flex-col gap-4">
+                  {(data.alumnis || []).slice(currentTestimonialSlide * 3, currentTestimonialSlide * 3 + 3).map((alumni, idx) => (
+                    <div key={idx} className="p-4 bg-transparent border border-white/10 rounded-lg">
+                      <p className="text-xs leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
+                      <div className="flex items-center gap-3 mt-4">
+                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} className="w-10 h-10 rounded-full object-cover" />
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
+                          <span className="text-[10px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
+                        </div>
+                      </div>
+                      <p className="text-right text-[10px] text-[#7a7a7a] font-medium mt-2 italic">-Alumni {alumni.graduationYear}</p>
+                    </div>
+                  ))}
+                </div>
 
-              {/* Message Content */}
-              <div className="text-white/95 leading-relaxed whitespace-pre-line text-sm md:text-base">
-                {data.principal.message}
+                {/* Mobile Navigation Dots - left aligned, smaller */}
+                <div className="flex justify-start gap-2 mt-4">
+                  {[0, 1].map((dot) => (
+                    <button
+                      key={dot}
+                      className={`w-2 h-2 rounded-full border-0 transition-all ${
+                        currentTestimonialSlide === dot ? 'bg-yellow-300' : 'bg-white/30'
+                      }`}
+                      onClick={() => setCurrentTestimonialSlide(dot)}
+                    ></button>
+                  ))}
+                </div>
               </div>
+            </div>
+
+            {/* Right - Info */}
+            <div className="w-full lg:w-[400px] flex-shrink-0 order-first lg:order-last">
+              <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white">
+                Cerita pengalaman menarik dan berkesan oleh alumni kami
+              </h2>
+              <p className="text-xs sm:text-sm leading-relaxed text-white mt-3 lg:mt-5">
+                SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.
+              </p>
+              <button className="inline-flex items-center px-6 lg:px-8 py-2.5 lg:py-3 bg-transparent border-2 border-[#c9a55b] text-white text-[11px] lg:text-xs font-semibold rounded mt-5 lg:mt-8 hover:bg-[#c9a55b] transition-all">
+                BAGIKAN CERITAMU
+              </button>
             </div>
           </div>
         </div>
-      )}
-      </div>
+      </section>
+
+      {/* News Section */}
+      <section className="py-10 lg:py-16 px-4 lg:px-10 max-w-[1200px] mx-auto">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left - Main Featured with smaller articles */}
+          <div className="flex-1">
+            {/* Main Featured Article */}
+            {data.articles[0] && (
+              <Link to={`/artikel/${data.articles[0].slug}`} className="relative rounded-xl overflow-hidden mb-4 block group">
+                <div className="relative h-[220px] sm:h-[280px] lg:h-[320px]">
+                  <img
+                    src={data.articles[0].featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop'}
+                    alt={data.articles[0].title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {/* Dark overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#1e1e1e]/95 via-[#1e1e1e]/70 to-transparent lg:to-transparent to-[#1e1e1e]/30"></div>
+
+                  {/* Content on left */}
+                  <div className="absolute inset-0 p-4 lg:p-6 flex flex-col justify-center max-w-full lg:max-w-[55%]">
+                    <h2 className="text-base sm:text-xl lg:text-2xl font-bold text-white leading-tight mb-2 lg:mb-3 line-clamp-2 lg:line-clamp-none">
+                      {data.articles[0].title}
+                    </h2>
+                    <span className="text-yellow-400 text-[10px] lg:text-xs font-medium mb-2 lg:mb-3">
+                      {data.articles[0].categoryJurusan?.name || data.articles[0].categoryTopik?.name || 'Berita'}
+                    </span>
+                    <p className="text-[11px] lg:text-xs text-gray-300 leading-relaxed line-clamp-2 lg:line-clamp-4 hidden sm:block">
+                      {data.articles[0].excerpt || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* Smaller articles below */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+              {(data.articles || []).slice(1, 3).map((article, idx) => (
+                <Link
+                  key={idx}
+                  to={`/artikel/${article.slug}`}
+                  className="flex gap-3 bg-[#1e1e1e] rounded-lg overflow-hidden p-3 hover:bg-[#2a2a2a] transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-white font-medium leading-snug line-clamp-2 sm:line-clamp-3">
+                      {article.title}
+                    </p>
+                    <span className="text-[10px] text-yellow-400 mt-2 block">
+                      {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
+                    </span>
+                  </div>
+                  <div className="w-16 h-14 sm:w-20 sm:h-16 flex-shrink-0 rounded overflow-hidden">
+                    <img
+                      src={article.featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200&h=150&fit=crop'}
+                      alt={article.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Right - TOP 5 BERITA */}
+          <div className="w-full lg:w-[280px] flex-shrink-0 mt-6 lg:mt-0">
+            <div className="flex items-center gap-2 mb-4 lg:mb-6">
+              <div className="w-1 h-5 lg:h-6 bg-[#0d76be] rounded-full"></div>
+              <h3 className="text-base lg:text-lg font-bold text-gray-900">TOP 5 BERITA</h3>
+            </div>
+
+            <div className="space-y-4 lg:space-y-5">
+              {(data.articles || []).slice(0, 5).map((article, idx) => (
+                <Link
+                  key={idx}
+                  to={`/artikel/${article.slug}`}
+                  className="flex gap-3 group"
+                >
+                  <span className="text-xl lg:text-2xl font-bold text-gray-200 group-hover:text-[#0d76be] transition-colors">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs lg:text-sm font-medium text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2 lg:line-clamp-3">
+                      {article.title}
+                    </p>
+                    <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 block">
+                      {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* BERITA UTAMA - Bottom section */}
+        <div className="mt-8 lg:mt-12">
+          <div className="mb-4 lg:mb-6">
+            <h3 className="text-base lg:text-lg font-bold text-gray-900">BERITA UTAMA</h3>
+            <div className="w-10 lg:w-12 h-1 bg-[#0d76be] mt-2 rounded-full"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            {(data.articles || []).slice(0, 3).map((article, idx) => (
+              <Link
+                key={idx}
+                to={`/artikel/${article.slug}`}
+                className="group"
+              >
+                <h4 className="text-sm lg:text-base font-semibold text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2">
+                  {article.title}
+                </h4>
+                <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 lg:mt-2 block">
+                  {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Events Section */}
+      <section className="py-12 lg:py-20 px-4 lg:px-10 relative" style={{ background: 'linear-gradient(to bottom, transparent 50px, rgba(13,118,190,0.15) 50%, rgba(13,118,190,0.31) 100%)' }}>
+        <div className="text-center mb-6 lg:mb-8">
+          <h2 className="text-base lg:text-lg font-bold text-black">KEGIATAN SISWA DAN GURU</h2>
+          <p className="text-xs lg:text-sm leading-relaxed text-gray-600 font-medium max-w-3xl mx-auto mt-2 px-2">
+            AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex justify-center gap-1 lg:gap-2 mb-8 lg:mb-10 border border-[#62B4DD] rounded-full p-1 lg:p-1.5 w-fit mx-auto">
+          {['Semua', 'Akademik', 'Non Akademik'].map((tab, idx) => (
+            <div
+              key={idx}
+              onClick={() => filterEvents(tab.toLowerCase())}
+              className={`px-3 sm:px-5 lg:px-8 py-2 lg:py-2.5 rounded-full text-[10px] sm:text-xs font-medium cursor-pointer transition-all whitespace-nowrap ${
+                activeEventFilter === tab.toLowerCase()
+                  ? 'bg-[rgba(207,233,246,0.5)] text-gray-700'
+                  : 'text-[#0d76be]'
+              }`}
+            >
+              {tab}
+            </div>
+          ))}
+        </div>
+
+        {/* Events Grid */}
+        {(() => {
+          const filteredEvents = (data.events || []).filter(event => {
+            if (activeEventFilter === 'semua') return true;
+            if (activeEventFilter === 'akademik') return event.category === 'akademik';
+            if (activeEventFilter === 'non akademik') return event.category === 'non-akademik';
+            return true;
+          });
+
+          const formatEventDate = (dateString) => {
+            const date = new Date(dateString);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            return {
+              day: String(date.getDate()).padStart(2, '0'),
+              month: months[date.getMonth()],
+              fullDate: `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
+            };
+          };
+
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-5 max-w-[1100px] mx-auto mb-8 lg:mb-10">
+              {filteredEvents.length > 0 ? (
+                filteredEvents.slice(0, 6).map((event, idx) => {
+                  const dateInfo = formatEventDate(event.eventDate);
+                  return (
+                    <div
+                      key={event._id || idx}
+                      className="flex gap-3 lg:gap-4 items-start p-3 lg:p-5 bg-white/40 backdrop-blur-xl border border-white/80 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
+                    >
+                      <div className="bg-[#f6efe4] px-3 sm:px-5 lg:px-6 py-3 sm:py-4 lg:py-5 rounded-lg text-center flex-shrink-0">
+                        <div className="russo text-xl sm:text-2xl lg:text-[26px] leading-none text-black">
+                          {dateInfo.day}
+                        </div>
+                        <div className="text-[10px] lg:text-xs text-gray-700 mt-1 font-medium">{dateInfo.month.toUpperCase()}</div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide ${
+                          event.category === 'akademik' ? 'text-[#008fd7]' : 'text-purple-600'
+                        }`}>
+                          {event.category === 'akademik' ? 'AKADEMIK' : 'NON AKADEMIK'}
+                        </span>
+                        <h4 className="text-sm lg:text-base font-semibold text-black mt-0.5 line-clamp-1">{event.title}</h4>
+                        <div className="flex flex-row flex-wrap gap-3 lg:gap-5 mt-2 lg:mt-3 text-[11px] lg:text-xs text-gray-700">
+                          <div className="flex items-center gap-1.5">
+                            <span>📅</span>
+                            <span>{dateInfo.fullDate}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span>🕐</span>
+                            <span>{event.startTime} - {event.endTime}</span>
+                          </div>
+                          {event.location && (
+                            <div className="flex items-center gap-1.5">
+                              <span>📍</span>
+                              <span>{event.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-2 text-center py-8">
+                  <p className="text-gray-600">Belum ada agenda yang tersedia.</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+
+        <button className="flex items-center justify-center px-6 lg:px-10 py-3 lg:py-3.5 bg-[#f6efe4] text-gray-700 text-[11px] lg:text-xs font-semibold rounded-lg mx-auto hover:bg-[#f0e5d4] hover:-translate-y-0.5 shadow-md hover:shadow-lg transition-all">
+          LIHAT SEMUA AGENDA
+        </button>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative min-h-[400px] lg:h-[550px] overflow-hidden flex">
+        <img
+          src={data.cta?.backgroundImage || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&h=1080&fit=crop'}
+          alt="CTA Background"
+          className="absolute inset-0 w-full h-full object-cover z-10"
+        />
+        <div className="absolute inset-0 bg-black/55 z-20"></div>
+        <div
+          className="absolute inset-0 z-30 hidden lg:block"
+          style={{
+            background: 'linear-gradient(90deg, rgba(30, 30, 30, 0.7) 0%, rgba(30, 30, 30, 0.7) 47%, rgba(255, 221, 85, 0.7) 47%, rgba(255, 221, 85, 0.7) 100%)',
+          }}
+        ></div>
+        {/* Mobile gradient */}
+        <div className="absolute inset-0 z-30 lg:hidden bg-gradient-to-b from-[#1e1e1e]/60 via-[#1e1e1e]/70 to-[rgba(255,221,85,0.7)]"></div>
+
+        <div className="relative z-40 flex items-center justify-center w-full min-h-[400px] lg:min-h-[550px] px-4 sm:px-6 lg:px-20 lg:pl-[50%] py-16 lg:py-0">
+          <div className="max-w-[550px] text-center lg:text-left">
+            <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white uppercase">
+              {data.cta?.title || 'MARI DISKUSIKAN BAKAT & MINAT KAMU, KAMI AKAN MEMBANTU MENEMUKAN SESUAI PASSION ANDA'}
+            </h2>
+            <p className="text-xs sm:text-sm lg:text-base leading-relaxed text-white/90 mt-3 lg:mt-4">
+              {data.cta?.description || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
+            </p>
+            <div className="flex gap-3 lg:gap-4 mt-5 lg:mt-7 flex-wrap justify-center lg:justify-start">
+              <Link
+                to={data.cta?.primaryButtonLink || '/pendaftaran'}
+                className="bg-yellow-300 text-black px-5 lg:px-7 py-3 lg:py-3.5 rounded text-[11px] lg:text-xs font-semibold uppercase hover:bg-yellow-400 hover:-translate-y-0.5 transition-all"
+              >
+                {data.cta?.primaryButtonText || 'DAFTAR SEKARANG'}
+              </Link>
+              {(data.cta?.secondaryButtonText || !data.cta) && (
+                <Link
+                  to={data.cta?.secondaryButtonLink || '/kontak'}
+                  className="bg-transparent text-white px-5 lg:px-7 py-3 lg:py-3.5 border-2 border-white rounded text-[11px] lg:text-xs font-semibold uppercase hover:bg-white/10 hover:-translate-y-0.5 transition-all"
+                >
+                  {data.cta?.secondaryButtonText || 'LAYANAN INFORMASI'}
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <Footer />
     </>
   );
 };

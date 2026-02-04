@@ -356,7 +356,6 @@ const Articles = () => {
       featuredImage: '',
       status: 'draft',
     });
-    setImagePreview('');
     setSelectedArticle(null);
   };
 
@@ -744,7 +743,7 @@ const Articles = () => {
             <div
               key={article._id}
               onClick={() => isSelectMode && toggleSelectArticle(article._id)}
-              className={`bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-all relative ${
+              className={`bg-white rounded-lg shadow hover:shadow-lg transition-all relative ${
                 isSelectMode ? 'cursor-pointer' : ''
               } ${
                 isSelectMode && selectedArticles.includes(article._id) ? 'ring-2 ring-blue-500' : ''
@@ -764,7 +763,7 @@ const Articles = () => {
 
               {/* Featured Image */}
               {article.featuredImage && (
-                <div className="relative">
+                <div className="relative overflow-hidden rounded-t-lg">
                   <img
                     src={typeof article.featuredImage === 'string' ? article.featuredImage : article.featuredImage.url}
                     alt={article.title}
@@ -794,7 +793,7 @@ const Articles = () => {
 
                     {/* Dropdown Menu */}
                     {openDropdown === article._id && (
-                      <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                      <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                         <div className="py-1">
                           {/* Preview */}
                           <button
@@ -1011,18 +1010,17 @@ const Articles = () => {
             </select>
           </div>
 
-          {/* Category Topik (Required) */}
+          {/* Category Topik (Optional) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Kategori Topik *
+              Kategori Topik (Opsional)
             </label>
             <select
               value={formData.categoryTopik}
               onChange={(e) => setFormData({ ...formData, categoryTopik: e.target.value })}
-              required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
             >
-              <option value="">Pilih Topik</option>
+              <option value="">Pilih Topik (Opsional)</option>
               {categories.filter(cat => cat.type === 'topik').map((cat) => (
                 <option key={cat._id} value={cat._id}>
                   {cat.name}

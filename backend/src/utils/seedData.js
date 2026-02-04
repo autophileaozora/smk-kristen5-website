@@ -5,6 +5,11 @@ import Category from '../models/Category.js';
 import Article from '../models/Article.js';
 import RunningText from '../models/RunningText.js';
 import Jurusan from '../models/Jurusan.js';
+import Ekskul from '../models/Ekskul.js';
+import Fasilitas from '../models/Fasilitas.js';
+import Partner from '../models/Partner.js';
+import Alumni from '../models/Alumni.js';
+import Contact from '../models/Contact.js';
 import connectDB from '../config/database.js';
 
 // Load env vars
@@ -25,6 +30,10 @@ const seedDatabase = async () => {
     await Article.deleteMany({});
     await RunningText.deleteMany({});
     await Jurusan.deleteMany({});
+    await Ekskul.deleteMany({});
+    await Fasilitas.deleteMany({});
+    await Partner.deleteMany({});
+    await Alumni.deleteMany({});
 
     // Create Administrator
     console.log('👤 Creating users...');
@@ -107,44 +116,372 @@ const seedDatabase = async () => {
     await Jurusan.create([
       {
         name: 'Teknik Komputer dan Jaringan',
-        slug: 'tkj',
+        code: 'TKJ',
         description: '<p>Jurusan TKJ mempelajari tentang instalasi, konfigurasi, dan pemeliharaan jaringan komputer. Siswa akan dibekali dengan keterampilan praktis dalam mengelola infrastruktur IT.</p>',
-        shortDescription: 'Jurusan yang mempelajari jaringan komputer dan infrastruktur IT',
-        skills: ['Instalasi Jaringan', 'Konfigurasi Server', 'Troubleshooting', 'Keamanan Jaringan', 'Linux & Windows Server'],
+        vision: 'Menjadi jurusan unggulan yang menghasilkan lulusan kompeten di bidang jaringan komputer',
+        mission: 'Mengembangkan kompetensi siswa dalam teknologi jaringan dan infrastruktur IT',
+        headOfDepartment: 'Budi Santoso, S.Kom',
+        competencies: ['Instalasi Jaringan', 'Konfigurasi Server', 'Troubleshooting', 'Keamanan Jaringan', 'Linux & Windows Server'],
         careerProspects: ['Network Administrator', 'IT Support', 'System Administrator', 'Network Engineer', 'IT Consultant'],
-        facilities: ['Lab Komputer', 'Lab Jaringan', 'Server Room', 'Cisco Equipment'],
-        accreditation: 'A',
+        facilities: [
+          { name: 'Lab Komputer', description: 'Laboratorium dengan 40 unit komputer' },
+          { name: 'Lab Jaringan', description: 'Lab khusus praktik jaringan' },
+          { name: 'Server Room', description: 'Ruang server untuk praktik' }
+        ],
         isActive: true,
         displayOrder: 1,
         createdBy: administrator._id,
       },
       {
         name: 'Multimedia',
-        slug: 'multimedia',
+        code: 'MM',
         description: '<p>Jurusan Multimedia fokus pada pengembangan kreativitas dalam bidang desain grafis, video editing, animasi, dan fotografi. Siswa akan belajar menggunakan software industri terkini.</p>',
-        shortDescription: 'Jurusan yang fokus pada desain grafis, video, dan animasi',
-        skills: ['Adobe Photoshop', 'Adobe Premiere', 'After Effects', 'Blender 3D', 'Fotografi'],
+        vision: 'Menjadi jurusan yang menghasilkan kreator konten digital yang profesional',
+        mission: 'Membekali siswa dengan keterampilan desain dan multimedia modern',
+        headOfDepartment: 'Denny Prasetyo, S.Sn',
+        competencies: ['Adobe Photoshop', 'Adobe Premiere', 'After Effects', 'Blender 3D', 'Fotografi'],
         careerProspects: ['Graphic Designer', 'Video Editor', 'Animator', 'Photographer', 'Content Creator'],
-        facilities: ['Lab Multimedia', 'Studio Fotografi', 'Rendering Farm', 'Green Screen'],
-        accreditation: 'A',
+        facilities: [
+          { name: 'Lab Multimedia', description: 'Lab dengan komputer spesifikasi tinggi' },
+          { name: 'Studio Fotografi', description: 'Studio lengkap dengan lighting' },
+          { name: 'Green Screen', description: 'Area green screen untuk produksi video' }
+        ],
         isActive: true,
         displayOrder: 2,
         createdBy: administrator._id,
       },
       {
         name: 'Akuntansi dan Keuangan Lembaga',
-        slug: 'akl',
+        code: 'AKL',
         description: '<p>Jurusan AKL mempersiapkan siswa untuk menjadi tenaga profesional di bidang akuntansi dan keuangan. Materi mencakup pembukuan, perpajakan, dan manajemen keuangan.</p>',
-        shortDescription: 'Jurusan yang mempelajari akuntansi dan manajemen keuangan',
-        skills: ['Pembukuan', 'Perpajakan', 'Manajemen Keuangan', 'Aplikasi Akuntansi', 'Audit'],
+        vision: 'Menjadi jurusan yang menghasilkan tenaga akuntansi profesional',
+        mission: 'Memberikan pendidikan akuntansi yang komprehensif sesuai standar industri',
+        headOfDepartment: 'Ahmad Fauzi, S.E, M.Ak',
+        competencies: ['Pembukuan', 'Perpajakan', 'Manajemen Keuangan', 'Aplikasi Akuntansi', 'Audit'],
         careerProspects: ['Akuntan', 'Staff Finance', 'Tax Consultant', 'Auditor', 'Bank Teller'],
-        facilities: ['Lab Akuntansi', 'Perpustakaan Ekonomi', 'Software Akuntansi'],
-        accreditation: 'B',
+        facilities: [
+          { name: 'Lab Akuntansi', description: 'Lab dengan software akuntansi terkini' },
+          { name: 'Perpustakaan Ekonomi', description: 'Koleksi buku ekonomi dan akuntansi' }
+        ],
         isActive: true,
         displayOrder: 3,
         createdBy: administrator._id,
       },
     ]);
+
+    // Create Sample Ekskul
+    console.log('🏃 Creating ekskul data...');
+    await Ekskul.create([
+      {
+        name: 'Basket',
+        description: 'Ekstrakurikuler basket untuk mengembangkan kemampuan olahraga dan kerja sama tim.',
+        category: 'olahraga',
+        coach: 'Pak Andi Setiawan',
+        schedule: 'Selasa & Kamis, 15:00-17:00',
+        location: 'Lapangan Basket Sekolah',
+        achievements: 'Juara 2 Turnamen Basket Antar SMK Kabupaten Klaten 2024',
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Paduan Suara',
+        description: 'Ekstrakurikuler paduan suara untuk mengembangkan bakat menyanyi dan seni musik.',
+        category: 'seni',
+        coach: 'Ibu Maria Kristina',
+        schedule: 'Senin & Rabu, 14:00-16:00',
+        location: 'Ruang Musik',
+        achievements: 'Juara 1 Festival Paduan Suara Rohani Se-Jawa Tengah 2024',
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'English Club',
+        description: 'Klub bahasa Inggris untuk meningkatkan kemampuan berbahasa Inggris siswa.',
+        category: 'akademik',
+        coach: 'Mr. David Hartono',
+        schedule: 'Jumat, 14:00-16:00',
+        location: 'Lab Bahasa',
+        achievements: 'Finalis English Debate Competition 2024',
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Rohani Kristen',
+        description: 'Kegiatan kerohanian untuk mendalami iman Kristiani dan pelayanan.',
+        category: 'keagamaan',
+        coach: 'Pdt. Yohanes Surya',
+        schedule: 'Sabtu, 08:00-10:00',
+        location: 'Aula Sekolah',
+        achievements: 'Aktif dalam pelayanan gereja dan masyarakat',
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Programming Club',
+        description: 'Klub pemrograman untuk siswa yang tertarik dengan coding dan teknologi.',
+        category: 'teknologi',
+        coach: 'Pak Budi Santoso, S.Kom',
+        schedule: 'Rabu & Jumat, 15:00-17:00',
+        location: 'Lab Komputer 1',
+        achievements: 'Juara 3 Hackathon Pelajar Jawa Tengah 2024',
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Pramuka',
+        description: 'Kegiatan kepramukaan untuk membentuk karakter dan jiwa kepemimpinan.',
+        category: 'lainnya',
+        coach: 'Kak Teguh Prasetyo',
+        schedule: 'Sabtu, 13:00-16:00',
+        location: 'Lapangan Sekolah',
+        achievements: 'Penggalang Terbaik Tingkat Kabupaten 2024',
+        isActive: true,
+        createdBy: administrator._id,
+      },
+    ]);
+    console.log('✅ Created 6 ekskul records');
+
+    // Create Sample Fasilitas
+    console.log('🏢 Creating fasilitas data...');
+    await Fasilitas.create([
+      {
+        name: 'Laboratorium Komputer',
+        description: 'Laboratorium dengan 40 unit komputer spesifikasi tinggi untuk praktik siswa TKJ dan MM.',
+        category: 'TKJ',
+        location: 'Gedung A, Lantai 2',
+        capacity: 40,
+        isActive: true,
+        displayOrder: 1,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Lab Jaringan',
+        description: 'Lab khusus untuk praktik instalasi dan konfigurasi jaringan komputer.',
+        category: 'TKJ',
+        location: 'Gedung A, Lantai 3',
+        capacity: 30,
+        isActive: true,
+        displayOrder: 2,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Studio Multimedia',
+        description: 'Studio lengkap dengan green screen, lighting, dan peralatan produksi video.',
+        category: 'MM',
+        location: 'Gedung B, Lantai 2',
+        capacity: 25,
+        isActive: true,
+        displayOrder: 3,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Lab Akuntansi',
+        description: 'Laboratorium dengan software akuntansi MYOB, Accurate, dan Zahir.',
+        category: 'AKL',
+        location: 'Gedung C, Lantai 1',
+        capacity: 35,
+        isActive: true,
+        displayOrder: 4,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Perpustakaan',
+        description: 'Perpustakaan dengan koleksi lebih dari 5000 buku dan akses e-library.',
+        category: 'PUBLIC',
+        location: 'Gedung Utama, Lantai 1',
+        capacity: 100,
+        isActive: true,
+        displayOrder: 5,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Aula Serbaguna',
+        description: 'Aula dengan kapasitas 500 orang untuk kegiatan sekolah dan acara besar.',
+        category: 'PUBLIC',
+        location: 'Gedung Utama',
+        capacity: 500,
+        isActive: true,
+        displayOrder: 6,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Lapangan Olahraga',
+        description: 'Lapangan outdoor untuk basket, voli, dan futsal.',
+        category: 'PUBLIC',
+        location: 'Area Outdoor',
+        capacity: 200,
+        isActive: true,
+        displayOrder: 7,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Ruang UKS',
+        description: 'Unit Kesehatan Sekolah dengan fasilitas P3K dan tempat istirahat.',
+        category: 'PUBLIC',
+        location: 'Gedung Utama, Lantai 1',
+        capacity: 10,
+        isActive: true,
+        displayOrder: 8,
+        createdBy: administrator._id,
+      },
+    ]);
+    console.log('✅ Created 8 fasilitas records');
+
+    // Create Sample Partners (Companies that hired alumni)
+    console.log('🏢 Creating partner data...');
+    await Partner.create([
+      {
+        name: 'PT Telkom Indonesia',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Logo_Telkom_Indonesia_%282013%29.svg/2560px-Logo_Telkom_Indonesia_%282013%29.svg.png',
+        startYear: 2020,
+        location: 'Jakarta',
+        description: 'Perusahaan telekomunikasi terbesar di Indonesia',
+        order: 1,
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Bank BCA',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Bank_Central_Asia.svg/2560px-Bank_Central_Asia.svg.png',
+        startYear: 2019,
+        location: 'Jakarta',
+        description: 'Bank swasta terbesar di Indonesia',
+        order: 2,
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Astra Honda Motor',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Logo_Honda.svg/2048px-Logo_Honda.svg.png',
+        startYear: 2018,
+        location: 'Jakarta',
+        description: 'Produsen sepeda motor terbesar di Indonesia',
+        order: 3,
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Tokopedia',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Tokopedia_logo_2022.svg/1280px-Tokopedia_logo_2022.svg.png',
+        startYear: 2021,
+        location: 'Jakarta',
+        description: 'E-commerce terkemuka di Indonesia',
+        order: 4,
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Gojek',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Gojek_logo_2022.svg/2560px-Gojek_logo_2022.svg.png',
+        startYear: 2022,
+        location: 'Jakarta',
+        description: 'Super app transportasi dan layanan on-demand',
+        order: 5,
+        isActive: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Bank Mandiri',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/2560px-Bank_Mandiri_logo_2016.svg.png',
+        startYear: 2019,
+        location: 'Jakarta',
+        description: 'Bank BUMN terbesar di Indonesia',
+        order: 6,
+        isActive: true,
+        createdBy: administrator._id,
+      },
+    ]);
+    console.log('✅ Created 6 partner records');
+
+    // Create Sample Alumni (with testimonials)
+    console.log('👨‍🎓 Creating alumni data...');
+    await Alumni.create([
+      {
+        name: 'Budi Setiawan',
+        photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+        graduationYear: 2020,
+        jurusan: 'TKJ',
+        currentOccupation: 'Network Administrator',
+        company: 'PT Telkom Indonesia',
+        testimonial: 'SMK Kristen 5 Klaten memberikan fondasi yang kuat untuk karir saya di bidang IT. Guru-guru yang kompeten dan fasilitas lab yang lengkap sangat membantu saya menguasai jaringan komputer.',
+        isPublished: true,
+        isFeatured: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Sari Dewi',
+        photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+        graduationYear: 2019,
+        jurusan: 'AKL',
+        currentOccupation: 'Senior Accountant',
+        company: 'Bank BCA',
+        testimonial: 'Ilmu akuntansi yang saya dapat di SMK Kristen 5 Klaten sangat aplikatif. Sekarang saya bekerja di salah satu bank terbesar di Indonesia berkat bekal dari sekolah.',
+        isPublished: true,
+        isFeatured: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Andi Pratama',
+        photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+        graduationYear: 2021,
+        jurusan: 'MM',
+        currentOccupation: 'Video Editor',
+        company: 'Gojek',
+        testimonial: 'Kreativitas saya diasah dengan baik di jurusan Multimedia. Sekarang saya bisa berkarir di industri kreatif digital yang sangat saya cintai.',
+        isPublished: true,
+        isFeatured: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Rina Kartika',
+        photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80',
+        graduationYear: 2018,
+        jurusan: 'TKJ',
+        currentOccupation: 'IT Support Manager',
+        company: 'Astra Honda Motor',
+        university: 'Universitas Gadjah Mada',
+        testimonial: 'Dari SMK Kristen 5 Klaten, saya melanjutkan kuliah sambil bekerja. Sekarang saya sudah menjadi manager di perusahaan otomotif ternama.',
+        isPublished: true,
+        isFeatured: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Dimas Nugroho',
+        photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
+        graduationYear: 2022,
+        jurusan: 'MM',
+        currentOccupation: 'UI/UX Designer',
+        company: 'Tokopedia',
+        testimonial: 'Skill desain yang saya pelajari di SMK sangat relevan dengan industri. Lab multimedia yang lengkap membuat saya siap terjun ke dunia kerja.',
+        isPublished: true,
+        isFeatured: true,
+        createdBy: administrator._id,
+      },
+      {
+        name: 'Putri Handayani',
+        photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80',
+        graduationYear: 2020,
+        jurusan: 'AKL',
+        currentOccupation: 'Tax Consultant',
+        company: 'PwC Indonesia',
+        testimonial: 'Pendidikan karakter Kristiani dan ilmu akuntansi yang solid dari SMK Kristen 5 Klaten membentuk saya menjadi profesional yang berintegritas.',
+        isPublished: true,
+        isFeatured: true,
+        createdBy: administrator._id,
+      },
+    ]);
+    console.log('✅ Created 6 alumni records');
+
+    // Update Contact with school logo
+    console.log('📞 Updating contact with school logo...');
+    await Contact.findOneAndUpdate(
+      { isCurrent: true },
+      {
+        schoolLogo: 'https://res.cloudinary.com/drszo9bl2/image/upload/v1735530809/smk-kristen5/logo_sekolah.png'
+      },
+      { upsert: false }
+    );
+    console.log('✅ Contact updated with school logo');
 
     // Create Sample Articles
     console.log('📝 Creating sample articles...');
@@ -280,7 +617,7 @@ const seedDatabase = async () => {
         status: 'published',
         isActive: true,
         priority: 3,
-        author: administrator._id,
+        createdBy: administrator._id,
         approvedBy: administrator._id,
         publishedAt: new Date(),
       },
@@ -289,7 +626,7 @@ const seedDatabase = async () => {
         status: 'published',
         isActive: true,
         priority: 2,
-        author: administrator._id,
+        createdBy: administrator._id,
         approvedBy: administrator._id,
         publishedAt: new Date(),
       },
@@ -298,7 +635,7 @@ const seedDatabase = async () => {
         status: 'published',
         isActive: true,
         priority: 1,
-        author: adminSiswa[1]._id,
+        createdBy: adminSiswa[1]._id,
         approvedBy: administrator._id,
         publishedAt: new Date(),
       },

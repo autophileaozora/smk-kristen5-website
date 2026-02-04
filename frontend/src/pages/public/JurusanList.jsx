@@ -1,67 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useSchoolLogo } from '../../hooks/useContact';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../../services/api';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 
 const JurusanList = () => {
-  const navigate = useNavigate();
-  const { logo: schoolLogo } = useSchoolLogo();
   const [jurusans, setJurusans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const horizontalSectionRef = useRef(null);
-  const containerRef = useRef(null);
-
-  // Navbar state
-  const [navbarVisible, setNavbarVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(null);
 
   useEffect(() => {
     fetchJurusans();
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setIsScrolled(currentScrollY > 50);
-
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setNavbarVisible(false);
-      } else {
-        setNavbarVisible(true);
-      }
-      setLastScrollY(currentScrollY);
-
-      // Horizontal scroll on vertical scroll
-      if (horizontalSectionRef.current && containerRef.current) {
-        const section = horizontalSectionRef.current;
-        const container = containerRef.current;
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.offsetHeight;
-        const scrollPosition = currentScrollY - sectionTop;
-
-        // Calculate scroll range
-        const maxScroll = container.scrollWidth - container.offsetWidth;
-
-        // Only apply horizontal scroll when in section bounds
-        if (scrollPosition >= 0 && scrollPosition <= sectionHeight) {
-          const scrollPercent = scrollPosition / sectionHeight;
-          const horizontalScroll = scrollPercent * maxScroll;
-          container.scrollLeft = horizontalScroll;
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
   const fetchJurusans = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/jurusan/active`);
+      const response = await api.get('/api/jurusan');
       setJurusans(response.data.data.jurusans || []);
     } catch (error) {
       console.error('Error fetching jurusans:', error);
@@ -70,357 +24,269 @@ const JurusanList = () => {
     }
   };
 
+  // Gradient colors with glow effects
+  const gradientColors = [
+    { gradient: 'from-cyan-400 to-blue-500', solid: '#06b6d4', primary: '#06b6d4', glow: 'rgba(6, 182, 212, 0.4)' },
+    { gradient: 'from-blue-500 to-indigo-600', solid: '#3b82f6', primary: '#3b82f6', glow: 'rgba(59, 130, 246, 0.4)' },
+    { gradient: 'from-indigo-500 to-purple-600', solid: '#8b5cf6', primary: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.4)' },
+    { gradient: 'from-purple-500 to-pink-500', solid: '#a855f7', primary: '#a855f7', glow: 'rgba(168, 85, 247, 0.4)' },
+    { gradient: 'from-pink-500 to-red-500', solid: '#ec4899', primary: '#ec4899', glow: 'rgba(236, 72, 153, 0.4)' },
+    { gradient: 'from-cyan-500 to-teal-500', solid: '#14b8a6', primary: '#14b8a6', glow: 'rgba(20, 184, 166, 0.4)' },
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="relative">
-          <div className="w-20 h-20 border-4 border-t-blue-600 border-r-purple-600 border-b-pink-600 border-l-cyan-600 rounded-full animate-spin"></div>
+        <div className="text-center">
+          <div className="inline-block w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600 text-lg">Memuat...</p>
         </div>
       </div>
     );
   }
 
-  // Calculate section height based on scroll distance needed
-  const cardWidth = 500; // approximate card width
-  const gap = 32;
-  const totalWidth = jurusans.length * (cardWidth + gap);
-  const sectionHeight = totalWidth * 1.5; // Multiply for smooth scrolling
-
-  // Futuristic gradient backgrounds for each card
-  const gradients = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Purple-Blue
-    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-Red
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', // Cyan-Blue
-    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Green-Cyan
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Pink-Yellow
-    'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', // Cyan-Purple
-    'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', // Mint-Pink
-    'linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%)', // Orange-Pink
-  ];
-
   return (
-    <div className="bg-gray-50 font-sans">
-      {/* Navbar - From Homepage */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        navbarVisible ? 'translate-y-0' : '-translate-y-full'
-      } ${
-        isScrolled ? 'bg-[#0D76BE] shadow-md' : 'bg-[#0D76BE]'
-      }`}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            <Link to="/" className="flex items-center gap-2 md:gap-3 z-50">
-              <img
-                src={schoolLogo}
-                alt="SMK Kristen 5 Klaten"
-                className="h-8 w-8 md:h-12 md:w-12 object-contain"
-              />
-              <div className="leading-tight">
-                <div className="text-[10px] md:text-xs text-white">SEKOLAH MENENGAH KEJURUAN</div>
-                <div className="text-sm md:text-lg font-bold text-white">KRISTEN 5 KLATEN</div>
-              </div>
-            </Link>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Styles */}
+      <style>{`
+        .vertical-text {
+          writing-mode: vertical-rl;
+          text-orientation: mixed;
+        }
 
-            <div className="hidden md:flex items-center gap-6 lg:gap-8">
-              <Link to="/" className="text-white/80 hover:text-white transition-colors relative group">
-                Beranda
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link to="/jurusan" className="text-white font-semibold relative group">
-                Jurusan
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-400"></span>
-              </Link>
-              <Link to="/artikel" className="text-white/80 hover:text-white transition-colors relative group">
-                Artikel
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link to="/kontak" className="text-white/80 hover:text-white transition-colors relative group">
-                Kontak
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-400 group-hover:w-full transition-all duration-300"></span>
-              </Link>
-            </div>
+        /* Card Animations */
+        @keyframes borderGlow {
+          0%, 100% {
+            opacity: 0.3;
+            transform: rotate(0deg) scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: rotate(180deg) scale(1.1);
+          }
+        }
 
-            <div className="flex items-center gap-2 md:gap-4">
-              <button
-                onClick={() => navigate('/artikel')}
-                className="hidden md:block p-1.5 md:p-2 rounded-full transition-colors hover:bg-white/10 text-white"
-              >
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-              <Link
-                to="/daftar"
-                className="hidden md:inline-block px-3 py-1.5 md:px-6 md:py-2.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full font-medium transition-colors text-xs md:text-base"
-              >
-                PENDAFTARAN
-              </Link>
+        @keyframes floatText {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
 
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-white focus:outline-none"
-                aria-label="Toggle menu"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+        .card-glow {
+          position: relative;
+        }
 
-      {/* Mobile Sidebar Menu */}
-      {isMobileMenuOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          ></div>
-          <div className="fixed top-0 right-0 h-full w-[280px] bg-[#0D76BE] z-50 md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between p-4 border-b border-white/20">
-                <div className="flex items-center gap-2">
-                  <img
-                    src={schoolLogo}
-                    alt="SMK Kristen 5 Klaten"
-                    className="h-10 w-10 object-contain"
-                  />
-                  <div className="leading-tight">
-                    <div className="text-sm font-bold text-white">SMK KRISTEN 5</div>
-                    <div className="text-xs text-white/80">KLATEN</div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+        .card-glow::before {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border-radius: 1.5rem;
+          padding: 2px;
+          background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.5), rgba(255,255,255,0.1));
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
 
-              <nav className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-2">
+        .card-glow:hover::before {
+          opacity: 1;
+          animation: borderGlow 3s linear infinite;
+        }
+
+        /* Subtle pattern background */
+        .h-screen.pt-24 {
+          background-image:
+            radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.03) 0%, transparent 50%);
+        }
+      `}</style>
+
+      {/* Fixed Navbar */}
+      <Navbar activePage="jurusan" />
+
+      {/* Main Content - Horizontal Accordion */}
+      <div className="h-screen pt-24 pb-5 px-5 flex gap-4">
+        {jurusans.map((jurusan, index) => {
+          const colors = gradientColors[index % gradientColors.length];
+          const isActive = activeIndex === index;
+
+          return (
+            <div
+              key={jurusan._id}
+              className={`relative h-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer overflow-hidden rounded-3xl ${
+                isActive ? 'flex-[4]' : 'flex-1'
+              }`}
+              onMouseEnter={() => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
+              style={{
+                minWidth: isActive ? '45%' : '80px',
+              }}
+            >
+              {/* Enhanced Apple Glassmorphism Background */}
+              <div
+                className="absolute inset-0 backdrop-blur-3xl rounded-3xl card-glow"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05))',
+                  border: '2px solid rgba(255, 255, 255, 0.6)',
+                  boxShadow: `
+                    0 8px 32px 0 rgba(31, 38, 135, 0.15),
+                    inset 0 2px 4px 0 rgba(255, 255, 255, 0.4),
+                    inset 0 -2px 4px 0 rgba(0, 0, 0, 0.05),
+                    0 0 20px ${colors.glow || 'rgba(255, 255, 255, 0.1)'}
+                  `
+                }}
+              ></div>
+
+              {/* Glass Shine Effect */}
+              <div
+                className="absolute top-0 left-0 right-0 h-1/3 rounded-t-3xl"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%)',
+                  pointerEvents: 'none'
+                }}
+              ></div>
+
+              {/* Animated Border Glow */}
+              <div
+                className="absolute inset-0 rounded-3xl opacity-0 hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background: `linear-gradient(45deg, transparent, ${colors.primary || '#fff'}, transparent)`,
+                  filter: 'blur(20px)',
+                  animation: 'borderGlow 3s ease-in-out infinite'
+                }}
+              ></div>
+
+              {/* Background with Gradient */}
+              <div
+                className={`absolute inset-0 bg-gradient-to-b ${colors.gradient} transition-all duration-700 rounded-3xl`}
+                style={{
+                  opacity: isActive ? 0.8 : 0.9,
+                }}
+              ></div>
+
+              {/* Background Image Overlay */}
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-all duration-700 mix-blend-overlay opacity-10 rounded-3xl"
+                style={{
+                  backgroundImage: `url(${jurusan.backgroundImage || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=1200&fit=crop'})`,
+                }}
+              ></div>
+
+              {/* Content for Active Item */}
+              <div className={`absolute inset-0 flex flex-col justify-start p-8 lg:p-12 transition-all duration-500 ${
+                isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}>
+                <div className="relative z-10">
+                  {/* Title */}
+                  <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight text-white drop-shadow-lg">
+                    {jurusan.name}
+                  </h2>
+
+                  {/* Description */}
+                  <p className="text-white/90 text-sm lg:text-base mb-6 line-clamp-4 leading-relaxed max-w-lg drop-shadow">
+                    {jurusan.shortDescription || jurusan.description?.replace(/<[^>]*>/g, '').slice(0, 250) + '...'}
+                  </p>
+
+                  {/* Button */}
                   <Link
-                    to="/"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Beranda
-                  </Link>
-                  <Link
-                    to="/jurusan"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Jurusan
-                  </Link>
-                  <Link
-                    to="/artikel"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Artikel
-                  </Link>
-                  <Link
-                    to="/kontak"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
-                  >
-                    Kontak
-                  </Link>
-                </div>
-              </nav>
-
-              <div className="p-4 border-t border-white/20">
-                <Link
-                  to="/daftar"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full font-medium text-center transition-colors"
-                >
-                  PENDAFTARAN
-                </Link>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Hero Section */}
-      <section className="pt-24 md:pt-32 pb-12 px-4 md:px-8 min-h-screen flex items-center">
-        <div className="container mx-auto max-w-7xl text-center">
-          <div className="mb-8 flex justify-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D76BE] rounded-full mb-6">
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              <span className="text-sm font-medium text-white">Program Keahlian</span>
-            </div>
-          </div>
-
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-none tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-gradient-x">
-            KRISMA
-          </h1>
-
-          <p className="text-xl md:text-2xl text-gray-800 font-bold max-w-2xl mb-4 mx-auto">
-            SMK KRISTEN 5 KLATEN BISA
-          </p>
-          <p className="text-base text-gray-600 max-w-xl mb-8 mx-auto">
-            Pilih program keahlian yang sesuai dengan minat dan bakatmu
-          </p>
-
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-            <span>Scroll down to explore</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Horizontal Scroll Section - Controlled by vertical scroll */}
-      <section
-        ref={horizontalSectionRef}
-        className="relative bg-gray-50"
-        style={{ height: `${sectionHeight}px` }}
-      >
-        <div className="sticky top-0 h-screen flex items-center overflow-hidden py-16">
-          <div
-            ref={containerRef}
-            className="flex gap-6 md:gap-8 px-4 md:px-8 overflow-x-hidden"
-            style={{ paddingRight: '50vw' }}
-          >
-            {jurusans.map((jurusan, index) => (
-              <Link
-                key={jurusan._id}
-                to={`/jurusan/${jurusan.slug}`}
-                className="flex-shrink-0 w-[400px] md:w-[480px] group"
-              >
-                <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-[360px] md:h-[400px]">
-                  {/* Futuristic Gradient Background */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: gradients[index % gradients.length]
+                    to={`/jurusan/${jurusan.slug}`}
+                    className="inline-block bg-white hover:bg-white/90 text-gray-900 px-6 py-2.5 lg:px-8 lg:py-3 rounded-xl text-xs lg:text-sm font-bold tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 relative z-20 overflow-hidden group"
+                    onClick={(e) => {
+                      e.stopPropagation();
                     }}
                   >
-                    {/* Overlay for text readability */}
-                    <div className="absolute inset-0 bg-black/10"></div>
-                  </div>
-
-                  {/* Content Overlay */}
-                  <div className="relative h-full flex flex-col justify-between p-6 md:p-8">
-                    {/* Top Section - Logo/Code */}
-                    <div className="flex items-start justify-between">
-                      <div>
-                        {jurusan.logo ? (
-                          <img
-                            src={jurusan.logo}
-                            alt={jurusan.code}
-                            className="h-12 w-12 object-contain drop-shadow-lg"
-                          />
-                        ) : (
-                          <div className="h-12 w-12 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-                            <span className="text-xl font-bold text-white">{jurusan.code.substring(0, 2)}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/30">
-                        <span className="text-xs font-semibold text-white">{jurusan.code}</span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Section - Title and CTA */}
-                    <div>
-                      <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 leading-tight group-hover:translate-x-2 transition-transform duration-300 drop-shadow-lg">
-                        {jurusan.name}
-                      </h2>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-white/90">
-                          Kepala Kejuruan
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-white/30 backdrop-blur-sm rounded-full border border-white/50"></div>
-                          <span className="text-xs font-semibold text-white">{jurusan.headOfDepartment || 'Belum Ditentukan'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hover Arrow */}
-                  <div className="absolute top-1/2 right-6 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-4 transition-all duration-300">
-                    <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer - From Homepage */}
-      <footer className="bg-gray-800 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <img
-                  src={schoolLogo}
-                  alt="SMK Kristen 5 Klaten"
-                  className="h-16 w-16 object-contain"
-                />
-                <div>
-                  <div className="text-2xl font-bold">SMK KRISTEN 5</div>
-                  <div className="text-xl">KLATEN</div>
+                    <span className="relative z-10">Lihat Detail Jurusan</span>
+                    <div className="absolute inset-0 bg-gray-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  </Link>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Information</h4>
-              <ul className="space-y-3">
-                <li><Link to="/sejarah" className="hover:text-yellow-400 transition-colors underline">Sejarah</Link></li>
-                <li><Link to="/sambutan" className="hover:text-yellow-400 transition-colors underline">Sambutan Kepala Sekolah</Link></li>
-              </ul>
+              {/* Content for Inactive Items - Vertical Text */}
+              <div className={`absolute inset-0 flex flex-col items-center justify-start pt-16 gap-1 transition-all duration-500 ${
+                isActive ? 'opacity-0' : 'opacity-100'
+              }`}>
+                {/* Code - Vertical Stacked (Each letter on new line) */}
+                {(jurusan.code || jurusan.name?.slice(0, 4).toUpperCase()).split('').map((letter, idx) => (
+                  <span
+                    key={idx}
+                    className="text-5xl lg:text-6xl font-bold text-white tracking-wider"
+                    style={{
+                      textShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                      opacity: 0.95,
+                    }}
+                  >
+                    {letter}
+                  </span>
+                ))}
+              </div>
             </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Penanggung Jawab</h4>
-              <ul className="space-y-3">
-                <li><Link to="/admin" className="hover:text-yellow-400 transition-colors underline">Admin Content</Link></li>
-                <li><Link to="/login" className="hover:text-yellow-400 transition-colors underline">Login</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Link lainnya</h4>
-              <ul className="space-y-3">
-                <li><a href="#" className="hover:text-yellow-400 transition-colors underline">Lowongan Kerja</a></li>
-                <li><a href="#" className="hover:text-yellow-400 transition-colors underline">BKK Krisma</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Copyright Section */}
-      <div className="bg-[#0D76BE] text-white py-4">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.</p>
-          </div>
-        </div>
+          );
+        })}
       </div>
+
+      {/* Footer */}
+      <Footer />
+
+      {/* Mobile View - Responsive Layout */}
+      <style>{`
+        @media (max-width: 768px) {
+          .h-screen.pt-24 {
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 100vh;
+            padding-top: 5rem !important;
+          }
+
+          .h-screen.pt-24 > div {
+            flex: none !important;
+            height: 140px !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+          }
+
+          .h-screen.pt-24 > div:hover {
+            height: 400px !important;
+          }
+
+          /* Horizontal text for mobile */
+          .h-screen.pt-24 > div span {
+            display: inline !important;
+            font-size: 2rem !important;
+            margin: 0 0.25rem !important;
+          }
+
+          .h-screen.pt-24 > div > div:last-child {
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding-top: 0 !important;
+            gap: 0.5rem !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .h-screen.pt-24 {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            gap: 0.75rem !important;
+          }
+
+          .h-screen.pt-24 > div span {
+            font-size: 1.5rem !important;
+          }
+
+          /* Button mobile sizing */
+          .h-screen.pt-24 a {
+            padding: 0.5rem 1.25rem !important;
+            font-size: 0.75rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

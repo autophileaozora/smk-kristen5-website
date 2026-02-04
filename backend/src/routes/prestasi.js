@@ -57,8 +57,8 @@ router.get('/:id', async (req, res) => {
 
 // @route   POST /api/prestasi
 // @desc    Create new prestasi
-// @access  Protected + Admin
-router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, res) => {
+// @access  Protected (Admin & Siswa)
+router.post('/', protect, uploadSingle('image'), async (req, res) => {
   try {
     const { title, description, category, level, date, participants, showInRunningText } = req.body;
 
@@ -133,8 +133,8 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
 
 // @route   PUT /api/prestasi/:id
 // @desc    Update prestasi
-// @access  Protected + Admin
-router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, res) => {
+// @access  Protected (Admin & Siswa)
+router.put('/:id', protect, uploadSingle('image'), async (req, res) => {
   try {
     const prestasi = await Prestasi.findById(req.params.id);
 
@@ -209,8 +209,8 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
 
 // @route   DELETE /api/prestasi/:id
 // @desc    Delete prestasi
-// @access  Protected + Admin
-router.delete('/:id', protect, isAdministrator, async (req, res) => {
+// @access  Protected (Admin & Siswa)
+router.delete('/:id', protect, async (req, res) => {
   try {
     const prestasi = await Prestasi.findById(req.params.id);
 

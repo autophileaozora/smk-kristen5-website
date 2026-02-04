@@ -77,12 +77,22 @@ router.get('/:id', protect, isAdministrator, async (req, res) => {
 // @access  Protected + Admin
 router.post('/', protect, isAdministrator, async (req, res) => {
   try {
-    const { title, subtitle, buttonText, buttonLink, backgroundImage, backgroundColor, isActive } = req.body;
+    const {
+      title,
+      description,
+      primaryButtonText,
+      primaryButtonLink,
+      secondaryButtonText,
+      secondaryButtonLink,
+      backgroundImage,
+      backgroundColor,
+      isActive
+    } = req.body;
 
-    if (!title || !buttonText || !buttonLink) {
+    if (!title || !primaryButtonText || !primaryButtonLink) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide title, button text, and button link',
+        message: 'Please provide title, primary button text, and primary button link',
       });
     }
 
@@ -93,9 +103,11 @@ router.post('/', protect, isAdministrator, async (req, res) => {
 
     const cta = await CTA.create({
       title,
-      subtitle: subtitle || '',
-      buttonText,
-      buttonLink,
+      description: description || '',
+      primaryButtonText,
+      primaryButtonLink,
+      secondaryButtonText: secondaryButtonText || '',
+      secondaryButtonLink: secondaryButtonLink || '',
       backgroundImage: backgroundImage || null,
       backgroundColor: backgroundColor || '#0D76BE',
       isActive: isActive !== undefined ? isActive : true,
@@ -142,7 +154,17 @@ router.put('/:id', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    const { title, subtitle, buttonText, buttonLink, backgroundImage, backgroundColor, isActive } = req.body;
+    const {
+      title,
+      description,
+      primaryButtonText,
+      primaryButtonLink,
+      secondaryButtonText,
+      secondaryButtonLink,
+      backgroundImage,
+      backgroundColor,
+      isActive
+    } = req.body;
 
     // If setting this CTA as active, deactivate all others
     if (isActive && !cta.isActive) {
@@ -150,9 +172,11 @@ router.put('/:id', protect, isAdministrator, async (req, res) => {
     }
 
     cta.title = title || cta.title;
-    cta.subtitle = subtitle !== undefined ? subtitle : cta.subtitle;
-    cta.buttonText = buttonText || cta.buttonText;
-    cta.buttonLink = buttonLink || cta.buttonLink;
+    cta.description = description !== undefined ? description : cta.description;
+    cta.primaryButtonText = primaryButtonText || cta.primaryButtonText;
+    cta.primaryButtonLink = primaryButtonLink || cta.primaryButtonLink;
+    cta.secondaryButtonText = secondaryButtonText !== undefined ? secondaryButtonText : cta.secondaryButtonText;
+    cta.secondaryButtonLink = secondaryButtonLink !== undefined ? secondaryButtonLink : cta.secondaryButtonLink;
     cta.backgroundImage = backgroundImage !== undefined ? backgroundImage : cta.backgroundImage;
     cta.backgroundColor = backgroundColor || cta.backgroundColor;
     cta.isActive = isActive !== undefined ? isActive : cta.isActive;
