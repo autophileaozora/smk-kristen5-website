@@ -1,11 +1,12 @@
 import express from 'express';
 import CustomPage from '../models/CustomPage.js';
-import { authenticateToken, isAdmin } from '../middleware/auth.js';
+import { protect } from '../middleware/auth.js';
+import { isAdministrator } from '../middleware/roleCheck.js';
 
 const router = express.Router();
 
 // Get all custom pages (Admin)
-router.get('/', authenticateToken, isAdmin, async (req, res) => {
+router.get('/', protect, isAdministrator, async (req, res) => {
   try {
     const { status, search, page = 1, limit = 20 } = req.query;
     const query = {};
@@ -68,7 +69,7 @@ router.get('/public/:slug', async (req, res) => {
 });
 
 // Get single custom page by ID (Admin)
-router.get('/:id', authenticateToken, isAdmin, async (req, res) => {
+router.get('/:id', protect, isAdministrator, async (req, res) => {
   try {
     const page = await CustomPage.findById(req.params.id)
       .populate('createdBy', 'name email')
@@ -86,7 +87,7 @@ router.get('/:id', authenticateToken, isAdmin, async (req, res) => {
 });
 
 // Create new custom page
-router.post('/', authenticateToken, isAdmin, async (req, res) => {
+router.post('/', protect, isAdministrator, async (req, res) => {
   try {
     const { title, slug, description, blocks, status, seo } = req.body;
 
@@ -123,7 +124,7 @@ router.post('/', authenticateToken, isAdmin, async (req, res) => {
 });
 
 // Update custom page
-router.put('/:id', authenticateToken, isAdmin, async (req, res) => {
+router.put('/:id', protect, isAdministrator, async (req, res) => {
   try {
     const { title, slug, description, blocks, status, seo } = req.body;
 
@@ -168,7 +169,7 @@ router.put('/:id', authenticateToken, isAdmin, async (req, res) => {
 });
 
 // Delete custom page
-router.delete('/:id', authenticateToken, isAdmin, async (req, res) => {
+router.delete('/:id', protect, isAdministrator, async (req, res) => {
   try {
     const page = await CustomPage.findByIdAndDelete(req.params.id);
 
@@ -187,7 +188,7 @@ router.delete('/:id', authenticateToken, isAdmin, async (req, res) => {
 });
 
 // Duplicate custom page
-router.post('/:id/duplicate', authenticateToken, isAdmin, async (req, res) => {
+router.post('/:id/duplicate', protect, isAdministrator, async (req, res) => {
   try {
     const originalPage = await CustomPage.findById(req.params.id);
 
