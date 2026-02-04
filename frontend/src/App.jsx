@@ -28,7 +28,9 @@ const CTAManagement = lazy(() => import('./pages/CTAManagement'));
 const AboutManagement = lazy(() => import('./pages/AboutManagement'));
 const Activities = lazy(() => import('./pages/Activities'));
 const Events = lazy(() => import('./pages/Events'));
+const CustomPages = lazy(() => import('./pages/CustomPages'));
 const HomepageFixed = lazy(() => import('./pages/public/HomepageFixed'));
+const CustomPageView = lazy(() => import('./pages/public/CustomPageView'));
 const JurusanList = lazy(() => import('./pages/public/JurusanList'));
 const JurusanDetail = lazy(() => import('./pages/public/JurusanDetail'));
 const Artikel = lazy(() => import('./pages/public/Artikel'));
@@ -87,6 +89,7 @@ function App() {
           <Route path="/sambutan" element={<Sambutan />} />
           <Route path="/tentang" element={<Tentang />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/page/:slug" element={<CustomPageView />} />
           <Route path="/login" element={<Login />} />
 
           {/* Protected Routes - Admin Panel */}
@@ -113,6 +116,7 @@ function App() {
             <Route path="about" element={<AboutManagement />} />
             <Route path="activities" element={<Activities />} />
             <Route path="events" element={<Events />} />
+            <Route path="custom-pages" element={<CustomPages />} />
             <Route path="categories" element={<Categories />} />
             <Route path="users" element={<Users />} />
             <Route path="audit-logs" element={<AuditLogs />} />

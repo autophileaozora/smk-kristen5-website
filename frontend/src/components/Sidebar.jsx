@@ -46,6 +46,7 @@ const Sidebar = () => {
     { name: 'Alumni', path: '/admin/alumni', icon: '👥' },
     { name: 'Video Hero', path: '/admin/video-hero', icon: '🎬' },
     { name: 'Hero Slides', path: '/admin/hero-slides', icon: '🖼️' },
+    { name: 'Custom Pages', path: '/admin/custom-pages', icon: '📄' },
     { name: 'Kategori', path: '/admin/categories', icon: '📁' },
     { name: 'Manajemen User', path: '/admin/users', icon: '👤' },
     { name: 'Audit Log', path: '/admin/audit-logs', icon: '📋' },
