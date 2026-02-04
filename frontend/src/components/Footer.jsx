@@ -73,7 +73,7 @@ const Footer = () => {
                     socialMedia.map((social, idx) => (
                       <li key={idx} className="text-xs leading-relaxed text-gray-200 font-medium">
                         <a href={social.url} target="_blank" rel="noopener noreferrer" className="hover:text-yellow-300 transition-colors">
-                          {social.platform.toUpperCase()}
+                          {social.platform?.toUpperCase() || social.name?.toUpperCase() || 'SOCIAL MEDIA'}
                         </a>
                       </li>
                     ))
