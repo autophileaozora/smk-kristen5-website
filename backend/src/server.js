@@ -6,12 +6,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables FIRST before any other imports
-// Specify path explicitly to make sure it loads from backend root
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-import app from './app.js';
-import connectDB from './config/database.js';
-import logger from './utils/logger.js';
+// Dynamic imports so env vars are available when modules initialize
+const { default: app } = await import('./app.js');
+const { default: connectDB } = await import('./config/database.js');
+const { default: logger } = await import('./utils/logger.js');
 
 // Validate required environment variables
 const requiredEnvVars = [

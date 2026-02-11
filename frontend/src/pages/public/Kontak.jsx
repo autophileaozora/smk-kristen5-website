@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const Kontak = () => {
   const navigate = useNavigate();
@@ -47,7 +45,7 @@ const Kontak = () => {
   useEffect(() => {
     const fetchContactInfo = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/contact`);
+        const response = await api.get(`/api/contact`);
         if (response.data.success) {
           setContactInfo(response.data.data);
         }
@@ -391,7 +389,7 @@ const Kontak = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 bg-[#0D76BE] hover:bg-[#0B5FA3] text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-[#0d76be] hover:bg-[#0a5a91] text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>

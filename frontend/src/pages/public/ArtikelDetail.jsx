@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const ArtikelDetail = () => {
   const { slug } = useParams();
@@ -74,7 +72,7 @@ const ArtikelDetail = () => {
 
   const fetchArticle = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/articles/slug/${slug}`);
+      const response = await api.get(`/api/articles/slug/${slug}`);
       setArticle(response.data.data.article);
     } catch (error) {
       console.error('Error fetching article:', error);
@@ -85,7 +83,7 @@ const ArtikelDetail = () => {
 
   const fetchRecentArticles = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/articles/public?limit=3`);
+      const response = await api.get(`/api/articles/public?limit=3`);
       // Filter out current article
       const filtered = (response.data.data.articles || []).filter(
         art => art.slug !== slug
@@ -109,7 +107,7 @@ const ArtikelDetail = () => {
     try {
       if (!article) return;
 
-      const response = await axios.get(`${API_URL}/api/articles/public?limit=10`);
+      const response = await api.get(`/api/articles/public?limit=10`);
       const allArticles = response.data.data.articles || [];
 
       // Filter articles with same categoryTopik, exclude current article
@@ -406,6 +404,35 @@ const ArtikelDetail = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Article content image styles - supports float/size from editor */}
+      <style>{`
+        .article-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.5rem;
+        }
+        .article-content img[style*="float: left"] {
+          margin-right: 1.5rem;
+          margin-bottom: 1rem;
+          border-radius: 0.5rem;
+        }
+        .article-content img[style*="float: right"] {
+          margin-left: 1.5rem;
+          margin-bottom: 1rem;
+          border-radius: 0.5rem;
+        }
+        .article-content::after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+        .article-content p::after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+      `}</style>
     </div>
   );
 };
