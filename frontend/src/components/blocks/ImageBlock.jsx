@@ -1,5 +1,3 @@
-import LazyImage from '../LazyImage';
-
 const ImageBlock = ({
   src = '',
   alt = 'Image',
@@ -49,9 +47,10 @@ const ImageBlock = ({
 
   return (
     <figure className={figureClass} style={figureStyle}>
-      <LazyImage
+      <img
         src={src}
         alt={alt}
+        loading="lazy"
         className={`w-full h-auto ${roundedClasses[rounded]}`}
       />
       {caption && (
