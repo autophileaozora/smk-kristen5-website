@@ -19,13 +19,13 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
     {
       _id: '2',
       label: 'Profil',
-      url: '/tentang',
+      url: '/page/profil',
       isDropdown: true,
       children: [
-        { _id: 'profil-1', label: 'Tentang Kami', url: '/tentang', target: '_self' },
-        { _id: 'profil-2', label: 'Visi & Misi', url: '/visi-misi', target: '_self' },
-        { _id: 'profil-3', label: 'Sejarah', url: '/sejarah', target: '_self' },
-        { _id: 'profil-4', label: 'Sambutan Kepsek', url: '/sambutan', target: '_self' },
+        { _id: 'profil-1', label: 'Sejarah', url: '/page/profil', target: '_self' },
+        { _id: 'profil-2', label: 'Visi & Misi', url: '/page/profil#visi-misi', target: '_self' },
+        { _id: 'profil-3', label: 'Sambutan Kepala Sekolah', url: '/page/profil#sambutan-kepala-sekolah', target: '_self' },
+        { _id: 'profil-4', label: 'Tentang Kami', url: '/page/profil#tentang-kami', target: '_self' },
       ]
     },
     { _id: '3', label: 'Jurusan', url: '/jurusan', isDropdown: false, children: [] },

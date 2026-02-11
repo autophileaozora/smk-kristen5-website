@@ -16,7 +16,8 @@ app.use(mongoSanitize()); // Prevent MongoDB injection
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
   'http://localhost:5173',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'https://smk-kristen5.netlify.app',
 ];
 
 // Add production frontend URL if exists
