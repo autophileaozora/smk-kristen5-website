@@ -186,7 +186,7 @@ const Events = () => {
       </div>
 
       {/* Events Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center">
             <div className="inline-block w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
@@ -197,7 +197,7 @@ const Events = () => {
             <p>Belum ada event. Klik "Tambah Event" untuk mulai.</p>
           </div>
         ) : (
-          <table className="w-full">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>

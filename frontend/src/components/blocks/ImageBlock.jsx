@@ -5,6 +5,8 @@ const ImageBlock = ({
   alt = 'Image',
   caption = '',
   width = 'full',
+  customWidth = '',
+  alignment = 'center',
   rounded = 'md',
   className = '',
 }) => {
@@ -25,6 +27,12 @@ const ImageBlock = ({
     full: 'rounded-full',
   };
 
+  const alignClasses = {
+    left: '',
+    center: 'mx-auto',
+    right: 'ml-auto',
+  };
+
   if (!src) {
     return (
       <div className="bg-gray-200 flex items-center justify-center h-64 rounded-lg mb-4">
@@ -33,8 +41,14 @@ const ImageBlock = ({
     );
   }
 
+  // Use customWidth (percentage) if set, otherwise fall back to width classes
+  const figureStyle = customWidth ? { width: customWidth, maxWidth: '100%' } : {};
+  const figureClass = customWidth
+    ? `mb-4 ${alignClasses[alignment] || 'mx-auto'} ${className}`
+    : `mb-4 ${widthClasses[width]} ${alignClasses[alignment] || ''} ${className}`;
+
   return (
-    <figure className={`mb-4 ${widthClasses[width]} ${className}`}>
+    <figure className={figureClass} style={figureStyle}>
       <LazyImage
         src={src}
         alt={alt}

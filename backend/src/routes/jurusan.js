@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Jurusan from '../models/Jurusan.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
@@ -53,8 +54,10 @@ router.get('/active', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
-    const jurusan = await Jurusan.findById(req.params.id)
-      .populate('createdBy', 'name');
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+    const jurusan = isObjectId
+      ? await Jurusan.findById(req.params.id).populate('createdBy', 'name')
+      : await Jurusan.findOne({ slug: req.params.id }).populate('createdBy', 'name');
 
     if (!jurusan) {
       return res.status(404).json({
@@ -215,6 +218,53 @@ router.post('/', protect, isAdministrator, uploadMultiple([
     });
   } catch (error) {
     console.error('Jurusan creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @route   PUT /api/jurusan/:id/blocks
+// @desc    Update jurusan page builder blocks
+// @access  Protected + Admin
+router.put('/:id/blocks', protect, isAdministrator, async (req, res) => {
+  try {
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+    const jurusan = isObjectId
+      ? await Jurusan.findById(req.params.id)
+      : await Jurusan.findOne({ slug: req.params.id });
+
+    if (!jurusan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Jurusan not found',
+      });
+    }
+
+    jurusan.blocks = req.body.blocks || [];
+    await jurusan.save();
+
+    // Audit log
+    await AuditLog.create({
+      user: req.user.id,
+      action: 'update',
+      resource: 'jurusan',
+      resourceId: jurusan._id,
+      details: {
+        action: 'blocks_update',
+        blocksCount: jurusan.blocks.length,
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Jurusan blocks updated successfully',
+      data: { jurusan },
+    });
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,

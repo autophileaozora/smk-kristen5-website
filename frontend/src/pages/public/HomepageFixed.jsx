@@ -34,6 +34,7 @@ const HomepageFixed = () => {
       sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
     },
     events: [],
+    siteSettings: null,
   });
   const [loading, setLoading] = useState(true);
   const [navbarVisible, setNavbarVisible] = useState(true);
@@ -67,6 +68,7 @@ const HomepageFixed = () => {
           activityTabsRes,
           activitySettingsRes,
           eventsRes,
+          siteSettingsRes,
         ] = await Promise.all([
           api.get('/api/jurusan').catch(() => ({ data: { data: [] } })),
           api.get('/api/articles/public?limit=6').catch(() => ({ data: { data: { articles: [] } } })),
@@ -84,6 +86,7 @@ const HomepageFixed = () => {
           api.get('/api/activities/tabs').catch(() => ({ data: { data: { tabs: [] } } })),
           api.get('/api/activities/settings').catch(() => ({ data: { data: { settings: null } } })),
           api.get('/api/events/upcoming').catch(() => ({ data: { data: { events: [] } } })),
+          api.get('/api/site-settings').catch(() => ({ data: { data: { settings: null } } })),
         ]);
 
         setData({
@@ -109,6 +112,7 @@ const HomepageFixed = () => {
             sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
           },
           events: eventsRes.data.data?.events || [],
+          siteSettings: siteSettingsRes.data.data?.settings || null,
         });
         setLoading(false);
       } catch (error) {
@@ -188,11 +192,13 @@ const HomepageFixed = () => {
     );
   }
 
+  const hp = data.siteSettings?.homepageSections || {};
+
   return (
     <>
       <SEO
-        title="SMK Kristen 5 Klaten - Sekolah Menengah Kejuruan"
-        description="SMK Kristen 5 Klaten menyiapkan siswa masuk dunia kerja dengan kurikulum berbasis industri"
+        title={data.siteSettings?.metaTitle || 'SMK Kristen 5 Klaten - Sekolah Menengah Kejuruan'}
+        description={data.siteSettings?.metaDescription || 'SMK Kristen 5 Klaten menyiapkan siswa masuk dunia kerja dengan kurikulum berbasis industri'}
       />
 
       {/* Custom Styles */}
@@ -364,23 +370,23 @@ const HomepageFixed = () => {
 
         <div className="relative z-20 max-w-[1300px] mx-auto px-4 lg:px-20 py-10 lg:py-20">
           <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-20">
-            {/* Left Content */}
-            <div className="w-full lg:w-[400px] flex-shrink-0">
-              <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">MENGAPA SEKOLAH DI KRISMA</h3>
+            {/* Left Content - 50% */}
+            <div className="w-full lg:w-1/2 lg:pr-10">
+              <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">{hp.whyTitle || 'MENGAPA SEKOLAH DI KRISMA'}</h3>
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-tight text-[#0d76be] mb-3 lg:mb-4">
-                SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL
+                {hp.whyHeading || 'SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL'}
               </h2>
               <p className="text-xs lg:text-sm leading-relaxed text-gray-700">
-                SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.
+                {hp.whyDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
               </p>
 
-              <Link to="/tentang" className="inline-flex items-center justify-center px-4 lg:px-6 py-2 lg:py-2.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full mt-4 lg:mt-6 transition-colors">
-                <span className="text-[10px] lg:text-xs font-medium">Baca Profil Sekolah</span>
+              <Link to={hp.whyButtonUrl || '/tentang'} className="inline-flex items-center justify-center px-4 lg:px-6 py-2 lg:py-2.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full mt-4 lg:mt-6 transition-colors">
+                <span className="text-[10px] lg:text-xs font-medium">{hp.whyButtonText || 'Baca Profil Sekolah'}</span>
               </Link>
 
               {/* Alumni Companies */}
               <div className="mt-6 lg:mt-10">
-                <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide">ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY</h4>
+                <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide">{hp.statsHeading || 'ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY'}</h4>
                 <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[400px]">
                   {(data.partners || []).slice(0, 6).map((partner, idx) => (
                     <div key={idx} className="bg-white rounded-md p-1.5 lg:p-2.5 h-12 lg:h-16 flex items-center justify-center">
@@ -391,8 +397,9 @@ const HomepageFixed = () => {
               </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-0 lg:mt-24 lg:ml-auto max-w-[500px] w-full">
+            {/* Stats Cards - 50% */}
+            <div className="w-full lg:w-1/2">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-0 lg:mt-24 w-full">
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-[#008fd7] sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.ekskuls || []).length}</div>
                 <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">EKSTRAKURIKULER</h4>
@@ -410,10 +417,10 @@ const HomepageFixed = () => {
               </div>
 
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-red-500 sm:aspect-square flex flex-col">
-                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">27</div>
+                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{new Date().getFullYear() - (hp.foundingYear || 1999)}</div>
                 <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">TAHUN PENGABDIAN</h4>
                 <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
-                  Melayani pendidikan di Klaten sejak tahun 1999
+                  {`Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`}
                 </p>
               </div>
 
@@ -425,6 +432,7 @@ const HomepageFixed = () => {
                 </p>
               </div>
             </div>
+            </div>
           </div>
         </div>
       </div>
@@ -434,9 +442,9 @@ const HomepageFixed = () => {
         <div className="flex justify-center mb-2">
           <Mascot3D size={100} />
         </div>
-        <h2 className="text-sm lg:text-lg font-medium text-black mt-3">ACCELERATE YOUR ENTIRE POTENTIAL</h2>
+        <h2 className="text-sm lg:text-lg font-medium text-black mt-3">{hp.accelerateTitle || 'ACCELERATE YOUR ENTIRE POTENTIAL'}</h2>
         <p className="text-[10px] lg:text-xs leading-relaxed text-black font-light mt-3 lg:mt-4">
-          MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA
+          {hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}
         </p>
       </section>
 
@@ -624,8 +632,8 @@ const HomepageFixed = () => {
                     </div>
                   </div>
 
-                  {/* Nav Dots - below image, left aligned */}
-                  <div className="flex justify-start gap-2 mt-3 px-4 lg:px-10">
+                  {/* Nav Dots - below image, centered */}
+                  <div className="flex justify-center gap-2 mt-3 px-4 lg:px-10">
                     {currentItems.map((_, dot) => (
                       <button
                         key={dot}
@@ -733,13 +741,13 @@ const HomepageFixed = () => {
             {/* Right - Info */}
             <div className="w-full lg:w-[400px] flex-shrink-0 order-first lg:order-last">
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white">
-                Cerita pengalaman menarik dan berkesan oleh alumni kami
+                {hp.testimonialsTitle || 'Cerita pengalaman menarik dan berkesan oleh alumni kami'}
               </h2>
               <p className="text-xs sm:text-sm leading-relaxed text-white mt-3 lg:mt-5">
-                SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.
+                {hp.testimonialsDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
               </p>
-              <button className="inline-flex items-center px-6 lg:px-8 py-2.5 lg:py-3 bg-transparent border-2 border-[#c9a55b] text-white text-[11px] lg:text-xs font-semibold rounded mt-5 lg:mt-8 hover:bg-[#c9a55b] transition-all">
-                BAGIKAN CERITAMU
+              <button className="inline-flex items-center px-6 lg:px-8 py-2.5 lg:py-3 bg-transparent border-2 border-yellow-300 text-yellow-300 text-[11px] lg:text-xs font-semibold rounded-lg mt-5 lg:mt-8 hover:bg-yellow-300/10 transition-all tracking-wide">
+                {hp.testimonialsButtonText || 'BAGIKAN CERITAMU'}
               </button>
             </div>
           </div>
@@ -811,7 +819,7 @@ const HomepageFixed = () => {
           <div className="w-full lg:w-[280px] flex-shrink-0 mt-6 lg:mt-0">
             <div className="flex items-center gap-2 mb-4 lg:mb-6">
               <div className="w-1 h-5 lg:h-6 bg-[#0d76be] rounded-full"></div>
-              <h3 className="text-base lg:text-lg font-bold text-gray-900">TOP 5 BERITA</h3>
+              <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsTopTitle || 'TOP 5 BERITA'}</h3>
             </div>
 
             <div className="space-y-4 lg:space-y-5">
@@ -841,15 +849,15 @@ const HomepageFixed = () => {
         {/* BERITA UTAMA - Bottom section */}
         <div className="mt-8 lg:mt-12">
           <div className="mb-4 lg:mb-6">
-            <h3 className="text-base lg:text-lg font-bold text-gray-900">BERITA UTAMA</h3>
+            <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsMainTitle || 'BERITA UTAMA'}</h3>
             <div className="w-10 lg:w-12 h-1 bg-[#0d76be] mt-2 rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-0">
             {(data.articles || []).slice(0, 3).map((article, idx) => (
               <Link
                 key={idx}
                 to={`/artikel/${article.slug}`}
-                className="group"
+                className={`group ${idx < 2 ? 'md:border-r md:border-gray-200 md:pr-6 md:mr-6' : ''}`}
               >
                 <h4 className="text-sm lg:text-base font-semibold text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2">
                   {article.title}
@@ -866,9 +874,9 @@ const HomepageFixed = () => {
       {/* Events Section */}
       <section className="py-12 lg:py-20 px-4 lg:px-10 relative" style={{ background: 'linear-gradient(to bottom, transparent 50px, rgba(13,118,190,0.15) 50%, rgba(13,118,190,0.31) 100%)' }}>
         <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-base lg:text-lg font-bold text-black">KEGIATAN SISWA DAN GURU</h2>
+          <h2 className="text-base lg:text-lg font-bold text-black">{hp.eventsTitle || 'KEGIATAN SISWA DAN GURU'}</h2>
           <p className="text-xs lg:text-sm leading-relaxed text-gray-600 font-medium max-w-3xl mx-auto mt-2 px-2">
-            AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH
+            {hp.eventsDescription || 'AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH'}
           </p>
         </div>
 
@@ -963,7 +971,7 @@ const HomepageFixed = () => {
 
 
         <button className="flex items-center justify-center px-6 lg:px-10 py-3 lg:py-3.5 bg-[#f6efe4] text-gray-700 text-[11px] lg:text-xs font-semibold rounded-lg mx-auto hover:bg-[#f0e5d4] hover:-translate-y-0.5 shadow-md hover:shadow-lg transition-all">
-          LIHAT SEMUA AGENDA
+          {hp.eventsButtonText || 'LIHAT SEMUA AGENDA'}
         </button>
       </section>
 
@@ -995,14 +1003,14 @@ const HomepageFixed = () => {
             <div className="flex gap-3 lg:gap-4 mt-5 lg:mt-7 flex-wrap justify-center lg:justify-start">
               <Link
                 to={data.cta?.primaryButtonLink || '/pendaftaran'}
-                className="bg-yellow-300 text-black px-5 lg:px-7 py-3 lg:py-3.5 rounded text-[11px] lg:text-xs font-semibold uppercase hover:bg-yellow-400 hover:-translate-y-0.5 transition-all"
+                className="bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 lg:px-7 py-3 lg:py-3.5 rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
                 {data.cta?.primaryButtonText || 'DAFTAR SEKARANG'}
               </Link>
               {(data.cta?.secondaryButtonText || !data.cta) && (
                 <Link
                   to={data.cta?.secondaryButtonLink || '/kontak'}
-                  className="bg-transparent text-white px-5 lg:px-7 py-3 lg:py-3.5 border-2 border-white rounded text-[11px] lg:text-xs font-semibold uppercase hover:bg-white/10 hover:-translate-y-0.5 transition-all"
+                  className="bg-transparent text-white px-5 lg:px-7 py-3 lg:py-3.5 border-2 border-white rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide hover:bg-white/10 hover:-translate-y-0.5 transition-all"
                 >
                   {data.cta?.secondaryButtonText || 'LAYANAN INFORMASI'}
                 </Link>

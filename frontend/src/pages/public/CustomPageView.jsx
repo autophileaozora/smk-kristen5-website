@@ -55,7 +55,7 @@ const CustomPageView = () => {
             <p className="text-xl text-gray-600 mb-8">{error}</p>
             <button
               onClick={() => navigate('/')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-[#0d76be] text-white rounded-full hover:bg-[#0a5a91] transition-colors font-medium"
             >
               Kembali ke Beranda
             </button>
@@ -78,7 +78,8 @@ const CustomPageView = () => {
       <div className="min-h-screen bg-gray-50">
         <Navbar />
 
-        <main className="pt-24 pb-12">
+        {/* Check if first block is hero - if so, no padding needed */}
+        <main className={`pb-12 ${page?.blocks?.[0]?.type === 'hero' ? '' : 'pt-24'}`}>
           <PageRenderer blocks={page?.blocks || []} />
         </main>
 

@@ -107,6 +107,9 @@ import heroSlidesRoutes from './routes/heroSlides.js';
 import activitiesRoutes from './routes/activities.js';
 import eventsRoutes from './routes/events.js';
 import customPagesRoutes from './routes/customPages.js';
+import siteSettingsRoutes from './routes/siteSettings.js';
+import navbarRoutes from './routes/navbar.js';
+import footerRoutes from './routes/footer.js';
 
 // Mount routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -133,6 +136,9 @@ app.use('/api/hero-slides', heroSlidesRoutes);
 app.use('/api/activities', activitiesRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/custom-pages', customPagesRoutes);
+app.use('/api/site-settings', siteSettingsRoutes);
+app.use('/api/navbar', navbarRoutes);
+app.use('/api/footer', footerRoutes);
 
 // Root route
 app.get('/', (req, res) => {

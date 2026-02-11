@@ -50,13 +50,16 @@ const Sidebar = () => {
     { name: 'Kategori', path: '/admin/categories', icon: '📁' },
     { name: 'Manajemen User', path: '/admin/users', icon: '👤' },
     { name: 'Audit Log', path: '/admin/audit-logs', icon: '📋' },
-    { name: 'Kontak', path: '/admin/kontak', icon: '📞' },
     { name: 'Sosial Media', path: '/admin/social-media', icon: '🌐' },
     { name: 'Partner', path: '/admin/partners', icon: '🤝' },
     { name: 'CTA', path: '/admin/cta', icon: '📣' },
     { name: 'Kegiatan', path: '/admin/activities', icon: '🎯' },
     { name: 'Agenda', path: '/admin/events', icon: '📅' },
-    { name: 'Tentang', path: '/admin/about', icon: '📖' },
+    { name: 'Informasi Sekolah', path: '/admin/about', icon: '🏫' },
+    { divider: true, name: 'Pengaturan' },
+    { name: 'Pengaturan Website', path: '/admin/site-settings', icon: '⚙️' },
+    { name: 'Manajemen Navbar', path: '/admin/navbar', icon: '🧭' },
+    { name: 'Manajemen Footer', path: '/admin/footer', icon: '📋' },
   ] : [
     { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
     { name: 'Artikel Saya', path: '/admin/my-articles', icon: '📝' },
@@ -137,8 +140,15 @@ const Sidebar = () => {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {navigationItems
-            .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map((item) => (
+            .filter(item => item.divider || item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map((item, index) => (
+            item.divider ? (
+              <div key={`divider-${index}`} className="pt-4 pb-2">
+                <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  {item.name}
+                </p>
+              </div>
+            ) : (
             <Link
               key={item.path}
               to={item.path}
@@ -163,6 +173,7 @@ const Sidebar = () => {
                 </span>
               )}
             </Link>
+            )
           ))}
         </nav>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
 import RichTextEditor from '../components/RichTextEditor';
@@ -358,6 +359,12 @@ const Jurusan = () => {
                     >
                       ✏️ Edit
                     </button>
+                    <Link
+                      to={`/admin/jurusan/${jurusan._id}/edit-layout`}
+                      className="flex-1 px-3 py-2 text-sm bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition-colors text-center"
+                    >
+                      🧩 Layout
+                    </Link>
                     <button
                       onClick={() => openDeleteModal(jurusan)}
                       className="flex-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"

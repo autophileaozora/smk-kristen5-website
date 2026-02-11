@@ -101,7 +101,7 @@ const SocialMedia = () => {
     try {
       setUploading(true);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('image', file);
 
       const response = await api.post('/api/upload/image', formData, {
         headers: {
@@ -190,7 +190,7 @@ const SocialMedia = () => {
       </div>
 
       {/* Social Media Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center">
             <div className="inline-block w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>

@@ -48,7 +48,11 @@ const auditLogSchema = new mongoose.Schema(
         'activity_tab',
         'activity_item',
         'activity_settings',
-        'event'
+        'event',
+        'navbarItem',
+        'siteSettings',
+        'customPage',
+        'footerColumn'
       ],
     },
     resourceId: {

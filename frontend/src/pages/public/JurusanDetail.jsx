@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import PageRenderer from '../../components/PageRenderer';
 
 export default function JurusanDetail() {
   const { slug } = useParams();
@@ -53,7 +52,7 @@ export default function JurusanDetail() {
       setLoading(true);
 
       // Fetch jurusan detail
-      const jurusanRes = await axios.get(`${API_URL}/api/jurusan`);
+      const jurusanRes = await api.get(`/api/jurusan`);
       console.log('API Response:', jurusanRes.data);
       const jurusans = jurusanRes.data.data.jurusans;
       console.log('All Jurusans:', jurusans);
@@ -75,7 +74,7 @@ export default function JurusanDetail() {
 
         // Fetch related prestasi (filter by jurusan if available)
         try {
-          const prestasiRes = await axios.get(`${API_URL}/api/prestasi`);
+          const prestasiRes = await api.get(`/api/prestasi`);
           console.log('Prestasi API Response:', prestasiRes.data);
           const prestasis = prestasiRes.data?.data?.prestasis || [];
           filteredPrestasi = prestasis.filter(p =>
@@ -88,7 +87,7 @@ export default function JurusanDetail() {
 
         // Fetch related alumni (filter by jurusan)
         try {
-          const alumniRes = await axios.get(`${API_URL}/api/alumni`);
+          const alumniRes = await api.get(`/api/alumni`);
           console.log('Alumni API Response:', alumniRes.data);
           const alumnis = alumniRes.data?.data?.alumni || [];
           filteredAlumni = alumnis.filter(a =>
@@ -102,7 +101,7 @@ export default function JurusanDetail() {
         // Fetch mata pelajaran (filter by category = jurusan code OR PUBLIC)
         try {
           console.log('Fetching mata pelajaran for:', foundJurusan.code);
-          const mataPelajaranRes = await axios.get(`${API_URL}/api/mata-pelajaran?category=${foundJurusan.code}`);
+          const mataPelajaranRes = await api.get(`/api/mata-pelajaran?category=${foundJurusan.code}`);
           console.log('Mata Pelajaran API Response:', mataPelajaranRes.data);
           mataPelajarans = mataPelajaranRes.data?.data?.mataPelajaran || [];
           console.log('Mata Pelajaran:', mataPelajarans);
@@ -113,7 +112,7 @@ export default function JurusanDetail() {
         // Fetch fasilitas (filter by category = jurusan code OR PUBLIC)
         try {
           console.log('Fetching fasilitas for:', foundJurusan.code);
-          const fasilitasRes = await axios.get(`${API_URL}/api/fasilitas?category=${foundJurusan.code}`);
+          const fasilitasRes = await api.get(`/api/fasilitas?category=${foundJurusan.code}`);
           console.log('Fasilitas API Response:', fasilitasRes.data);
           fasilitass = fasilitasRes.data?.data?.fasilitas || [];
           console.log('Fasilitas:', fasilitass);
@@ -124,7 +123,7 @@ export default function JurusanDetail() {
         // Fetch articles (published articles for this jurusan)
         try {
           console.log('Fetching articles for:', foundJurusan.code);
-          const articlesRes = await axios.get(`${API_URL}/api/articles/public?jurusanCode=${foundJurusan.code}&limit=4`);
+          const articlesRes = await api.get(`/api/articles/public?jurusanCode=${foundJurusan.code}&limit=4`);
           console.log('Articles API Response:', articlesRes.data);
           articles = articlesRes.data?.data?.articles || [];
           console.log('Articles:', articles);
@@ -168,7 +167,7 @@ export default function JurusanDetail() {
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Jurusan tidak ditemukan</h2>
-          <Link to="/" className="text-blue-600 hover:underline">Kembali ke Beranda</Link>
+          <Link to="/" className="text-[#0d76be] hover:text-[#0a5a91] hover:underline transition-colors">Kembali ke Beranda</Link>
         </div>
       </div>
     );
@@ -259,6 +258,9 @@ export default function JurusanDetail() {
               {/* Tab Content */}
               <div className="bg-white">
                 {activeTab === 'informasi' && (
+                  jurusan.blocks && jurusan.blocks.length > 0 ? (
+                    <PageRenderer blocks={jurusan.blocks} />
+                  ) : (
                   <div className="prose max-w-none">
                     {/* Description */}
                     <div className="mb-8">
@@ -329,6 +331,7 @@ export default function JurusanDetail() {
                       </div>
                     )}
                   </div>
+                  )
                 )}
 
                 {activeTab === 'mata-pelajaran' && (
@@ -489,7 +492,7 @@ export default function JurusanDetail() {
                     POSTINGAN {jurusan.code?.toUpperCase()}
                   </h3>
                   {relatedData.posts.length > 0 && (
-                    <Link to="/artikel" className="text-blue-600 text-sm hover:underline">
+                    <Link to="/artikel" className="text-[#0d76be] text-sm hover:text-[#0a5a91] hover:underline transition-colors">
                       LIHAT LAINNYA
                     </Link>
                   )}

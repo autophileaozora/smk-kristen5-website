@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+const blockSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  type: { type: String, required: true },
+  props: { type: mongoose.Schema.Types.Mixed, default: {} },
+  children: [{ type: mongoose.Schema.Types.Mixed }],
+  order: { type: Number, default: 0 },
+}, { _id: false });
+
 const jurusanSchema = new mongoose.Schema(
   {
     name: {
@@ -75,6 +83,9 @@ const jurusanSchema = new mongoose.Schema(
       type: String,
       trim: true,
     }],
+
+    // Page Builder Blocks
+    blocks: [blockSchema],
 
     // Gallery
     gallery: [{

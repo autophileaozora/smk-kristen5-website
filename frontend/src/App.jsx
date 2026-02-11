@@ -19,7 +19,6 @@ const VideoHero = lazy(() => import('./pages/VideoHero'));
 const HeroSlides = lazy(() => import('./pages/HeroSlides'));
 const MataPelajaran = lazy(() => import('./pages/MataPelajaran'));
 const Fasilitas = lazy(() => import('./pages/Fasilitas'));
-const KontakManagement = lazy(() => import('./pages/KontakManagement'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const ProfileManagement = lazy(() => import('./pages/ProfileManagement'));
 const SocialMedia = lazy(() => import('./pages/SocialMedia'));
@@ -29,6 +28,10 @@ const AboutManagement = lazy(() => import('./pages/AboutManagement'));
 const Activities = lazy(() => import('./pages/Activities'));
 const Events = lazy(() => import('./pages/Events'));
 const CustomPages = lazy(() => import('./pages/CustomPages'));
+const CustomPageEditor = lazy(() => import('./pages/CustomPageEditor'));
+const SiteSettings = lazy(() => import('./pages/SiteSettings'));
+const NavbarManagement = lazy(() => import('./pages/NavbarManagement'));
+const FooterManagement = lazy(() => import('./pages/FooterManagement'));
 const HomepageFixed = lazy(() => import('./pages/public/HomepageFixed'));
 const CustomPageView = lazy(() => import('./pages/public/CustomPageView'));
 const JurusanList = lazy(() => import('./pages/public/JurusanList'));
@@ -41,6 +44,7 @@ const VisiMisi = lazy(() => import('./pages/public/VisiMisi'));
 const Sambutan = lazy(() => import('./pages/public/Sambutan'));
 const Tentang = lazy(() => import('./pages/public/Tentang'));
 const SearchPage = lazy(() => import('./pages/public/SearchPage'));
+const FasilitasList = lazy(() => import('./pages/public/FasilitasList'));
 
 // Loading component
 const LoadingFallback = () => (
@@ -88,9 +92,15 @@ function App() {
           <Route path="/visi-misi" element={<VisiMisi />} />
           <Route path="/sambutan" element={<Sambutan />} />
           <Route path="/tentang" element={<Tentang />} />
+          <Route path="/fasilitas" element={<FasilitasList />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/page/:slug" element={<CustomPageView />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Full-screen Editor Routes (Outside Dashboard Layout) */}
+          <Route path="/admin/custom-pages/create" element={<CustomPageEditor />} />
+          <Route path="/admin/custom-pages/:id/edit" element={<CustomPageEditor />} />
+          <Route path="/admin/jurusan/:jurusanId/edit-layout" element={<CustomPageEditor sourceType="jurusan" />} />
 
           {/* Protected Routes - Admin Panel */}
           <Route path="/admin" element={<DashboardLayout />}>
@@ -109,7 +119,7 @@ function App() {
             <Route path="hero-slides" element={<HeroSlides />} />
             <Route path="mata-pelajaran" element={<MataPelajaran />} />
             <Route path="fasilitas" element={<Fasilitas />} />
-            <Route path="kontak" element={<KontakManagement />} />
+            <Route path="kontak" element={<Navigate to="/admin/about" replace />} />
             <Route path="social-media" element={<SocialMedia />} />
             <Route path="partners" element={<Partner />} />
             <Route path="cta" element={<CTAManagement />} />
@@ -121,6 +131,9 @@ function App() {
             <Route path="users" element={<Users />} />
             <Route path="audit-logs" element={<AuditLogs />} />
             <Route path="profile" element={<ProfileManagement />} />
+            <Route path="site-settings" element={<SiteSettings />} />
+            <Route path="navbar" element={<NavbarManagement />} />
+            <Route path="footer" element={<FooterManagement />} />
           </Route>
 
           {/* 404 Not Found */}

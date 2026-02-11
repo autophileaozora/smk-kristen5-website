@@ -110,7 +110,7 @@ const Partner = () => {
     try {
       setUploading(true);
       const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
+      uploadFormData.append('image', file);
 
       const response = await api.post('/api/upload/image', uploadFormData, {
         headers: {
@@ -130,16 +130,34 @@ const Partner = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.logo || !formData.startYear || !formData.location) {
-      showToast('Nama, Logo, Tahun Mulai, dan Lokasi harus diisi', 'error');
+    if (!formData.name || !formData.logo || !formData.location) {
+      showToast('Nama, Logo, dan Lokasi harus diisi', 'error');
+      return;
+    }
+
+    // Ensure startYear and order are valid numbers
+    const startYearNum = parseInt(formData.startYear) || currentYear;
+    const orderNum = parseInt(formData.order) || 1;
+    const endYearNum = formData.endYear ? parseInt(formData.endYear) : null;
+
+    if (isNaN(startYearNum) || startYearNum < 1900) {
+      showToast('Tahun mulai harus berupa angka yang valid', 'error');
       return;
     }
 
     try {
       const submitData = {
-        ...formData,
-        endYear: formData.endYear ? parseInt(formData.endYear) : null,
+        name: formData.name.trim(),
+        logo: formData.logo,
+        startYear: startYearNum,
+        endYear: endYearNum,
+        location: formData.location.trim(),
+        description: formData.description?.trim() || '',
+        isActive: Boolean(formData.isActive),
+        order: orderNum,
       };
+
+      console.log('Submitting partner data:', submitData);
 
       if (modalMode === 'create') {
         await api.post('/api/partners', submitData);
@@ -152,6 +170,7 @@ const Partner = () => {
       fetchPartners();
       closeModal();
     } catch (error) {
+      console.error('Partner save error:', error.response?.data || error);
       showToast(error.response?.data?.message || 'Gagal menyimpan partner', 'error');
     }
   };
@@ -204,7 +223,7 @@ const Partner = () => {
       </div>
 
       {/* Partners Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center">
             <div className="inline-block w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
@@ -338,7 +357,7 @@ const Partner = () => {
                     <input
                       type="number"
                       value={formData.startYear}
-                      onChange={(e) => setFormData({ ...formData, startYear: parseInt(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, startYear: e.target.value ? parseInt(e.target.value) : currentYear })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       min="1900"
                       max={currentYear + 10}
@@ -397,7 +416,7 @@ const Partner = () => {
                     <input
                       type="number"
                       value={formData.order}
-                      onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, order: e.target.value ? parseInt(e.target.value) : 1 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       min="1"
                     />
