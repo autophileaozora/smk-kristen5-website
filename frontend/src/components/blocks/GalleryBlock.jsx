@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import LazyImage from '../LazyImage';
 
 const GalleryBlock = ({
   images = [
@@ -56,9 +55,10 @@ const GalleryBlock = ({
             className={`relative overflow-hidden ${rounded ? 'rounded-lg' : ''} cursor-pointer group`}
             onClick={() => openLightbox(index)}
           >
-            <LazyImage
+            <img
               src={image.src}
               alt={image.alt}
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
             {image.caption && (

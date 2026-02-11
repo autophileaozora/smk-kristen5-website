@@ -20,7 +20,6 @@ export { default as ImageUpload } from './ImageUpload';
 // Utility Components
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as EmptyState } from './EmptyState';
-export { default as LazyImage } from './LazyImage';
 export { default as Pagination } from './Pagination';
 export { default as SEO } from './SEO';
 

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import LazyImage from '../LazyImage';
 
 const CarouselBlock = ({
   slides = [
@@ -56,9 +55,10 @@ const CarouselBlock = ({
               index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <LazyImage
+            <img
               src={slide.image}
               alt={slide.title || `Slide ${index + 1}`}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
             {/* Overlay Content */}
