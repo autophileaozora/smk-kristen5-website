@@ -103,7 +103,7 @@ const FasilitasList = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/[0.02] rounded-full"></div>
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 py-20 md:py-28 text-center text-white">
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-16 py-20 md:py-28 text-center text-white">
           <h1 className="russo text-3xl md:text-5xl lg:text-6xl mb-4 drop-shadow-lg">
             FASILITAS SEKOLAH
           </h1>
@@ -115,7 +115,7 @@ const FasilitasList = () => {
 
       {/* Category Filter */}
       <section className="bg-white shadow-sm sticky top-16 z-30">
-        <div className="container mx-auto px-4 py-4">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16 py-4">
           <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
             <button
               onClick={() => setSelectedCategory('Semua')}
@@ -146,7 +146,7 @@ const FasilitasList = () => {
 
       {/* Facilities Grid */}
       <section className="py-12">
-        <div className="container mx-auto px-8 md:px-12 lg:px-16">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           {filteredFasilitas.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredFasilitas.map((item) => (

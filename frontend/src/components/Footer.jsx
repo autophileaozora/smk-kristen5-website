@@ -274,8 +274,8 @@ const Footer = () => {
 
   return (
     <>
-      <footer className="bg-gradient-to-r from-[#3F24D9] via-[#1e58c4] to-[#008FD7] text-white py-10 lg:py-16 px-4 lg:px-10">
-        <div className="max-w-[1100px] mx-auto">
+      <footer className="bg-gradient-to-r from-[#3F24D9] via-[#1e58c4] to-[#008FD7] text-white py-10 lg:py-16">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           {columns.length > 0 ? renderDynamicFooter() : renderStaticFooter()}
 
           <div className="w-full h-px bg-white/30 my-5"></div>

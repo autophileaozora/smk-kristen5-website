@@ -208,7 +208,7 @@ const NewsGridBlock = ({
                     <span className="text-yellow-400 text-[10px] lg:text-xs font-medium mb-2 lg:mb-3">
                       {articles[0].categoryJurusan?.name || articles[0].categoryTopik?.name || 'Berita'}
                     </span>
-                    <p className="text-[11px] lg:text-xs text-gray-300 leading-relaxed line-clamp-2 lg:line-clamp-4 hidden sm:block">
+                    <p className="text-xs lg:text-sm text-gray-300 leading-relaxed line-clamp-2 lg:line-clamp-4 hidden sm:block">
                       {articles[0].excerpt || 'Berita terbaru dari SMK Kristen 5 Klaten.'}
                     </p>
                   </div>
@@ -225,7 +225,7 @@ const NewsGridBlock = ({
                   className="flex gap-3 bg-[#1e1e1e] rounded-lg overflow-hidden p-3 hover:bg-[#2a2a2a] transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-white font-medium leading-snug line-clamp-2 sm:line-clamp-3">
+                    <p className="text-sm text-white font-medium leading-snug line-clamp-2 sm:line-clamp-3">
                       {article.title}
                     </p>
                     <span className="text-[10px] text-yellow-400 mt-2 block">
@@ -263,7 +263,7 @@ const NewsGridBlock = ({
                       {String(idx + 1).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs lg:text-sm font-medium text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2 lg:line-clamp-3">
+                      <p className="text-sm lg:text-base font-medium text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2 lg:line-clamp-3">
                         {article.title}
                       </p>
                       <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 block">

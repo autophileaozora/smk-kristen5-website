@@ -175,7 +175,7 @@ const Kontak = () => {
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center text-white">
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-16 text-center text-white">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">Hubungi Kami</h1>
           <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow">
             Kami siap membantu Anda. Jangan ragu untuk menghubungi kami kapan saja.
@@ -185,7 +185,7 @@ const Kontak = () => {
 
       {/* Contact Info Cards - Left Aligned */}
       <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Address Card */}
             <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
@@ -257,7 +257,7 @@ const Kontak = () => {
 
       {/* Map and Form Section */}
       <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Google Maps */}
             <div>
@@ -416,7 +416,7 @@ const Kontak = () => {
 
       {/* Social Media Section - Bottom of Page */}
       <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ikuti Kami di Sosial Media</h2>
             <p className="text-gray-600 text-lg">Tetap terhubung dengan kami melalui platform sosial media</p>

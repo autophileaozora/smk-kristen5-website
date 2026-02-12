@@ -106,7 +106,7 @@ const EventsBlock = ({
           <div className="text-center mb-6 lg:mb-8">
             {title && <h2 className={`text-base lg:text-lg font-bold ${textClasses[backgroundColor]}`}>{title}</h2>}
             {subtitle && (
-              <p className={`text-xs lg:text-sm leading-relaxed ${subtitleClasses[backgroundColor]} font-medium max-w-3xl mx-auto mt-2`}>
+              <p className={`text-sm lg:text-base leading-relaxed ${subtitleClasses[backgroundColor]} font-medium max-w-3xl mx-auto mt-2`}>
                 {subtitle}
               </p>
             )}
@@ -194,7 +194,7 @@ const EventsBlock = ({
         <div className="text-center mb-6 lg:mb-8">
           {title && <h2 className={`text-base lg:text-lg font-bold ${textClasses[backgroundColor]}`}>{title}</h2>}
           {subtitle && (
-            <p className={`text-xs lg:text-sm leading-relaxed ${subtitleClasses[backgroundColor]} font-medium max-w-3xl mx-auto mt-2 px-2`}>
+            <p className={`text-sm lg:text-base leading-relaxed ${subtitleClasses[backgroundColor]} font-medium max-w-3xl mx-auto mt-2 px-2`}>
               {subtitle}
             </p>
           )}

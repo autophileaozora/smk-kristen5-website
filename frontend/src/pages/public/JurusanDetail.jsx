@@ -198,7 +198,7 @@ export default function JurusanDetail() {
           />
         </div>
 
-        <div className="relative container mx-auto px-4">
+        <div className="relative max-w-[1400px] mx-auto px-6 lg:px-16">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-white/80 text-sm md:text-base mb-6">
             <Link to="/" className="hover:text-white flex items-center gap-1">
@@ -231,7 +231,7 @@ export default function JurusanDetail() {
 
       {/* Main Content */}
       <section className="py-12 md:py-20">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Content */}
             <div className="lg:col-span-2">
@@ -520,7 +520,7 @@ export default function JurusanDetail() {
                             {post.title}
                           </h4>
                           {post.excerpt && (
-                            <p className="text-xs text-gray-600 mt-2 line-clamp-2">
+                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                               {post.excerpt}
                             </p>
                           )}

@@ -347,7 +347,7 @@ const Artikel = () => {
 
       {/* Search and Filter Section - Apple Glass Design */}
       <section className="search-section bg-[#0D76BE] sticky top-16 z-40">
-        <div className="container mx-auto px-4 py-5">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16 py-5">
           <div className="relative w-full max-w-4xl mx-auto">
             {/* Glass Container */}
             <div className="relative flex items-center bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-lg shadow-black/5 overflow-hidden">
@@ -602,7 +602,7 @@ const Artikel = () => {
 
       {/* Articles Grid */}
       <section className="py-12">
-        <div className="container mx-auto px-8 md:px-12 lg:px-16">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           {currentArticles.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {currentArticles.map((article) => (

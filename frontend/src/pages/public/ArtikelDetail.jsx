@@ -163,7 +163,7 @@ const ArtikelDetail = () => {
 
       {/* Main Content */}
       <div className="pt-20 md:pt-24 pb-16">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-6 flex-wrap">
             <Link to="/" className="hover:text-blue-600 transition-colors">Beranda</Link>
