@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useSwipe from '../../hooks/useSwipe';
 
 const CarouselBlock = ({
   slides = [
@@ -36,6 +37,8 @@ const CarouselBlock = ({
     setCurrentSlide(index);
   };
 
+  const swipeHandlers = useSwipe({ onLeft: nextSlide, onRight: prevSlide });
+
   if (slides.length === 0) {
     return (
       <div className="my-8 p-8 bg-gray-100 rounded-lg text-center text-gray-500">
@@ -45,7 +48,7 @@ const CarouselBlock = ({
   }
 
   return (
-    <div className="my-8 relative rounded-lg overflow-hidden group" style={{ height }}>
+    <div className="my-8 relative rounded-lg overflow-hidden group" style={{ height }} {...swipeHandlers}>
       {/* Slides */}
       <div className="relative w-full h-full">
         {slides.map((slide, index) => (

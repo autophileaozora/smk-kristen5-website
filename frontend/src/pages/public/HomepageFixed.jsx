@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
+import useSwipe from '../../hooks/useSwipe';
 import SEO from '../../components/SEO';
 import Mascot3D from '../../components/Mascot3D';
 import Navbar from '../../components/Navbar';
@@ -47,76 +48,41 @@ const HomepageFixed = () => {
 
   const lastScrollY = useRef(0);
 
-  // Fetch data from API
+  // Fetch all homepage data in a single request
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [
-          jurusanRes,
-          articleRes,
-          ekskulRes,
-          alumniRes,
-          partnerRes,
-          fasilitasRes,
-          prestasiRes,
-          heroSlidesRes,
-          heroSettingsRes,
-          runningTextRes,
-          socialMediaRes,
-          contactRes,
-          ctaRes,
-          activityTabsRes,
-          activitySettingsRes,
-          eventsRes,
-          siteSettingsRes,
-        ] = await Promise.all([
-          api.get('/api/jurusan').catch(() => ({ data: { data: [] } })),
-          api.get('/api/articles/public?limit=6').catch(() => ({ data: { data: { articles: [] } } })),
-          api.get('/api/ekskul').catch(() => ({ data: { data: [] } })),
-          api.get('/api/alumni').catch(() => ({ data: { data: [] } })),
-          api.get('/api/partners').catch(() => ({ data: { data: [] } })),
-          api.get('/api/fasilitas').catch(() => ({ data: { data: [] } })),
-          api.get('/api/prestasi').catch(() => ({ data: { data: [] } })),
-          api.get('/api/hero-slides/active').catch(() => ({ data: { data: { slides: [] } } })),
-          api.get('/api/hero-slides/settings/config').catch(() => ({ data: { data: { settings: { slideDuration: 5000, autoPlay: true, showIndicators: true } } } })),
-          api.get('/api/running-text/active').catch(() => ({ data: { data: { runningTexts: [] } } })),
-          api.get('/api/social-media').catch(() => ({ data: { data: [] } })),
-          api.get('/api/contact').catch(() => ({ data: { data: null } })),
-          api.get('/api/cta/active').catch(() => ({ data: { data: { cta: null } } })),
-          api.get('/api/activities/tabs').catch(() => ({ data: { data: { tabs: [] } } })),
-          api.get('/api/activities/settings').catch(() => ({ data: { data: { settings: null } } })),
-          api.get('/api/events/upcoming').catch(() => ({ data: { data: { events: [] } } })),
-          api.get('/api/site-settings').catch(() => ({ data: { data: { settings: null } } })),
-        ]);
+        const res = await api.get('/api/homepage');
+        const d = res.data.data;
 
         setData({
-          jurusans: jurusanRes.data.data?.jurusans || [],
-          articles: articleRes.data.data?.articles || [],
-          ekskuls: ekskulRes.data.data?.ekskuls || [],
-          alumnis: alumniRes.data.data?.alumni || [],
-          partners: partnerRes.data.data?.partners || [],
-          fasilitas: fasilitasRes.data.data?.fasilitas || [],
-          prestasi: prestasiRes.data.data?.prestasis || [],
-          heroSlides: heroSlidesRes.data.data?.slides || [],
-          heroSettings: heroSettingsRes.data.data?.settings || { slideDuration: 5000, autoPlay: true, showIndicators: true },
-          runningText: runningTextRes.data.data?.runningTexts || [],
-          socialMedia: socialMediaRes.data.data?.socialMedia || [],
-          contact: contactRes.data.data || null,
-          cta: ctaRes.data.data?.cta || null,
+          jurusans: d.jurusans || [],
+          articles: d.articles || [],
+          ekskuls: d.ekskuls || [],
+          alumnis: d.alumni || [],
+          partners: d.partners || [],
+          fasilitas: d.fasilitas || [],
+          prestasi: d.prestasis || [],
+          heroSlides: d.heroSlides || [],
+          heroSettings: d.heroSettings || { slideDuration: 5000, autoPlay: true, showIndicators: true },
+          runningText: d.runningTexts || [],
+          socialMedia: d.socialMedia || [],
+          contact: d.contact || null,
+          cta: d.cta || null,
           about: null,
-          activityTabs: activityTabsRes.data.data?.tabs || [],
-          activitySettings: activitySettingsRes.data.data?.settings || {
+          activityTabs: d.activityTabs || [],
+          activitySettings: d.activitySettings || {
             globalLink: '/kegiatan',
             globalButtonText: 'Explore Kegiatan Siswa',
             sectionTitle: 'Pembelajaran & Kegiatan',
             sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
           },
-          events: eventsRes.data.data?.events || [],
-          siteSettings: siteSettingsRes.data.data?.settings || null,
+          events: d.events || [],
+          siteSettings: d.siteSettings || null,
         });
-        setLoading(false);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching homepage data:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -168,8 +134,62 @@ const HomepageFixed = () => {
     }
   }, [data.heroSlides.length, data.heroSettings.slideDuration, data.heroSettings.autoPlay]);
 
+  // Swipe handlers for carousels
+  const heroSwipe = useSwipe({
+    onLeft: () => setCurrentHeroSlide((p) => (p + 1) % (data.heroSlides.length || 1)),
+    onRight: () => setCurrentHeroSlide((p) => (p - 1 + (data.heroSlides.length || 1)) % (data.heroSlides.length || 1)),
+  });
+
+  const activitySwipe = useSwipe({
+    onLeft: () => {
+      const tabs = data.activityTabs.length > 0 ? data.activityTabs : [{ items: [{},{},{},{}] }];
+      const currentTab = tabs[activeActivityTab] || tabs[0];
+      const len = currentTab?.items?.length || 1;
+      setActiveActivitySlide((p) => (p + 1) % len);
+    },
+    onRight: () => {
+      const tabs = data.activityTabs.length > 0 ? data.activityTabs : [{ items: [{},{},{},{}] }];
+      const currentTab = tabs[activeActivityTab] || tabs[0];
+      const len = currentTab?.items?.length || 1;
+      setActiveActivitySlide((p) => (p - 1 + len) % len);
+    },
+  });
+
+  const testimonialSwipe = useSwipe({
+    onLeft: () => setCurrentTestimonialSlide((p) => (p + 1) % 2),
+    onRight: () => setCurrentTestimonialSlide((p) => (p - 1 + 2) % 2),
+  });
+
+  const accordionContainerRef = useRef(null);
+  const accordionItemRefs = useRef([]);
   const toggleProgram = (index) => {
-    setActiveProgram(activeProgram === index ? -1 : index);
+    if (activeProgram === index) {
+      // Close current
+      setActiveProgram(-1);
+    } else if (activeProgram !== -1) {
+      // Another is open: close first, wait for animation, then open new
+      setActiveProgram(-1);
+      setTimeout(() => {
+        setActiveProgram(index);
+        setTimeout(() => {
+          const container = accordionContainerRef.current;
+          const item = accordionItemRefs.current[index];
+          if (container && item) {
+            container.scrollTo({ top: item.offsetTop - container.offsetTop, behavior: 'smooth' });
+          }
+        }, 100);
+      }, 350);
+    } else {
+      // None open: just open
+      setActiveProgram(index);
+      setTimeout(() => {
+        const container = accordionContainerRef.current;
+        const item = accordionItemRefs.current[index];
+        if (container && item) {
+          container.scrollTo({ top: item.offsetTop - container.offsetTop, behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
 
   const switchActivityTab = (index) => {
@@ -257,7 +277,7 @@ const HomepageFixed = () => {
       <Navbar activePage="beranda" visible={navbarVisible} />
 
       {/* Hero Section */}
-      <section className="relative w-full min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] overflow-hidden">
+      <section className="relative w-full min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] overflow-hidden" {...heroSwipe}>
         {/* Background Images - Rotating slides */}
         {(() => {
           const defaultSlides = [
@@ -368,7 +388,7 @@ const HomepageFixed = () => {
           }}
         ></div>
 
-        <div className="relative z-20 max-w-[1300px] mx-auto px-4 lg:px-20 py-10 lg:py-20">
+        <div className="relative z-20 max-w-[1400px] mx-auto px-6 lg:px-16 py-10 lg:py-20">
           <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-20">
             {/* Left Content - 50% */}
             <div className="w-full lg:w-1/2 lg:pr-10">
@@ -376,7 +396,7 @@ const HomepageFixed = () => {
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-tight text-[#0d76be] mb-3 lg:mb-4">
                 {hp.whyHeading || 'SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL'}
               </h2>
-              <p className="text-xs lg:text-sm leading-relaxed text-gray-700">
+              <p className="text-sm lg:text-base leading-relaxed text-gray-700">
                 {hp.whyDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
               </p>
 
@@ -390,7 +410,7 @@ const HomepageFixed = () => {
                 <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[400px]">
                   {(data.partners || []).slice(0, 6).map((partner, idx) => (
                     <div key={idx} className="bg-white rounded-md p-1.5 lg:p-2.5 h-12 lg:h-16 flex items-center justify-center">
-                      <img src={partner.logo} alt={partner.name} className="max-w-full max-h-full object-contain" />
+                      <img src={partner.logo} alt={partner.name} loading="lazy" className="max-w-full max-h-full object-contain" />
                     </div>
                   ))}
                 </div>
@@ -403,7 +423,7 @@ const HomepageFixed = () => {
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-[#008fd7] sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.ekskuls || []).length}</div>
                 <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">EKSTRAKURIKULER</h4>
-                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.ekskuls || []).slice(0, 3).map(e => e.name).join(', ') || 'Loading...'}{(data.ekskuls || []).length > 3 ? ', dan lainnya' : ''}
                 </p>
               </div>
@@ -411,7 +431,7 @@ const HomepageFixed = () => {
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-yellow-300 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.fasilitas || []).length}</div>
                 <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">FASILITAS</h4>
-                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.fasilitas || []).slice(0, 3).map(f => f.name).join(', ') || 'Loading...'}{(data.fasilitas || []).length > 3 ? ', dan lainnya' : ''}
                 </p>
               </div>
@@ -419,7 +439,7 @@ const HomepageFixed = () => {
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-red-500 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{new Date().getFullYear() - (hp.foundingYear || 1999)}</div>
                 <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">TAHUN PENGABDIAN</h4>
-                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {`Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`}
                 </p>
               </div>
@@ -427,7 +447,7 @@ const HomepageFixed = () => {
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-orange-600 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.jurusans || []).length}</div>
                 <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">BIDANG KOMPETENSI</h4>
-                <p className="text-[10px] lg:text-xs leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
+                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.jurusans || []).slice(0, 3).map(j => j.name).join(', ') || 'Loading...'}{(data.jurusans || []).length > 3 ? '' : ''}
                 </p>
               </div>
@@ -442,8 +462,8 @@ const HomepageFixed = () => {
         <div className="flex justify-center mb-2">
           <Mascot3D size={100} />
         </div>
-        <h2 className="text-sm lg:text-lg font-medium text-black mt-3">{hp.accelerateTitle || 'ACCELERATE YOUR ENTIRE POTENTIAL'}</h2>
-        <p className="text-[10px] lg:text-xs leading-relaxed text-black font-light mt-3 lg:mt-4">
+        <h2 className="russo text-xl lg:text-2xl text-gray-700 mt-3">{hp.accelerateTitle || 'ACCELERATE YOUR ENTIRE POTENTIAL'}</h2>
+        <p className="text-sm lg:text-base leading-relaxed text-black font-light mt-3 lg:mt-4">
           {hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}
         </p>
       </section>
@@ -468,22 +488,23 @@ const HomepageFixed = () => {
             <img
               src={(data.jurusans || [])[activeProgram]?.backgroundImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop'}
               alt="Program"
+              loading="lazy"
               className="w-full h-full rounded-lg object-cover transition-opacity duration-300"
             />
           </div>
         </div>
 
         {/* Right - Accordion */}
-        <div className="flex-1 px-6 lg:px-16 py-10 flex flex-col justify-start gap-4 lg:overflow-y-auto lg:h-[600px]">
+        <div ref={accordionContainerRef} className="flex-1 px-6 lg:px-16 py-10 flex flex-col justify-start gap-4 lg:overflow-y-auto lg:h-[600px] max-w-[1400px]">
           {(data.jurusans || []).slice(0, 5).map((jurusan, idx) => (
-            <div key={idx} className="pb-4 border-b border-gray-300">
+            <div key={idx} ref={el => accordionItemRefs.current[idx] = el} className="pb-4 border-b border-gray-300">
               <div
                 className="flex justify-between items-center cursor-pointer hover:opacity-70 transition-opacity"
                 onClick={() => toggleProgram(idx)}
               >
                 <div>
                   <h3 className="russo text-xl lg:text-2xl text-gray-700">{jurusan.code || jurusan.name.slice(0, 4).toUpperCase()}</h3>
-                  <h4 className="text-xs text-gray-700 font-medium mt-1.5">{jurusan.name}</h4>
+                  <h4 className="text-sm lg:text-base text-gray-700 font-medium mt-1.5">{jurusan.name}</h4>
                 </div>
                 <span className="text-4xl leading-none text-gray-700 cursor-pointer transition-transform">
                   {activeProgram === idx ? '−' : '+'}
@@ -492,23 +513,23 @@ const HomepageFixed = () => {
 
               {/* Content */}
               <div
-                className={`overflow-hidden transition-all duration-400 ${
+                className={`overflow-hidden transition-all duration-300 ${
                   activeProgram === idx ? 'max-h-[600px] pt-4' : 'max-h-0 pt-0'
                 }`}
               >
                 {/* Mobile Image */}
                 <div className="lg:hidden w-full h-48 mb-4 rounded-lg overflow-hidden">
-                  <img src={jurusan.backgroundImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop'} alt={jurusan.name} className="w-full h-full object-cover" />
+                  <img src={jurusan.backgroundImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop'} alt={jurusan.name} loading="lazy" className="w-full h-full object-cover" />
                 </div>
 
                 {/* Short Description (plain text) or fallback to full description */}
                 {jurusan.shortDescription ? (
-                  <p className="text-xs leading-relaxed text-gray-700 mb-4">
+                  <p className="text-sm leading-relaxed text-gray-700 mb-4">
                     {jurusan.shortDescription}
                   </p>
                 ) : (
                   <div
-                    className="text-xs leading-relaxed text-gray-700 mb-4 prose prose-sm max-w-none"
+                    className="text-sm leading-relaxed text-gray-700 mb-4 prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: jurusan.description }}
                   />
                 )}
@@ -533,10 +554,11 @@ const HomepageFixed = () => {
       </section>
 
       {/* Activities Section */}
-      <section className="bg-[#1e1e1e] py-10 lg:py-[60px] px-4 lg:px-10 relative overflow-hidden">
+      <section className="bg-[#1e1e1e] py-10 lg:py-[60px] relative overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
         <div className="text-center mb-6 lg:mb-8">
           <h2 className="text-base lg:text-lg font-bold text-white">{data.activitySettings?.sectionTitle || 'PEMBELAJARAN & KEGIATAN NYATA'}</h2>
-          <p className="text-xs lg:text-sm leading-relaxed text-[#6a6b6d] font-medium max-w-[600px] mx-auto mt-2 px-4">
+          <p className="text-sm lg:text-base leading-relaxed text-[#6a6b6d] font-medium max-w-[600px] mx-auto mt-2 px-4">
             {data.activitySettings?.sectionSubtitle || 'SISWA DILATIH DAN DIDUKUNG DENGAN PROGRAM DAN KOMPETISI YANG MELATIH RASA DAN KEBERANIAN'}
           </p>
         </div>
@@ -587,7 +609,7 @@ const HomepageFixed = () => {
               </div>
 
               {currentItem && (
-                <div className="w-full">
+                <div className="w-full" {...activitySwipe}>
                   {/* Image wrapper with Union.svg overlays */}
                   <div className="relative w-full h-[250px] sm:h-[350px] lg:h-[450px] pt-3 lg:pt-5 pb-0 px-2 lg:px-10">
                     <div className="relative w-full h-full overflow-hidden">
@@ -660,11 +682,12 @@ const HomepageFixed = () => {
             </>
           );
         })()}
+        </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="bg-[rgba(30,30,30,0.95)] py-10 lg:py-16 px-4 lg:px-10 relative overflow-hidden">
-        <div className="max-w-[1400px] mx-auto">
+      <section className="bg-[rgba(30,30,30,0.95)] py-10 lg:py-16 relative overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
             {/* Left - Testimonials */}
             <div className="flex-1">
@@ -674,9 +697,9 @@ const HomepageFixed = () => {
                 <div className="flex flex-col gap-5 animate-scroll-up">
                   {(data.alumnis || []).slice(0, 6).map((alumni, idx) => (
                     <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg">
-                      <p className="text-xs leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
+                      <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
                       <div className="flex items-center gap-3.5 mt-5">
-                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} className="w-12 h-12 rounded-full object-cover" />
+                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" />
                         <div>
                           <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
                           <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
@@ -691,9 +714,9 @@ const HomepageFixed = () => {
                 <div className="flex flex-col gap-5 animate-scroll-down">
                   {(data.alumnis || []).slice(0, 6).map((alumni, idx) => (
                     <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg">
-                      <p className="text-xs leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
+                      <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
                       <div className="flex items-center gap-3.5 mt-5">
-                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} className="w-12 h-12 rounded-full object-cover" />
+                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" />
                         <div>
                           <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
                           <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
@@ -706,13 +729,13 @@ const HomepageFixed = () => {
               </div>
 
               {/* Mobile: 3 cards with slide */}
-              <div className="lg:hidden">
+              <div className="lg:hidden" {...testimonialSwipe}>
                 <div className="flex flex-col gap-4">
                   {(data.alumnis || []).slice(currentTestimonialSlide * 3, currentTestimonialSlide * 3 + 3).map((alumni, idx) => (
                     <div key={idx} className="p-4 bg-transparent border border-white/10 rounded-lg">
-                      <p className="text-xs leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
+                      <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
                       <div className="flex items-center gap-3 mt-4">
-                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} className="w-10 h-10 rounded-full object-cover" />
+                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                         <div>
                           <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
                           <span className="text-[10px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
@@ -743,7 +766,7 @@ const HomepageFixed = () => {
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white">
                 {hp.testimonialsTitle || 'Cerita pengalaman menarik dan berkesan oleh alumni kami'}
               </h2>
-              <p className="text-xs sm:text-sm leading-relaxed text-white mt-3 lg:mt-5">
+              <p className="text-sm sm:text-base leading-relaxed text-white mt-3 lg:mt-5">
                 {hp.testimonialsDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
               </p>
               <button className="inline-flex items-center px-6 lg:px-8 py-2.5 lg:py-3 bg-transparent border-2 border-yellow-300 text-yellow-300 text-[11px] lg:text-xs font-semibold rounded-lg mt-5 lg:mt-8 hover:bg-yellow-300/10 transition-all tracking-wide">
@@ -755,7 +778,7 @@ const HomepageFixed = () => {
       </section>
 
       {/* News Section */}
-      <section className="py-10 lg:py-16 px-4 lg:px-10 max-w-[1200px] mx-auto">
+      <section className="py-10 lg:py-16 max-w-[1400px] mx-auto px-6 lg:px-16">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left - Main Featured with smaller articles */}
           <div className="flex-1">
@@ -779,7 +802,7 @@ const HomepageFixed = () => {
                     <span className="text-yellow-400 text-[10px] lg:text-xs font-medium mb-2 lg:mb-3">
                       {data.articles[0].categoryJurusan?.name || data.articles[0].categoryTopik?.name || 'Berita'}
                     </span>
-                    <p className="text-[11px] lg:text-xs text-gray-300 leading-relaxed line-clamp-2 lg:line-clamp-4 hidden sm:block">
+                    <p className="text-xs lg:text-sm text-gray-300 leading-relaxed line-clamp-2 lg:line-clamp-4 hidden sm:block">
                       {data.articles[0].excerpt || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
                     </p>
                   </div>
@@ -796,7 +819,7 @@ const HomepageFixed = () => {
                   className="flex gap-3 bg-[#1e1e1e] rounded-lg overflow-hidden p-3 hover:bg-[#2a2a2a] transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-white font-medium leading-snug line-clamp-2 sm:line-clamp-3">
+                    <p className="text-sm text-white font-medium leading-snug line-clamp-2 sm:line-clamp-3">
                       {article.title}
                     </p>
                     <span className="text-[10px] text-yellow-400 mt-2 block">
@@ -833,7 +856,7 @@ const HomepageFixed = () => {
                     {String(idx + 1).padStart(2, '0')}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs lg:text-sm font-medium text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2 lg:line-clamp-3">
+                    <p className="text-sm lg:text-base font-medium text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2 lg:line-clamp-3">
                       {article.title}
                     </p>
                     <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 block">
@@ -872,10 +895,11 @@ const HomepageFixed = () => {
       </section>
 
       {/* Events Section */}
-      <section className="py-12 lg:py-20 px-4 lg:px-10 relative" style={{ background: 'linear-gradient(to bottom, transparent 50px, rgba(13,118,190,0.15) 50%, rgba(13,118,190,0.31) 100%)' }}>
+      <section className="py-12 lg:py-20 relative" style={{ background: 'linear-gradient(to bottom, transparent 50px, rgba(13,118,190,0.15) 50%, rgba(13,118,190,0.31) 100%)' }}>
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
         <div className="text-center mb-6 lg:mb-8">
           <h2 className="text-base lg:text-lg font-bold text-black">{hp.eventsTitle || 'KEGIATAN SISWA DAN GURU'}</h2>
-          <p className="text-xs lg:text-sm leading-relaxed text-gray-600 font-medium max-w-3xl mx-auto mt-2 px-2">
+          <p className="text-sm lg:text-base leading-relaxed text-gray-600 font-medium max-w-3xl mx-auto mt-2 px-2">
             {hp.eventsDescription || 'AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH'}
           </p>
         </div>
@@ -918,7 +942,7 @@ const HomepageFixed = () => {
           };
 
           return (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-5 max-w-[1100px] mx-auto mb-8 lg:mb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-5 mb-8 lg:mb-10">
               {filteredEvents.length > 0 ? (
                 filteredEvents.slice(0, 6).map((event, idx) => {
                   const dateInfo = formatEventDate(event.eventDate);
@@ -940,7 +964,7 @@ const HomepageFixed = () => {
                           {event.category === 'akademik' ? 'AKADEMIK' : 'NON AKADEMIK'}
                         </span>
                         <h4 className="text-sm lg:text-base font-semibold text-black mt-0.5 line-clamp-1">{event.title}</h4>
-                        <div className="flex flex-row flex-wrap gap-3 lg:gap-5 mt-2 lg:mt-3 text-[11px] lg:text-xs text-gray-700">
+                        <div className="flex flex-row flex-wrap gap-3 lg:gap-5 mt-2 lg:mt-3 text-xs lg:text-sm text-gray-700">
                           <div className="flex items-center gap-1.5">
                             <span>📅</span>
                             <span>{dateInfo.fullDate}</span>
@@ -973,6 +997,7 @@ const HomepageFixed = () => {
         <button className="flex items-center justify-center px-6 lg:px-10 py-3 lg:py-3.5 bg-[#f6efe4] text-gray-700 text-[11px] lg:text-xs font-semibold rounded-lg mx-auto hover:bg-[#f0e5d4] hover:-translate-y-0.5 shadow-md hover:shadow-lg transition-all">
           {hp.eventsButtonText || 'LIHAT SEMUA AGENDA'}
         </button>
+        </div>
       </section>
 
       {/* CTA Section */}
@@ -997,7 +1022,7 @@ const HomepageFixed = () => {
             <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white uppercase">
               {data.cta?.title || 'MARI DISKUSIKAN BAKAT & MINAT KAMU, KAMI AKAN MEMBANTU MENEMUKAN SESUAI PASSION ANDA'}
             </h2>
-            <p className="text-xs sm:text-sm lg:text-base leading-relaxed text-white/90 mt-3 lg:mt-4">
+            <p className="text-sm sm:text-base lg:text-lg leading-relaxed text-white/90 mt-3 lg:mt-4">
               {data.cta?.description || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
             </p>
             <div className="flex gap-3 lg:gap-4 mt-5 lg:mt-7 flex-wrap justify-center lg:justify-start">

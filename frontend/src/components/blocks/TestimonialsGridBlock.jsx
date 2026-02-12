@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
+import useSwipe from '../../hooks/useSwipe';
 
 const TestimonialsGridBlock = ({
   title = 'Cerita pengalaman menarik dan berkesan oleh alumni kami',
@@ -33,6 +34,12 @@ const TestimonialsGridBlock = ({
       fetchAlumni();
     }
   }, [fetchFromAPI]);
+
+  const totalSlides = Math.ceil(testimonials.length / 3);
+  const swipeHandlers = useSwipe({
+    onLeft: () => setCurrentSlide((p) => (p + 1) % (totalSlides || 1)),
+    onRight: () => setCurrentSlide((p) => (p - 1 + (totalSlides || 1)) % (totalSlides || 1)),
+  });
 
   // Auto-slide for carousel/mobile
   useEffect(() => {
@@ -80,7 +87,7 @@ const TestimonialsGridBlock = ({
 
   const TestimonialCard = ({ testimonial, compact = false }) => (
     <div className={`${compact ? 'p-4' : 'p-6'} ${cardBgClasses[backgroundColor]} rounded-lg`}>
-      <p className={`text-xs leading-relaxed ${backgroundColor === 'dark' ? 'text-[#d9d9d9]' : 'text-gray-600'}`}>
+      <p className={`text-sm leading-relaxed ${backgroundColor === 'dark' ? 'text-[#d9d9d9]' : 'text-gray-600'}`}>
         {testimonial.testimonial}
       </p>
       <div className={`flex items-center gap-3 ${compact ? 'mt-4' : 'mt-5'}`}>
@@ -176,7 +183,7 @@ const TestimonialsGridBlock = ({
             </div>
           )}
 
-          <div className="relative">
+          <div className="relative" {...swipeHandlers}>
             <div
               className="flex transition-transform duration-500"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -254,7 +261,7 @@ const TestimonialsGridBlock = ({
             </div>
 
             {/* Mobile: Sliding cards */}
-            <div className="lg:hidden">
+            <div className="lg:hidden" {...swipeHandlers}>
               <div className="flex flex-col gap-4">
                 {testimonials.slice(currentSlide * 3, currentSlide * 3 + 3).map((testimonial, idx) => (
                   <TestimonialCard key={idx} testimonial={testimonial} compact />
@@ -286,7 +293,7 @@ const TestimonialsGridBlock = ({
               </h2>
             )}
             {description && (
-              <p className={`text-xs sm:text-sm leading-relaxed ${subtextClasses[backgroundColor]} mt-3 lg:mt-5`}>
+              <p className={`text-sm sm:text-base leading-relaxed ${subtextClasses[backgroundColor]} mt-3 lg:mt-5`}>
                 {description}
               </p>
             )}

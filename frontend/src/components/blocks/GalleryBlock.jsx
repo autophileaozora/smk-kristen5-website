@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import useSwipe from '../../hooks/useSwipe';
 
 const GalleryBlock = ({
   images = [
@@ -45,6 +46,8 @@ const GalleryBlock = ({
   const prevImage = () => {
     setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
   };
+
+  const lightboxSwipe = useSwipe({ onLeft: nextImage, onRight: prevImage });
 
   return (
     <>
@@ -114,7 +117,7 @@ const GalleryBlock = ({
           )}
 
           {/* Image */}
-          <div className="max-w-6xl max-h-full" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-6xl max-h-full" onClick={(e) => e.stopPropagation()} {...lightboxSwipe}>
             <img
               src={images[currentImage].src}
               alt={images[currentImage].alt}
