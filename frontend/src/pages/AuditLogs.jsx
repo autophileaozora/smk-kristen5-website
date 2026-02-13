@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const AuditLogs = () => {
+const AuditLogs = ({ embedded = false }) => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -122,10 +122,12 @@ const AuditLogs = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
+      {!embedded && (
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Audit Log</h1>
         <p className="mt-2 text-gray-600">Riwayat aktivitas pengguna di sistem</p>
       </div>
+      )}
 
       {/* Statistics Cards */}
       {stats && (

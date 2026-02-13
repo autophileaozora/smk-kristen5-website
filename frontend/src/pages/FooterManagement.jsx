@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const FooterManagement = () => {
+const FooterManagement = ({ embedded = false }) => {
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -339,7 +339,7 @@ const FooterManagement = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast */}
       {toast.show && (
         <div
@@ -352,6 +352,7 @@ const FooterManagement = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Manajemen Footer</h1>
@@ -381,6 +382,7 @@ const FooterManagement = () => {
           </button>
         </div>
       </div>
+      )}
 
       {/* Footer Preview */}
       {columns.length > 0 && (

@@ -7,31 +7,19 @@ import { useSchoolLogo } from './hooks/useContact';
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Users = lazy(() => import('./pages/Users'));
 const Articles = lazy(() => import('./pages/Articles'));
-const Categories = lazy(() => import('./pages/Categories'));
-const RunningText = lazy(() => import('./pages/RunningText'));
-const Prestasi = lazy(() => import('./pages/Prestasi'));
-const Jurusan = lazy(() => import('./pages/Jurusan'));
-const Ekskul = lazy(() => import('./pages/Ekskul'));
-const Alumni = lazy(() => import('./pages/Alumni'));
-const VideoHero = lazy(() => import('./pages/VideoHero'));
-const HeroSlides = lazy(() => import('./pages/HeroSlides'));
-const MataPelajaran = lazy(() => import('./pages/MataPelajaran'));
-const Fasilitas = lazy(() => import('./pages/Fasilitas'));
-const AuditLogs = lazy(() => import('./pages/AuditLogs'));
-const ProfileManagement = lazy(() => import('./pages/ProfileManagement'));
-const SocialMedia = lazy(() => import('./pages/SocialMedia'));
-const Partner = lazy(() => import('./pages/Partner'));
-const CTAManagement = lazy(() => import('./pages/CTAManagement'));
-const AboutManagement = lazy(() => import('./pages/AboutManagement'));
-const Activities = lazy(() => import('./pages/Activities'));
-const Events = lazy(() => import('./pages/Events'));
 const CustomPages = lazy(() => import('./pages/CustomPages'));
 const CustomPageEditor = lazy(() => import('./pages/CustomPageEditor'));
-const SiteSettings = lazy(() => import('./pages/SiteSettings'));
-const NavbarManagement = lazy(() => import('./pages/NavbarManagement'));
-const FooterManagement = lazy(() => import('./pages/FooterManagement'));
+const ProfileManagement = lazy(() => import('./pages/ProfileManagement'));
+
+// Consolidated admin wrapper pages
+const ArtikelPage = lazy(() => import('./pages/admin/ArtikelPage'));
+const AkademikPage = lazy(() => import('./pages/admin/AkademikPage'));
+const KesiswaanPage = lazy(() => import('./pages/admin/KesiswaanPage'));
+const KegiatanPage = lazy(() => import('./pages/admin/KegiatanPage'));
+const HomepagePage = lazy(() => import('./pages/admin/HomepagePage'));
+const PengaturanPage = lazy(() => import('./pages/admin/PengaturanPage'));
+const SistemPage = lazy(() => import('./pages/admin/SistemPage'));
 const HomepageFixed = lazy(() => import('./pages/public/HomepageFixed'));
 const CustomPageView = lazy(() => import('./pages/public/CustomPageView'));
 const JurusanList = lazy(() => import('./pages/public/JurusanList'));
@@ -107,33 +95,41 @@ function App() {
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
 
-            {/* Admin routes with lazy loading */}
-            <Route path="articles" element={<Articles />} />
-            <Route path="my-articles" element={<Articles />} />
-            <Route path="running-text" element={<RunningText />} />
-            <Route path="prestasi" element={<Prestasi />} />
-            <Route path="jurusan" element={<Jurusan />} />
-            <Route path="ekskul" element={<Ekskul />} />
-            <Route path="alumni" element={<Alumni />} />
-            <Route path="video-hero" element={<VideoHero />} />
-            <Route path="hero-slides" element={<HeroSlides />} />
-            <Route path="mata-pelajaran" element={<MataPelajaran />} />
-            <Route path="fasilitas" element={<Fasilitas />} />
-            <Route path="kontak" element={<Navigate to="/admin/about" replace />} />
-            <Route path="social-media" element={<SocialMedia />} />
-            <Route path="partners" element={<Partner />} />
-            <Route path="cta" element={<CTAManagement />} />
-            <Route path="about" element={<AboutManagement />} />
-            <Route path="activities" element={<Activities />} />
-            <Route path="events" element={<Events />} />
+            {/* Consolidated admin routes */}
+            <Route path="articles" element={<ArtikelPage />} />
             <Route path="custom-pages" element={<CustomPages />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="users" element={<Users />} />
-            <Route path="audit-logs" element={<AuditLogs />} />
+            <Route path="akademik" element={<AkademikPage />} />
+            <Route path="kesiswaan" element={<KesiswaanPage />} />
+            <Route path="kegiatan" element={<KegiatanPage />} />
+            <Route path="homepage" element={<HomepagePage />} />
+            <Route path="pengaturan" element={<PengaturanPage />} />
+            <Route path="sistem" element={<SistemPage />} />
             <Route path="profile" element={<ProfileManagement />} />
-            <Route path="site-settings" element={<SiteSettings />} />
-            <Route path="navbar" element={<NavbarManagement />} />
-            <Route path="footer" element={<FooterManagement />} />
+            <Route path="my-articles" element={<Articles />} />
+
+            {/* Redirects from old routes to new consolidated routes */}
+            <Route path="categories" element={<Navigate to="/admin/articles?tab=kategori" replace />} />
+            <Route path="jurusan" element={<Navigate to="/admin/akademik?tab=jurusan" replace />} />
+            <Route path="mata-pelajaran" element={<Navigate to="/admin/akademik?tab=mapel" replace />} />
+            <Route path="ekskul" element={<Navigate to="/admin/kesiswaan?tab=ekskul" replace />} />
+            <Route path="prestasi" element={<Navigate to="/admin/kesiswaan?tab=prestasi" replace />} />
+            <Route path="alumni" element={<Navigate to="/admin/kesiswaan?tab=alumni" replace />} />
+            <Route path="fasilitas" element={<Navigate to="/admin/kesiswaan?tab=fasilitas" replace />} />
+            <Route path="activities" element={<Navigate to="/admin/kegiatan?tab=kegiatan" replace />} />
+            <Route path="events" element={<Navigate to="/admin/kegiatan?tab=agenda" replace />} />
+            <Route path="hero-slides" element={<Navigate to="/admin/homepage?tab=hero-slides" replace />} />
+            <Route path="video-hero" element={<Navigate to="/admin/homepage?tab=video-hero" replace />} />
+            <Route path="cta" element={<Navigate to="/admin/homepage?tab=cta" replace />} />
+            <Route path="partners" element={<Navigate to="/admin/homepage?tab=partner" replace />} />
+            <Route path="running-text" element={<Navigate to="/admin/homepage?tab=running-text" replace />} />
+            <Route path="site-settings" element={<Navigate to="/admin/pengaturan?tab=website" replace />} />
+            <Route path="about" element={<Navigate to="/admin/pengaturan?tab=sekolah" replace />} />
+            <Route path="kontak" element={<Navigate to="/admin/pengaturan?tab=sekolah" replace />} />
+            <Route path="navbar" element={<Navigate to="/admin/pengaturan?tab=navbar" replace />} />
+            <Route path="footer" element={<Navigate to="/admin/pengaturan?tab=footer" replace />} />
+            <Route path="social-media" element={<Navigate to="/admin/pengaturan?tab=sosmed" replace />} />
+            <Route path="users" element={<Navigate to="/admin/sistem?tab=users" replace />} />
+            <Route path="audit-logs" element={<Navigate to="/admin/sistem?tab=audit-log" replace />} />
           </Route>
 
           {/* 404 Not Found */}

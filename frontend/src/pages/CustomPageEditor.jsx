@@ -2661,6 +2661,110 @@ const BlockEditor = ({ block, onChange, onFileUpload, uploadingFile, onAddBlockT
       );
     }
 
+    // Special handling for image block rounded corners
+    if (propName === 'rounded' && block.type === 'image') {
+      const roundedOptions = [
+        { value: 'none', label: 'Tanpa' },
+        { value: 'sm', label: 'Kecil' },
+        { value: 'md', label: 'Sedang' },
+        { value: 'lg', label: 'Besar' },
+        { value: 'xl', label: 'Ekstra' },
+        { value: 'full', label: 'Bulat' },
+      ];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Sudut Gambar</label>
+          <div className="flex flex-wrap gap-1.5">
+            {roundedOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onChange({ [propName]: opt.value })}
+                className={`px-3 py-1.5 text-xs rounded-lg border font-medium transition-all ${
+                  propValue === opt.value
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-300 hover:border-blue-300 text-gray-600'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Special handling for image block object fit
+    if (propName === 'objectFit' && block.type === 'image') {
+      const fitOptions = [
+        { value: 'cover', label: 'Cover', desc: 'Isi area (crop)' },
+        { value: 'contain', label: 'Contain', desc: 'Tampil penuh' },
+        { value: 'fill', label: 'Fill', desc: 'Regangkan' },
+        { value: 'none', label: 'None', desc: 'Ukuran asli' },
+      ];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Mode Tampilan</label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {fitOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onChange({ [propName]: opt.value })}
+                className={`px-3 py-2 rounded-lg border text-left transition-all ${
+                  propValue === opt.value
+                    ? 'bg-blue-50 border-blue-500'
+                    : 'bg-white border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <span className={`text-xs font-medium block ${propValue === opt.value ? 'text-blue-700' : 'text-gray-700'}`}>{opt.label}</span>
+                <span className="text-[10px] text-gray-400">{opt.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Special handling for image block max height
+    if (propName === 'maxHeight' && block.type === 'image') {
+      const heightPresets = [
+        { value: '', label: 'Auto' },
+        { value: '200px', label: '200px' },
+        { value: '300px', label: '300px' },
+        { value: '400px', label: '400px' },
+        { value: '500px', label: '500px' },
+      ];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Tinggi Maksimal</label>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {heightPresets.map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                onClick={() => onChange({ [propName]: preset.value })}
+                className={`px-3 py-1.5 text-xs rounded-lg border font-medium transition-all ${
+                  propValue === preset.value
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-300 hover:border-blue-300 text-gray-600'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={propValue || ''}
+            onChange={(e) => onChange({ [propName]: e.target.value })}
+            placeholder="Custom (contoh: 350px, 50vh)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          />
+        </div>
+      );
+    }
+
     // Handle image/file upload fields
     const imageFields = ['src', 'image', 'backgroundImage', 'logo', 'avatar', 'thumbnail', 'poster'];
     if (imageFields.includes(propName)) {

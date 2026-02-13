@@ -4,7 +4,7 @@ import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
 import RichTextEditor from '../components/RichTextEditor';
 
-const Jurusan = () => {
+const Jurusan = ({ embedded = false }) => {
   const [jurusans, setJurusans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -219,7 +219,7 @@ const Jurusan = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -230,6 +230,7 @@ const Jurusan = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Program Keahlian</h1>
@@ -243,6 +244,7 @@ const Jurusan = () => {
           <span>Tambah Jurusan</span>
         </button>
       </div>
+      )}
 
       {/* Jurusan Grid */}
       <div className="bg-white rounded-lg shadow">

@@ -130,6 +130,9 @@ export const BLOCK_DEFINITIONS = [
       caption: '',
       customWidth: '',
       alignment: 'center',
+      rounded: 'md',
+      objectFit: 'cover',
+      maxHeight: '',
     },
   },
   {

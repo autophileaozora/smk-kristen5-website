@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const HeroSlides = () => {
+const HeroSlides = ({ embedded = false }) => {
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -231,7 +231,7 @@ const HeroSlides = () => {
   const activeCount = slides.filter(s => s.isActive).length;
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -242,6 +242,7 @@ const HeroSlides = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Hero Slides</h1>
@@ -260,6 +261,7 @@ const HeroSlides = () => {
           Tambah Hero Slide
         </button>
       </div>
+      )}
 
       {/* Info Alert */}
       {activeCount >= 5 && (

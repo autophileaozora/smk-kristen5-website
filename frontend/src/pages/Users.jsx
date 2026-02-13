@@ -5,7 +5,7 @@ import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import Pagination from '../components/Pagination';
 
-const Users = () => {
+const Users = ({ embedded = false }) => {
   const { user: currentUser } = useAuthStore();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -174,6 +174,7 @@ const Users = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Manajemen User</h1>
@@ -187,6 +188,7 @@ const Users = () => {
           <span>Tambah User</span>
         </button>
       </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">

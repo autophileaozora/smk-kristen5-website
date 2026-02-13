@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const MataPelajaran = () => {
+const MataPelajaran = ({ embedded = false }) => {
   const [mataPelajarans, setMataPelajarans] = useState([]);
   const [jurusans, setJurusans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -199,7 +199,7 @@ const MataPelajaran = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className={embedded ? '' : 'space-y-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -210,6 +210,7 @@ const MataPelajaran = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Mata Pelajaran</h1>
@@ -222,6 +223,7 @@ const MataPelajaran = () => {
           + Tambah Mata Pelajaran
         </button>
       </div>
+      )}
 
       {/* Search Bar */}
       <div className="bg-white rounded-lg shadow p-6">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const CTAManagement = () => {
+const CTAManagement = ({ embedded = false }) => {
   const [cta, setCTA] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -170,7 +170,7 @@ const CTAManagement = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -181,10 +181,12 @@ const CTAManagement = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Edit CTA Section</h1>
         <p className="text-gray-600 mt-1">Kelola Call-to-Action section di homepage</p>
       </div>
+      )}
 
       {/* Form */}
       {loading ? (

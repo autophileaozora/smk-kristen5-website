@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSchoolLogo } from '../hooks/useContact';
+import { useLanguage } from '../contexts/LanguageContext';
 import api from '../services/api';
 
 const Navbar = ({ activePage = '', visible = true, className = '' }) => {
   const { logo: schoolLogo } = useSchoolLogo();
+  const { language, toggleLanguage } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -290,7 +292,21 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
               </svg>
             </Link>
 
-            {/* Button Items (e.g., PENDAFTARAN) */}
+            {/* Language Toggle - before PENDAFTARAN */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all border border-white/20"
+              title={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              <span>{language === 'id' ? 'EN' : 'ID'}</span>
+            </button>
+
+            {/* Button Items (e.g., PENDAFTARAN) - only from API, no fallback */}
             {buttonItems.map((item) => (
               <Link
                 key={item._id}
@@ -301,16 +317,6 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
                 {item.label}
               </Link>
             ))}
-
-            {/* Fallback button if no button items from API */}
-            {buttonItems.length === 0 && (
-              <Link
-                to="/pendaftaran"
-                className="hidden md:block bg-transparent text-yellow-300 px-7 py-3 rounded-full text-xs font-semibold border-2 border-yellow-300 tracking-wide hover:bg-yellow-300/15 transition-all duration-300"
-              >
-                PENDAFTARAN
-              </Link>
-            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -357,6 +363,19 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
               {item.label}
             </Link>
           ))}
+
+          {/* Mobile Language Toggle */}
+          <button
+            onClick={toggleLanguage}
+            className="mt-4 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-full text-sm font-semibold transition-all border border-white/20"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            <span>{language === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
+          </button>
         </div>
       </div>
 

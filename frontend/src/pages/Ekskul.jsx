@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
 
-const Ekskul = () => {
+const Ekskul = ({ embedded = false }) => {
   const [ekskuls, setEkskuls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -199,7 +199,7 @@ const Ekskul = () => {
   });
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -210,6 +210,7 @@ const Ekskul = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Ekstrakurikuler</h1>
@@ -223,6 +224,7 @@ const Ekskul = () => {
           Tambah Ekstrakurikuler
         </button>
       </div>
+      )}
 
       {/* Search Bar */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">

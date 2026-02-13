@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const SiteSettings = () => {
+const SiteSettings = ({ embedded = false }) => {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -190,7 +190,7 @@ const SiteSettings = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast */}
       {toast && (
         <div
@@ -203,10 +203,12 @@ const SiteSettings = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Pengaturan Website</h1>
         <p className="text-gray-600">Kelola pengaturan umum website</p>
       </div>
+      )}
 
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow-md">

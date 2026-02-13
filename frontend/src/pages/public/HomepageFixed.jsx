@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
+import { useLanguage } from '../../contexts/LanguageContext';
+import T from '../../components/T';
 import useSwipe from '../../hooks/useSwipe';
 import SEO from '../../components/SEO';
 import Mascot3D from '../../components/Mascot3D';
@@ -11,6 +13,7 @@ import Footer from '../../components/Footer';
 const HomepageFixed = () => {
   const navigate = useNavigate();
   const { logo: schoolLogo } = useSchoolLogo();
+  const { t } = useLanguage();
 
   const [data, setData] = useState({
     jurusans: [],
@@ -335,10 +338,10 @@ const HomepageFixed = () => {
               {/* Hero Content - Left Aligned */}
               <div className="absolute top-[55%] left-4 sm:left-8 lg:left-16 transform -translate-y-1/2 text-left z-10 w-11/12 max-w-xl lg:max-w-2xl px-2 sm:px-4">
                 <h1 className="russo text-[16px] sm:text-[18px] md:text-[20px] lg:text-[24px] leading-tight text-white uppercase mb-3 sm:mb-5 drop-shadow-lg transition-all duration-500">
-                  {currentSlide.title}
+                  <T>{currentSlide.title}</T>
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/95 transition-all duration-500">
-                  {currentSlide.subtitle}
+                  <T>{currentSlide.subtitle}</T>
                 </p>
                 <div className="flex justify-start gap-3 sm:gap-4 mt-6 sm:mt-9 flex-wrap">
                   <button className="bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 sm:px-8 py-3 sm:py-[14px] rounded-lg text-[11px] sm:text-xs font-semibold tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
@@ -392,16 +395,16 @@ const HomepageFixed = () => {
           <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-20">
             {/* Left Content - 50% */}
             <div className="w-full lg:w-1/2 lg:pr-10">
-              <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">{hp.whyTitle || 'MENGAPA SEKOLAH DI KRISMA'}</h3>
+              <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">{hp.whyTitle || t('home.whyTitle')}</h3>
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-tight text-[#0d76be] mb-3 lg:mb-4">
-                {hp.whyHeading || 'SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL'}
+                <T>{hp.whyHeading || 'SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL'}</T>
               </h2>
               <p className="text-sm lg:text-base leading-relaxed text-gray-700">
-                {hp.whyDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
+                <T>{hp.whyDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}</T>
               </p>
 
-              <Link to={hp.whyButtonUrl || '/tentang'} className="inline-flex items-center justify-center px-4 lg:px-6 py-2 lg:py-2.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full mt-4 lg:mt-6 transition-colors">
-                <span className="text-[10px] lg:text-xs font-medium">{hp.whyButtonText || 'Baca Profil Sekolah'}</span>
+              <Link to={hp.whyButtonUrl || '/tentang'} className="inline-flex items-center justify-center px-5 lg:px-7 py-2.5 lg:py-3 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-lg mt-4 lg:mt-6 text-[11px] lg:text-xs font-semibold tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                {hp.whyButtonText || t('home.readProfile')}
               </Link>
 
               {/* Alumni Companies */}
@@ -422,7 +425,7 @@ const HomepageFixed = () => {
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-0 lg:mt-24 w-full">
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-[#008fd7] sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.ekskuls || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">EKSTRAKURIKULER</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.extracurricular')}</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.ekskuls || []).slice(0, 3).map(e => e.name).join(', ') || 'Loading...'}{(data.ekskuls || []).length > 3 ? ', dan lainnya' : ''}
                 </p>
@@ -430,7 +433,7 @@ const HomepageFixed = () => {
 
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-yellow-300 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.fasilitas || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">FASILITAS</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.facilities')}</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.fasilitas || []).slice(0, 3).map(f => f.name).join(', ') || 'Loading...'}{(data.fasilitas || []).length > 3 ? ', dan lainnya' : ''}
                 </p>
@@ -438,15 +441,15 @@ const HomepageFixed = () => {
 
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-red-500 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{new Date().getFullYear() - (hp.foundingYear || 1999)}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">TAHUN PENGABDIAN</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.yearsServing')}</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
-                  {`Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`}
+                  <T>{`Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`}</T>
                 </p>
               </div>
 
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-orange-600 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.jurusans || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">BIDANG KOMPETENSI</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.competencyFields')}</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.jurusans || []).slice(0, 3).map(j => j.name).join(', ') || 'Loading...'}{(data.jurusans || []).length > 3 ? '' : ''}
                 </p>
@@ -464,7 +467,7 @@ const HomepageFixed = () => {
         </div>
         <h2 className="russo text-xl lg:text-2xl text-gray-700 mt-3">{hp.accelerateTitle || 'ACCELERATE YOUR ENTIRE POTENTIAL'}</h2>
         <p className="text-sm lg:text-base leading-relaxed text-black font-light mt-3 lg:mt-4">
-          {hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}
+          <T>{hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}</T>
         </p>
       </section>
 
@@ -654,8 +657,8 @@ const HomepageFixed = () => {
                     </div>
                   </div>
 
-                  {/* Nav Dots - below image, centered */}
-                  <div className="flex justify-center gap-2 mt-3 px-4 lg:px-10">
+                  {/* Nav Dots - overlapping bottom of image */}
+                  <div className="flex justify-center gap-2 -mt-1 lg:-mt-3 relative z-30 px-4 lg:px-10">
                     {currentItems.map((_, dot) => (
                       <button
                         key={dot}
@@ -674,7 +677,7 @@ const HomepageFixed = () => {
                       <span className="text-[#bbb]">{currentItem.description}</span>
                     </p>
                     <Link to={data.activitySettings?.globalLink || '/artikel'} className="text-[#008fd7] text-xs lg:text-sm font-medium mt-3 lg:mt-4 inline-block hover:text-[#00D9FF] transition-colors">
-                      {data.activitySettings?.globalButtonText || 'Explore Kegiatan Siswa'} &gt;
+                      {data.activitySettings?.globalButtonText || t('home.exploreActivities')} &gt;
                     </Link>
                   </div>
                 </div>
@@ -705,7 +708,7 @@ const HomepageFixed = () => {
                           <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
                         </div>
                       </div>
-                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-Alumni {alumni.graduationYear}</p>
+                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
                     </div>
                   ))}
                 </div>
@@ -722,7 +725,7 @@ const HomepageFixed = () => {
                           <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
                         </div>
                       </div>
-                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-Alumni {alumni.graduationYear}</p>
+                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
                     </div>
                   ))}
                 </div>
@@ -741,7 +744,7 @@ const HomepageFixed = () => {
                           <span className="text-[10px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
                         </div>
                       </div>
-                      <p className="text-right text-[10px] text-[#7a7a7a] font-medium mt-2 italic">-Alumni {alumni.graduationYear}</p>
+                      <p className="text-right text-[10px] text-[#7a7a7a] font-medium mt-2 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
                     </div>
                   ))}
                 </div>
@@ -769,8 +772,8 @@ const HomepageFixed = () => {
               <p className="text-sm sm:text-base leading-relaxed text-white mt-3 lg:mt-5">
                 {hp.testimonialsDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
               </p>
-              <button className="inline-flex items-center px-6 lg:px-8 py-2.5 lg:py-3 bg-transparent border-2 border-yellow-300 text-yellow-300 text-[11px] lg:text-xs font-semibold rounded-lg mt-5 lg:mt-8 hover:bg-yellow-300/10 transition-all tracking-wide">
-                {hp.testimonialsButtonText || 'BAGIKAN CERITAMU'}
+              <button className="inline-flex items-center px-5 lg:px-7 py-3 lg:py-3.5 bg-transparent border-2 border-yellow-300 text-yellow-300 text-[11px] lg:text-xs font-semibold rounded-lg mt-5 lg:mt-8 hover:bg-yellow-300/10 hover:-translate-y-0.5 transition-all tracking-wide">
+                {hp.testimonialsButtonText || t('home.shareStory')}
               </button>
             </div>
           </div>
@@ -787,7 +790,7 @@ const HomepageFixed = () => {
               <Link to={`/artikel/${data.articles[0].slug}`} className="relative rounded-xl overflow-hidden mb-4 block group">
                 <div className="relative h-[220px] sm:h-[280px] lg:h-[320px]">
                   <img
-                    src={data.articles[0].featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop'}
+                    src={data.articles[0].featuredImage?.url || data.articles[0].featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop'}
                     alt={data.articles[0].title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -797,13 +800,13 @@ const HomepageFixed = () => {
                   {/* Content on left */}
                   <div className="absolute inset-0 p-4 lg:p-6 flex flex-col justify-center max-w-full lg:max-w-[55%]">
                     <h2 className="text-base sm:text-xl lg:text-2xl font-bold text-white leading-tight mb-2 lg:mb-3 line-clamp-2 lg:line-clamp-none">
-                      {data.articles[0].title}
+                      <T>{data.articles[0].title}</T>
                     </h2>
                     <span className="text-yellow-400 text-[10px] lg:text-xs font-medium mb-2 lg:mb-3">
-                      {data.articles[0].categoryJurusan?.name || data.articles[0].categoryTopik?.name || 'Berita'}
+                      <T>{data.articles[0].categoryJurusan?.name || data.articles[0].categoryTopik?.name || t('home.news')}</T>
                     </span>
                     <p className="text-xs lg:text-sm text-gray-300 leading-relaxed line-clamp-2 lg:line-clamp-4 hidden sm:block">
-                      {data.articles[0].excerpt || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
+                      <T>{data.articles[0].excerpt || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}</T>
                     </p>
                   </div>
                 </div>
@@ -820,15 +823,15 @@ const HomepageFixed = () => {
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium leading-snug line-clamp-2 sm:line-clamp-3">
-                      {article.title}
+                      <T>{article.title}</T>
                     </p>
                     <span className="text-[10px] text-yellow-400 mt-2 block">
-                      {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
+                      <T>{article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}</T>
                     </span>
                   </div>
                   <div className="w-16 h-14 sm:w-20 sm:h-16 flex-shrink-0 rounded overflow-hidden">
                     <img
-                      src={article.featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200&h=150&fit=crop'}
+                      src={article.featuredImage?.url || article.featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200&h=150&fit=crop'}
                       alt={article.title}
                       className="w-full h-full object-cover"
                     />
@@ -842,7 +845,7 @@ const HomepageFixed = () => {
           <div className="w-full lg:w-[280px] flex-shrink-0 mt-6 lg:mt-0">
             <div className="flex items-center gap-2 mb-4 lg:mb-6">
               <div className="w-1 h-5 lg:h-6 bg-[#0d76be] rounded-full"></div>
-              <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsTopTitle || 'TOP 5 BERITA'}</h3>
+              <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsTopTitle || t('home.topNews')}</h3>
             </div>
 
             <div className="space-y-4 lg:space-y-5">
@@ -860,7 +863,7 @@ const HomepageFixed = () => {
                       {article.title}
                     </p>
                     <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 block">
-                      {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
+                      {article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}
                     </span>
                   </div>
                 </Link>
@@ -872,7 +875,7 @@ const HomepageFixed = () => {
         {/* BERITA UTAMA - Bottom section */}
         <div className="mt-8 lg:mt-12">
           <div className="mb-4 lg:mb-6">
-            <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsMainTitle || 'BERITA UTAMA'}</h3>
+            <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsMainTitle || t('home.mainNews')}</h3>
             <div className="w-10 lg:w-12 h-1 bg-[#0d76be] mt-2 rounded-full"></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-0">
@@ -886,7 +889,7 @@ const HomepageFixed = () => {
                   {article.title}
                 </h4>
                 <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 lg:mt-2 block">
-                  {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
+                  {article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}
                 </span>
               </Link>
             ))}
@@ -898,25 +901,29 @@ const HomepageFixed = () => {
       <section className="py-12 lg:py-20 relative" style={{ background: 'linear-gradient(to bottom, transparent 50px, rgba(13,118,190,0.15) 50%, rgba(13,118,190,0.31) 100%)' }}>
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
         <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-base lg:text-lg font-bold text-black">{hp.eventsTitle || 'KEGIATAN SISWA DAN GURU'}</h2>
+          <h2 className="text-base lg:text-lg font-bold text-black">{hp.eventsTitle || t('home.eventsTitle')}</h2>
           <p className="text-sm lg:text-base leading-relaxed text-gray-600 font-medium max-w-3xl mx-auto mt-2 px-2">
-            {hp.eventsDescription || 'AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH'}
+            {hp.eventsDescription || t('home.eventsSubtitle')}
           </p>
         </div>
 
         {/* Tabs */}
         <div className="flex justify-center gap-1 lg:gap-2 mb-8 lg:mb-10 border border-[#62B4DD] rounded-full p-1 lg:p-1.5 w-fit mx-auto">
-          {['Semua', 'Akademik', 'Non Akademik'].map((tab, idx) => (
+          {[
+            { key: 'semua', label: t('home.allCategories') },
+            { key: 'akademik', label: t('home.academic') },
+            { key: 'non akademik', label: t('home.nonAcademic') },
+          ].map((tab, idx) => (
             <div
               key={idx}
-              onClick={() => filterEvents(tab.toLowerCase())}
+              onClick={() => filterEvents(tab.key)}
               className={`px-3 sm:px-5 lg:px-8 py-2 lg:py-2.5 rounded-full text-[10px] sm:text-xs font-medium cursor-pointer transition-all whitespace-nowrap ${
-                activeEventFilter === tab.toLowerCase()
+                activeEventFilter === tab.key
                   ? 'bg-[rgba(207,233,246,0.5)] text-gray-700'
                   : 'text-[#0d76be]'
               }`}
             >
-              {tab}
+              {tab.label}
             </div>
           ))}
         </div>
@@ -994,8 +1001,8 @@ const HomepageFixed = () => {
         })()}
 
 
-        <button className="flex items-center justify-center px-6 lg:px-10 py-3 lg:py-3.5 bg-[#f6efe4] text-gray-700 text-[11px] lg:text-xs font-semibold rounded-lg mx-auto hover:bg-[#f0e5d4] hover:-translate-y-0.5 shadow-md hover:shadow-lg transition-all">
-          {hp.eventsButtonText || 'LIHAT SEMUA AGENDA'}
+        <button className="flex items-center justify-center px-5 lg:px-7 py-3 lg:py-3.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white text-[11px] lg:text-xs font-semibold rounded-lg mx-auto shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all tracking-wide">
+          {hp.eventsButtonText || t('home.viewAllEvents')}
         </button>
         </div>
       </section>
@@ -1020,24 +1027,24 @@ const HomepageFixed = () => {
         <div className="relative z-40 flex items-center justify-center w-full min-h-[400px] lg:min-h-[550px] px-4 sm:px-6 lg:px-20 lg:pl-[50%] py-16 lg:py-0">
           <div className="max-w-[550px] text-center lg:text-left">
             <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white uppercase">
-              {data.cta?.title || 'MARI DISKUSIKAN BAKAT & MINAT KAMU, KAMI AKAN MEMBANTU MENEMUKAN SESUAI PASSION ANDA'}
+              {data.cta?.title || t('home.ctaTitle')}
             </h2>
             <p className="text-sm sm:text-base lg:text-lg leading-relaxed text-white/90 mt-3 lg:mt-4">
-              {data.cta?.description || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
+              {data.cta?.description || t('home.ctaDescription')}
             </p>
             <div className="flex gap-3 lg:gap-4 mt-5 lg:mt-7 flex-wrap justify-center lg:justify-start">
               <Link
                 to={data.cta?.primaryButtonLink || '/pendaftaran'}
                 className="bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 lg:px-7 py-3 lg:py-3.5 rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
-                {data.cta?.primaryButtonText || 'DAFTAR SEKARANG'}
+                {data.cta?.primaryButtonText || t('home.registerNow')}
               </Link>
               {(data.cta?.secondaryButtonText || !data.cta) && (
                 <Link
                   to={data.cta?.secondaryButtonLink || '/kontak'}
                   className="bg-transparent text-white px-5 lg:px-7 py-3 lg:py-3.5 border-2 border-white rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide hover:bg-white/10 hover:-translate-y-0.5 transition-all"
                 >
-                  {data.cta?.secondaryButtonText || 'LAYANAN INFORMASI'}
+                  {data.cta?.secondaryButtonText || t('home.infoService')}
                 </Link>
               )}
             </div>

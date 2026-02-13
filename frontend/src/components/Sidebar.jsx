@@ -44,7 +44,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
   const location = useLocation();
   const { user, logout } = useAuthStore();
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   // Fetch pending articles count for administrator
   useEffect(() => {
@@ -66,71 +66,20 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Menu structure - grouped by category
+  // Menu structure - consolidated 9 items
   const menuGroups = user?.role === 'administrator' ? [
     {
       id: 'main',
       items: [
         { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-      ],
-    },
-    {
-      id: 'konten',
-      label: 'Konten',
-      items: [
         { name: 'Artikel', path: '/admin/articles', icon: FileText, badge: pendingArticlesCount },
-        { name: 'Custom Pages', path: '/admin/custom-pages', icon: FilePlus },
-        { name: 'Kategori', path: '/admin/categories', icon: FolderOpen },
-        { name: 'Running Text', path: '/admin/running-text', icon: Megaphone },
-      ],
-    },
-    {
-      id: 'akademik',
-      label: 'Akademik',
-      items: [
-        { name: 'Jurusan', path: '/admin/jurusan', icon: GraduationCap },
-        { name: 'Mata Pelajaran', path: '/admin/mata-pelajaran', icon: BookOpen },
-        { name: 'Ekskul', path: '/admin/ekskul', icon: Dribbble },
-        { name: 'Prestasi', path: '/admin/prestasi', icon: Trophy },
-      ],
-    },
-    {
-      id: 'sekolah',
-      label: 'Sekolah',
-      items: [
-        { name: 'Informasi Sekolah', path: '/admin/about', icon: School },
-        { name: 'Fasilitas', path: '/admin/fasilitas', icon: Building2 },
-        { name: 'Alumni', path: '/admin/alumni', icon: Users },
-        { name: 'Kegiatan', path: '/admin/activities', icon: CalendarDays },
-        { name: 'Agenda', path: '/admin/events', icon: CalendarCheck },
-      ],
-    },
-    {
-      id: 'homepage',
-      label: 'Homepage',
-      items: [
-        { name: 'Hero Slides', path: '/admin/hero-slides', icon: Images },
-        { name: 'Video Hero', path: '/admin/video-hero', icon: Video },
-        { name: 'CTA', path: '/admin/cta', icon: MousePointerClick },
-        { name: 'Partner', path: '/admin/partners', icon: Handshake },
-      ],
-    },
-    {
-      id: 'tampilan',
-      label: 'Tampilan',
-      items: [
-        { name: 'Pengaturan Website', path: '/admin/site-settings', icon: Settings },
-        { name: 'Navbar', path: '/admin/navbar', icon: Navigation },
-        { name: 'Footer', path: '/admin/footer', icon: PanelBottom },
-        { name: 'Sosial Media', path: '/admin/social-media', icon: Share2 },
-      ],
-    },
-    {
-      id: 'sistem',
-      label: 'Sistem',
-      items: [
-        { name: 'Manajemen User', path: '/admin/users', icon: UserCog },
-        { name: 'Audit Log', path: '/admin/audit-logs', icon: ClipboardList },
+        { name: 'Halaman Kustom', path: '/admin/custom-pages', icon: FilePlus },
+        { name: 'Jurusan & Mapel', path: '/admin/akademik', icon: GraduationCap },
+        { name: 'Kesiswaan', path: '/admin/kesiswaan', icon: Users },
+        { name: 'Kegiatan & Agenda', path: '/admin/kegiatan', icon: CalendarDays },
+        { name: 'Homepage', path: '/admin/homepage', icon: Images },
+        { name: 'Pengaturan', path: '/admin/pengaturan', icon: Settings },
+        { name: 'User & Log', path: '/admin/sistem', icon: UserCog },
       ],
     },
   ] : [
@@ -138,15 +87,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
       id: 'main',
       items: [
         { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-      ],
-    },
-    {
-      id: 'konten',
-      label: 'Konten',
-      items: [
         { name: 'Artikel Saya', path: '/admin/my-articles', icon: FileText },
-        { name: 'Running Text', path: '/admin/running-text', icon: Megaphone },
-        { name: 'Prestasi', path: '/admin/prestasi', icon: Trophy },
       ],
     },
   ];

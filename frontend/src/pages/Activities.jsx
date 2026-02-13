@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const Activities = () => {
+const Activities = ({ embedded = false }) => {
   const [tabs, setTabs] = useState([]);
   const [settings, setSettings] = useState({
     globalLink: '/kegiatan',
@@ -326,7 +326,7 @@ const Activities = () => {
   const activeTab = tabs.find(t => t._id === activeTabId);
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -337,6 +337,7 @@ const Activities = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pembelajaran & Kegiatan</h1>
@@ -358,6 +359,7 @@ const Activities = () => {
           </button>
         </div>
       </div>
+      )}
 
       {loading ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">

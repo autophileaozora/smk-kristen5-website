@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
 
-const Fasilitas = () => {
+const Fasilitas = ({ embedded = false }) => {
   const [fasilitass, setFasilitass] = useState([]);
   const [jurusans, setJurusans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -167,7 +167,7 @@ const Fasilitas = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className={embedded ? '' : 'space-y-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -178,6 +178,7 @@ const Fasilitas = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Fasilitas</h1>
@@ -190,6 +191,7 @@ const Fasilitas = () => {
           + Tambah Fasilitas
         </button>
       </div>
+      )}
 
       {/* Search Bar */}
       <div className="bg-white rounded-lg shadow p-6">

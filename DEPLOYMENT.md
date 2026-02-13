@@ -82,17 +82,17 @@ Download dan install dari: https://git-scm.com/downloads
    ```
    NODE_ENV=production
    PORT=5001
-   MONGODB_URI=mongodb+srv://smkadmin:llASVw6t0ne1TSot@cluster0.q3nsc8a.mongodb.net/
-   JWT_SECRET=e306ea9de5c5e324d6e5c846a32819bd79ea924bae66154e9da06a52c6575527
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+   JWT_SECRET=your_super_secret_jwt_key_here_min_32_chars
    JWT_EXPIRE=7d
-   CLOUDINARY_CLOUD_NAME=drszo9bl2
-   CLOUDINARY_API_KEY=655933234672663
-   CLOUDINARY_API_SECRET=azdMIKT382EqxYGiRcmUG7Slsxw
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
    EMAIL_HOST=smtp.gmail.com
    EMAIL_PORT=587
-   EMAIL_USER=andrian.imanuel.sinaga17@gmail.com
-   EMAIL_PASSWORD=stkc rlkw fhzr yiri
-   EMAIL_FROM=SMK Kristen 5 Klaten <andrian.imanuel.sinaga17@gmail.com>
+   EMAIL_USER=your_email@gmail.com
+   EMAIL_PASSWORD=your_gmail_app_password
+   EMAIL_FROM=SMK Kristen 5 Klaten <your_email@gmail.com>
    MAX_IMAGE_SIZE=5242880
    MAX_VIDEO_SIZE=52428800
    ```
@@ -247,19 +247,19 @@ Download dan install dari: https://git-scm.com/downloads
 ```env
 NODE_ENV=production
 PORT=5001
-BASE_URL=https://smk-kristen5-backend.onrender.com
-MONGODB_URI=mongodb+srv://smkadmin:llASVw6t0ne1TSot@cluster0.q3nsc8a.mongodb.net/
-JWT_SECRET=e306ea9de5c5e324d6e5c846a32819bd79ea924bae66154e9da06a52c6575527
+BASE_URL=https://your-backend.onrender.com
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+JWT_SECRET=your_super_secret_jwt_key_here_min_32_chars
 JWT_EXPIRE=7d
-CLOUDINARY_CLOUD_NAME=drszo9bl2
-CLOUDINARY_API_KEY=655933234672663
-CLOUDINARY_API_SECRET=azdMIKT382EqxYGiRcmUG7Slsxw
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=andrian.imanuel.sinaga17@gmail.com
-EMAIL_PASSWORD=stkc rlkw fhzr yiri
-EMAIL_FROM=SMK Kristen 5 Klaten <andrian.imanuel.sinaga17@gmail.com>
-FRONTEND_URL=https://smk-kristen5.netlify.app
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_gmail_app_password
+EMAIL_FROM=SMK Kristen 5 Klaten <your_email@gmail.com>
+FRONTEND_URL=https://your-frontend.netlify.app
 MAX_IMAGE_SIZE=5242880
 MAX_VIDEO_SIZE=52428800
 ```

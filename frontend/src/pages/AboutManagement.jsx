@@ -3,7 +3,7 @@ import api from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import ImageUpload from '../components/ImageUpload';
 
-const AboutManagement = () => {
+const AboutManagement = ({ embedded = false }) => {
   const [activeTab, setActiveTab] = useState('about');
 
   // ========== ABOUT TAB STATE ==========
@@ -889,7 +889,7 @@ const AboutManagement = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div
@@ -904,12 +904,14 @@ const AboutManagement = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Informasi Sekolah</h1>
         <p className="text-gray-600 mt-2">
           Kelola informasi tentang sekolah dan kontak
         </p>
       </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="mb-6 border-b border-gray-200">

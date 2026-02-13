@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
 
-const Alumni = () => {
+const Alumni = ({ embedded = false }) => {
   const [alumni, setAlumni] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -224,7 +224,7 @@ const Alumni = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -235,6 +235,7 @@ const Alumni = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Alumni</h1>
@@ -248,6 +249,7 @@ const Alumni = () => {
           Tambah Alumni
         </button>
       </div>
+      )}
 
       {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">

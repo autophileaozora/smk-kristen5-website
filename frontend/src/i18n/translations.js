@@ -1,0 +1,339 @@
+export const translations = {
+  id: {
+    // Navbar
+    nav: {
+      home: 'Beranda',
+      profile: 'Profil',
+      history: 'Sejarah',
+      visionMission: 'Visi & Misi',
+      principalGreeting: 'Sambutan Kepala Sekolah',
+      aboutUs: 'Tentang Kami',
+      programs: 'Jurusan',
+      information: 'Informasi',
+      achievements: 'Prestasi',
+      activities: 'Kegiatan',
+      allArticles: 'Semua Artikel',
+      contact: 'Kontak',
+      registration: 'PENDAFTARAN',
+      search: 'Cari',
+    },
+
+    // Homepage
+    home: {
+      loading: 'Memuat...',
+      // Why Section
+      whyTitle: 'MENGAPA SEKOLAH DI KRISMA',
+      whyDescription: 'Temukan alasan mengapa SMK Kristen 5 Klaten menjadi pilihan terbaik untuk masa depan Anda.',
+      readProfile: 'Baca Profil Sekolah',
+      partneredWith: 'BERMITRA DENGAN',
+      stats: {
+        extracurricular: 'Ekstrakurikuler',
+        facilities: 'Fasilitas',
+        yearsServing: 'Tahun Melayani',
+        competencyFields: 'Bidang Kompetensi',
+      },
+      // Accelerate
+      accelerateTitle: 'ACCELERATE YOUR ENTIRE POTENTIAL',
+      // Programs
+      programs: 'PROGRAM KEAHLIAN',
+      careerProspects: 'Prospek Karir:',
+      // Activities
+      activitiesTitle: 'Pembelajaran & Kegiatan',
+      activitiesSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
+      exploreActivities: 'Explore Kegiatan Siswa',
+      // Testimonials
+      testimonialsTitle: 'CERITA ALUMNI',
+      testimonialsSubtitle: 'Dengarkan pengalaman alumni SMK Kristen 5 Klaten yang telah sukses di berbagai bidang.',
+      shareStory: 'BAGIKAN CERITAMU',
+      graduationYear: 'Lulusan',
+      // News
+      topNews: 'TOP 5 BERITA',
+      mainNews: 'BERITA UTAMA',
+      news: 'Berita',
+      // Events
+      eventsTitle: 'KEGIATAN SISWA DAN GURU',
+      eventsSubtitle: 'AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH',
+      viewAllEvents: 'LIHAT SEMUA AGENDA',
+      allCategories: 'Semua',
+      academic: 'Akademik',
+      nonAcademic: 'Non Akademik',
+      // CTA
+      ctaTitle: 'MARI DISKUSIKAN BAKAT & MINAT KAMU, KAMI AKAN MEMBANTU MENEMUKAN SESUAI PASSION ANDA',
+      ctaDescription: 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.',
+      registerNow: 'DAFTAR SEKARANG',
+      infoService: 'LAYANAN INFORMASI',
+    },
+
+    // Article page
+    article: {
+      featured: 'Artikel Pilihan',
+      search: 'Cari artikel...',
+      filter: 'Filter',
+      allPeriods: 'Semua Periode',
+      last7Days: '7 Hari Terakhir',
+      last30Days: '30 Hari Terakhir',
+      last90Days: '90 Hari Terakhir',
+      lastYear: '1 Tahun Terakhir',
+      allPrograms: 'Semua Jurusan',
+      allTopics: 'Semua Topik',
+      readMore: 'Baca Selengkapnya',
+      readingTime: 'menit baca',
+      shareArticle: 'Bagikan Artikel',
+      copyLink: 'Salin Link',
+      linkCopied: 'Link disalin!',
+      relatedArticles: 'ARTIKEL TERKAIT',
+      latestNews: 'BERITA TERBARU',
+      noArticles: 'Belum ada artikel.',
+    },
+
+    // Contact page
+    contact: {
+      title: 'Hubungi Kami',
+      address: 'Alamat',
+      phone: 'Telepon',
+      email: 'Email',
+      operatingHours: 'Jam Operasional',
+      weekdays: 'Senin - Jumat',
+      saturday: 'Sabtu',
+      sunday: 'Minggu',
+      closed: 'Tutup',
+      sendMessage: 'Kirim Pesan',
+      fullName: 'Nama Lengkap',
+      yourQuestion: 'Pertanyaan',
+      send: 'Kirim',
+      sending: 'Mengirim...',
+      messageSent: 'Pesan berhasil dikirim!',
+      followUs: 'Ikuti Kami',
+    },
+
+    // Programs page
+    program: {
+      title: 'Program Keahlian',
+      information: 'INFORMASI',
+      subjects: 'MATA PELAJARAN',
+      facilities: 'FASILITAS',
+      achievements: 'PRESTASI',
+      gallery: 'GALERI',
+      headOfDept: 'Kepala Program',
+      competencies: 'Kompetensi Keahlian',
+      careerProspects: 'Prospek Karir',
+      relatedArticles: 'Artikel Terkait',
+      alumniTestimonials: 'Testimoni Alumni',
+      semester: 'Semester',
+      hoursPerWeek: 'Jam/Minggu',
+      location: 'Lokasi',
+      capacity: 'Kapasitas',
+    },
+
+    // About pages
+    about: {
+      history: 'Sejarah',
+      visionMission: 'Visi & Misi',
+      principalGreeting: 'Sambutan Kepala Sekolah',
+      aboutUs: 'Tentang Kami',
+    },
+
+    // Facilities
+    facility: {
+      title: 'Fasilitas',
+      allCategories: 'Semua',
+      location: 'Lokasi',
+      capacity: 'Kapasitas',
+    },
+
+    // Search
+    search: {
+      title: 'Pencarian',
+      placeholder: 'Cari jurusan, artikel, kegiatan...',
+      noResults: 'Tidak ada hasil ditemukan',
+      suggestions: 'Kata kunci yang disarankan',
+      contactInfo: 'Informasi Kontak',
+    },
+
+    // Footer
+    footer: {
+      copyright: 'Hak Cipta',
+      allRightsReserved: 'Seluruh hak dilindungi.',
+    },
+
+    // Common
+    common: {
+      viewAll: 'Lihat Semua',
+      back: 'Kembali',
+      close: 'Tutup',
+      loading: 'Memuat...',
+      error: 'Terjadi kesalahan',
+      notFound: 'Halaman tidak ditemukan',
+      backToHome: 'Kembali ke Beranda',
+    },
+  },
+
+  en: {
+    // Navbar
+    nav: {
+      home: 'Home',
+      profile: 'Profile',
+      history: 'History',
+      visionMission: 'Vision & Mission',
+      principalGreeting: "Principal's Greeting",
+      aboutUs: 'About Us',
+      programs: 'Programs',
+      information: 'Information',
+      achievements: 'Achievements',
+      activities: 'Activities',
+      allArticles: 'All Articles',
+      contact: 'Contact',
+      registration: 'REGISTER',
+      search: 'Search',
+    },
+
+    // Homepage
+    home: {
+      loading: 'Loading...',
+      // Why Section
+      whyTitle: 'WHY STUDY AT KRISMA',
+      whyDescription: 'Discover why SMK Kristen 5 Klaten is the best choice for your future.',
+      readProfile: 'Read School Profile',
+      partneredWith: 'PARTNERED WITH',
+      stats: {
+        extracurricular: 'Extracurriculars',
+        facilities: 'Facilities',
+        yearsServing: 'Years Serving',
+        competencyFields: 'Competency Fields',
+      },
+      // Accelerate
+      accelerateTitle: 'ACCELERATE YOUR ENTIRE POTENTIAL',
+      // Programs
+      programs: 'STUDY PROGRAMS',
+      careerProspects: 'Career Prospects:',
+      // Activities
+      activitiesTitle: 'Learning & Activities',
+      activitiesSubtitle: 'Various learning activities and student engagement',
+      exploreActivities: 'Explore Student Activities',
+      // Testimonials
+      testimonialsTitle: 'ALUMNI STORIES',
+      testimonialsSubtitle: 'Hear from SMK Kristen 5 Klaten alumni who have succeeded in various fields.',
+      shareStory: 'SHARE YOUR STORY',
+      graduationYear: 'Class of',
+      // News
+      topNews: 'TOP 5 NEWS',
+      mainNews: 'MAIN NEWS',
+      news: 'News',
+      // Events
+      eventsTitle: 'STUDENT & TEACHER ACTIVITIES',
+      eventsSubtitle: 'UPCOMING EVENTS AT SMK KRISTEN 5 KLATEN, BOTH IN-SCHOOL AND OFF-CAMPUS',
+      viewAllEvents: 'VIEW ALL EVENTS',
+      allCategories: 'All',
+      academic: 'Academic',
+      nonAcademic: 'Non Academic',
+      // CTA
+      ctaTitle: "LET'S DISCUSS YOUR TALENTS & INTERESTS, WE WILL HELP FIND YOUR PASSION",
+      ctaDescription: 'SMK Kristen 5 Klaten holds ISO 9008:2015 certification and partners with industry leaders to ensure quality education aligned with industry standards.',
+      registerNow: 'REGISTER NOW',
+      infoService: 'INFORMATION SERVICE',
+    },
+
+    // Article page
+    article: {
+      featured: 'Featured Articles',
+      search: 'Search articles...',
+      filter: 'Filter',
+      allPeriods: 'All Periods',
+      last7Days: 'Last 7 Days',
+      last30Days: 'Last 30 Days',
+      last90Days: 'Last 90 Days',
+      lastYear: 'Last Year',
+      allPrograms: 'All Programs',
+      allTopics: 'All Topics',
+      readMore: 'Read More',
+      readingTime: 'min read',
+      shareArticle: 'Share Article',
+      copyLink: 'Copy Link',
+      linkCopied: 'Link copied!',
+      relatedArticles: 'RELATED ARTICLES',
+      latestNews: 'LATEST NEWS',
+      noArticles: 'No articles yet.',
+    },
+
+    // Contact page
+    contact: {
+      title: 'Contact Us',
+      address: 'Address',
+      phone: 'Phone',
+      email: 'Email',
+      operatingHours: 'Operating Hours',
+      weekdays: 'Monday - Friday',
+      saturday: 'Saturday',
+      sunday: 'Sunday',
+      closed: 'Closed',
+      sendMessage: 'Send Message',
+      fullName: 'Full Name',
+      yourQuestion: 'Your Question',
+      send: 'Send',
+      sending: 'Sending...',
+      messageSent: 'Message sent successfully!',
+      followUs: 'Follow Us',
+    },
+
+    // Programs page
+    program: {
+      title: 'Study Programs',
+      information: 'INFORMATION',
+      subjects: 'SUBJECTS',
+      facilities: 'FACILITIES',
+      achievements: 'ACHIEVEMENTS',
+      gallery: 'GALLERY',
+      headOfDept: 'Head of Department',
+      competencies: 'Key Competencies',
+      careerProspects: 'Career Prospects',
+      relatedArticles: 'Related Articles',
+      alumniTestimonials: 'Alumni Testimonials',
+      semester: 'Semester',
+      hoursPerWeek: 'Hours/Week',
+      location: 'Location',
+      capacity: 'Capacity',
+    },
+
+    // About pages
+    about: {
+      history: 'History',
+      visionMission: 'Vision & Mission',
+      principalGreeting: "Principal's Greeting",
+      aboutUs: 'About Us',
+    },
+
+    // Facilities
+    facility: {
+      title: 'Facilities',
+      allCategories: 'All',
+      location: 'Location',
+      capacity: 'Capacity',
+    },
+
+    // Search
+    search: {
+      title: 'Search',
+      placeholder: 'Search programs, articles, activities...',
+      noResults: 'No results found',
+      suggestions: 'Suggested keywords',
+      contactInfo: 'Contact Information',
+    },
+
+    // Footer
+    footer: {
+      copyright: 'Copyright',
+      allRightsReserved: 'All rights reserved.',
+    },
+
+    // Common
+    common: {
+      viewAll: 'View All',
+      back: 'Back',
+      close: 'Close',
+      loading: 'Loading...',
+      error: 'An error occurred',
+      notFound: 'Page not found',
+      backToHome: 'Back to Home',
+    },
+  },
+};

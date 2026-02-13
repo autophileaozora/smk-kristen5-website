@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const Categories = () => {
+const Categories = ({ embedded = false }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -156,7 +156,7 @@ const Categories = () => {
   });
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -167,6 +167,7 @@ const Categories = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Manajemen Kategori</h1>
@@ -180,6 +181,7 @@ const Categories = () => {
           <span>Tambah Kategori</span>
         </button>
       </div>
+      )}
 
       {/* Search and Filter */}
       <div className="bg-white rounded-lg shadow mb-6 p-6">

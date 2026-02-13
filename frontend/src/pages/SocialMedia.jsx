@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const SocialMedia = () => {
+const SocialMedia = ({ embedded = false }) => {
   const [socialMedia, setSocialMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -164,7 +164,7 @@ const SocialMedia = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -175,6 +175,7 @@ const SocialMedia = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Sosial Media</h1>
@@ -188,6 +189,7 @@ const SocialMedia = () => {
           <span>Tambah Sosial Media</span>
         </button>
       </div>
+      )}
 
       {/* Social Media Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">

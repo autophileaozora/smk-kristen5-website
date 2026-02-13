@@ -6,6 +6,8 @@ const ImageBlock = ({
   customWidth = '',
   alignment = 'center',
   rounded = 'md',
+  objectFit = 'cover',
+  maxHeight = '',
   className = '',
 }) => {
   const widthClasses = {
@@ -31,6 +33,13 @@ const ImageBlock = ({
     right: 'ml-auto',
   };
 
+  const fitClasses = {
+    cover: 'object-cover',
+    contain: 'object-contain',
+    fill: 'object-fill',
+    none: 'object-none',
+  };
+
   if (!src) {
     return (
       <div className="bg-gray-200 flex items-center justify-center h-64 rounded-lg mb-4">
@@ -45,13 +54,19 @@ const ImageBlock = ({
     ? `mb-4 ${alignClasses[alignment] || 'mx-auto'} ${className}`
     : `mb-4 ${widthClasses[width]} ${alignClasses[alignment] || ''} ${className}`;
 
+  const imgStyle = maxHeight ? { maxHeight, width: '100%' } : {};
+  const imgClass = maxHeight
+    ? `${fitClasses[objectFit] || 'object-cover'} ${roundedClasses[rounded]}`
+    : `w-full h-auto ${roundedClasses[rounded]}`;
+
   return (
     <figure className={figureClass} style={figureStyle}>
       <img
         src={src}
         alt={alt}
         loading="lazy"
-        className={`w-full h-auto ${roundedClasses[rounded]}`}
+        className={imgClass}
+        style={imgStyle}
       />
       {caption && (
         <figcaption className="text-sm text-gray-600 mt-2 text-center">

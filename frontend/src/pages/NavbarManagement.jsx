@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const NavbarManagement = () => {
+const NavbarManagement = ({ embedded = false }) => {
   const [items, setItems] = useState([]);
   const [parents, setParents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,7 +236,7 @@ const NavbarManagement = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className={embedded ? '' : 'p-6'}>
       {/* Toast */}
       {toast && (
         <div
@@ -249,6 +249,7 @@ const NavbarManagement = () => {
       )}
 
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Manajemen Navbar</h1>
@@ -278,6 +279,7 @@ const NavbarManagement = () => {
           </button>
         </div>
       </div>
+      )}
 
       {/* Navbar Preview */}
       {items.length > 0 && (

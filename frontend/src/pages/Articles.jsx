@@ -8,7 +8,7 @@ import Toast from '../components/Toast';
 import Pagination from '../components/Pagination';
 import ImageUpload from '../components/ImageUpload';
 
-const Articles = () => {
+const Articles = ({ embedded = false }) => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'administrator';
 
@@ -408,8 +408,9 @@ const Articles = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={embedded ? '' : 'space-y-6'}>
       {/* Header */}
+      {!embedded && (
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -471,6 +472,7 @@ const Articles = () => {
           )}
         </div>
       </div>
+      )}
 
       {/* Search + Filter */}
       <div className="bg-white rounded-lg shadow p-6">
