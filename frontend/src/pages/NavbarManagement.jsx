@@ -249,7 +249,7 @@ const NavbarManagement = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded && (
+      {!embedded ? (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Manajemen Navbar</h1>
@@ -278,6 +278,30 @@ const NavbarManagement = ({ embedded = false }) => {
             + Tambah Menu
           </button>
         </div>
+      </div>
+      ) : (
+      <div className="flex items-center justify-end gap-2 mb-4">
+        {items.length === 0 ? (
+          <button
+            onClick={handleSeedDefault}
+            className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+          >
+            🌱 Buat Menu Default
+          </button>
+        ) : (
+          <button
+            onClick={handleResetAndSeed}
+            className="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm"
+          >
+            🔄 Reset ke Default
+          </button>
+        )}
+        <button
+          onClick={() => openModal()}
+          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+        >
+          + Tambah Menu
+        </button>
       </div>
       )}
 

@@ -157,9 +157,7 @@ const SiteSettings = ({ embedded = false }) => {
   const tabs = [
     { id: 'general', label: 'Umum', icon: '⚙️' },
     { id: 'beranda', label: 'Beranda', icon: '🏠' },
-    { id: 'contact', label: 'Kontak', icon: '📞' },
     { id: 'seo', label: 'SEO', icon: '🔍' },
-    { id: 'footer', label: 'Footer', icon: '📝' },
   ];
 
   const updateHP = (field, value) => {
@@ -502,8 +500,9 @@ const SiteSettings = ({ embedded = false }) => {
             </div>
           )}
 
-          {/* Contact Tab */}
-          {activeTab === 'contact' && (
+          {/* Contact Tab - removed, managed in Info Sekolah → Kontak */}
+
+          {activeTab === '_contact_removed' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -662,8 +661,8 @@ const SiteSettings = ({ embedded = false }) => {
             </div>
           )}
 
-          {/* Footer Tab */}
-          {activeTab === 'footer' && (
+          {/* Footer Tab - removed, managed in Pengaturan → Footer */}
+          {activeTab === '_footer_removed' && (
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

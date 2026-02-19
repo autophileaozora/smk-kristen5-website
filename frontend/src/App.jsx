@@ -30,7 +30,6 @@ const Kontak = lazy(() => import('./pages/public/Kontak'));
 const Sejarah = lazy(() => import('./pages/public/Sejarah'));
 const VisiMisi = lazy(() => import('./pages/public/VisiMisi'));
 const Sambutan = lazy(() => import('./pages/public/Sambutan'));
-const Tentang = lazy(() => import('./pages/public/Tentang'));
 const SearchPage = lazy(() => import('./pages/public/SearchPage'));
 const FasilitasList = lazy(() => import('./pages/public/FasilitasList'));
 
@@ -79,7 +78,7 @@ function App() {
           <Route path="/sejarah" element={<Sejarah />} />
           <Route path="/visi-misi" element={<VisiMisi />} />
           <Route path="/sambutan" element={<Sambutan />} />
-          <Route path="/tentang" element={<Tentang />} />
+          <Route path="/tentang" element={<Navigate to="/page/profil#tentang-kami" replace />} />
           <Route path="/fasilitas" element={<FasilitasList />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/page/:slug" element={<CustomPageView />} />

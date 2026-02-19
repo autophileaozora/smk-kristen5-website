@@ -175,7 +175,7 @@ const SocialMedia = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded && (
+      {!embedded ? (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Sosial Media</h1>
@@ -186,6 +186,16 @@ const SocialMedia = ({ embedded = false }) => {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <span className="text-xl">➕</span>
+          <span>Tambah Sosial Media</span>
+        </button>
+      </div>
+      ) : (
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={openCreateModal}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
+        >
+          <span>➕</span>
           <span>Tambah Sosial Media</span>
         </button>
       </div>

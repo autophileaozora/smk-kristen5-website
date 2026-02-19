@@ -174,7 +174,7 @@ const Users = ({ embedded = false }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      {!embedded && (
+      {!embedded ? (
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Manajemen User</h1>
@@ -185,6 +185,16 @@ const Users = ({ embedded = false }) => {
           className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
         >
           <span className="text-xl">+</span>
+          <span>Tambah User</span>
+        </button>
+      </div>
+      ) : (
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 text-sm"
+        >
+          <span>+</span>
           <span>Tambah User</span>
         </button>
       </div>

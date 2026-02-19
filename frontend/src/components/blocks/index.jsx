@@ -45,6 +45,8 @@ import ContactInfoBlock from './ContactInfoBlock';
 import PricingBlock from './PricingBlock';
 import ProgressBlock from './ProgressBlock';
 import ArticleCardBlock from './ArticleCardBlock';
+import RichCardBlock from './RichCardBlock';
+import StepperBlock from './StepperBlock';
 
 // Block Registry - Maps block types to components
 export const BLOCK_REGISTRY = {
@@ -92,6 +94,8 @@ export const BLOCK_REGISTRY = {
   pricing: PricingBlock,
   progress: ProgressBlock,
   articleCard: ArticleCardBlock,
+  richCard: RichCardBlock,
+  stepper: StepperBlock,
 };
 
 // Block Definitions - For the block picker UI
@@ -133,6 +137,11 @@ export const BLOCK_DEFINITIONS = [
       rounded: 'md',
       objectFit: 'cover',
       maxHeight: '',
+      // Text wrapping (Word-style): none | square | tight | through | topbottom
+      wrapStyle: 'none',
+      floatSide: 'left',
+      wrapWidth: '40%',
+      wrapMargin: '16px',
     },
   },
   {
@@ -869,6 +878,96 @@ export const BLOCK_DEFINITIONS = [
       maxWidth: 'sm',
       padding: 'md',
       align: 'left',
+    },
+  },
+  {
+    type: 'richCard',
+    name: 'Rich Card',
+    icon: '🖼️',
+    category: 'Sections',
+    description: 'Fully customizable card: image, overlay tag, tags, title, description, meta icons, button — each element can be shown/hidden and fully styled',
+    defaultProps: {
+      // Image
+      image: '',
+      imageAlt: 'Card image',
+      showImage: true,
+      imageHeight: 'md',
+      imageFit: 'cover',
+      // Overlay tag
+      overlayTag: 'tag category',
+      showOverlayTag: true,
+      overlayTagBg: '#1f2937',
+      overlayTagTextColor: '#ffffff',
+      // Tags row (JSON: [{text, bg, color}])
+      tagsJson: '[{"text":"tag category","bg":"#1f2937","color":"#ffffff"},{"text":"tag category","bg":"#1f2937","color":"#ffffff"}]',
+      showTags: true,
+      // Title
+      title: 'Ini Contoh Judul Card',
+      showTitle: true,
+      titleColor: '#111827',
+      titleSize: 'xl',
+      titleWeight: 'bold',
+      // Description
+      description: 'Ini contoh isi element card. SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.',
+      showDescription: true,
+      descriptionColor: '#4b5563',
+      descriptionClamp: '3',
+      // Meta 1 (icon: calendar|clock|map|user|users|tag|star|phone|mail|info|link)
+      meta1Icon: 'calendar',
+      meta1Text: 'tanggal',
+      showMeta1: true,
+      meta1Color: '#2563eb',
+      // Meta 2
+      meta2Icon: 'user',
+      meta2Text: 'keterangan lainnya',
+      showMeta2: true,
+      meta2Color: '#2563eb',
+      // Button
+      buttonText: 'BAGIKAN CERITAMU',
+      buttonUrl: '#',
+      buttonExternal: false,
+      showButton: true,
+      buttonBg: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonVariant: 'solid',
+      showButtonArrow: true,
+      buttonRadius: 'lg',
+      // Card
+      cardBg: '#ffffff',
+      cardRadius: 'xl',
+      cardShadow: 'md',
+      cardPadding: 'md',
+      maxWidth: 'sm',
+      centerCard: false,
+    },
+  },
+  {
+    type: 'stepper',
+    name: 'Stepper',
+    icon: '📶',
+    category: 'Content',
+    description: 'Vertical step-by-step guide with completed/active/pending states, configurable colors and icons',
+    defaultProps: {
+      title: '',
+      subtitle: '',
+      showHeader: false,
+      stepsJson: '[{"title":"Langkah Pertama","description":"Deskripsi untuk langkah pertama.","icon":"1","status":"completed"},{"title":"Langkah Kedua","description":"Deskripsi untuk langkah kedua, sedang berjalan.","icon":"2","status":"active"},{"title":"Langkah Ketiga","description":"Deskripsi untuk langkah ketiga.","icon":"3","status":"pending"},{"title":"Langkah Keempat","description":"Deskripsi untuk langkah keempat.","icon":"4","status":"pending"}]',
+      completedColor: '#22c55e',
+      activeColor: '#2563eb',
+      pendingColor: '#d1d5db',
+      lineColor: '#e5e7eb',
+      completedLineFill: '#22c55e',
+      titleColor: '#111827',
+      activeTitleColor: '#2563eb',
+      completedTitleColor: '#111827',
+      pendingTitleColor: '#6b7280',
+      descriptionColor: '#4b5563',
+      pendingDescColor: '#9ca3af',
+      iconSize: 'md',
+      compact: false,
+      showConnector: true,
+      connectorStyle: 'solid',
+      fillConnector: true,
     },
   },
 ];

@@ -73,6 +73,10 @@ const activitySettingsSchema = new mongoose.Schema(
       type: String,
       default: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
     },
+    slideDuration: {
+      type: Number,
+      default: 4000,
+    },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

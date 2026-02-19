@@ -112,6 +112,7 @@ import siteSettingsRoutes from './routes/siteSettings.js';
 import navbarRoutes from './routes/navbar.js';
 import footerRoutes from './routes/footer.js';
 import homepageRoutes from './routes/homepage.js';
+import alumniSubmissionsRoutes from './routes/alumniSubmissions.js';
 
 // Mount routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -142,6 +143,7 @@ app.use('/api/site-settings', siteSettingsRoutes);
 app.use('/api/navbar', navbarRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/homepage', homepageRoutes);
+app.use('/api/alumni-submissions', alumniSubmissionsRoutes);
 
 // Root route
 app.get('/', (req, res) => {

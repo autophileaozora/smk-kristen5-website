@@ -4,7 +4,7 @@ import RichTextEditor from '../components/RichTextEditor';
 import ImageUpload from '../components/ImageUpload';
 
 const AboutManagement = ({ embedded = false }) => {
-  const [activeTab, setActiveTab] = useState('about');
+  const [activeTab, setActiveTab] = useState('contact');
 
   // ========== ABOUT TAB STATE ==========
   const [aboutSections, setAboutSections] = useState([]);
@@ -68,7 +68,6 @@ const AboutManagement = ({ embedded = false }) => {
 
   // ========== DATA FETCHING ==========
   useEffect(() => {
-    fetchAboutSections();
     fetchContactInfo();
   }, []);
 
@@ -884,7 +883,6 @@ const AboutManagement = ({ embedded = false }) => {
 
   // ========== MAIN RENDER ==========
   const tabs = [
-    { id: 'about', label: 'Tentang', icon: '📖' },
     { id: 'contact', label: 'Kontak', icon: '📞' },
   ];
 
@@ -914,6 +912,7 @@ const AboutManagement = ({ embedded = false }) => {
       )}
 
       {/* Tab Navigation */}
+      {tabs.length > 1 && (
       <div className="mb-6 border-b border-gray-200">
         <nav className="flex space-x-8" aria-label="Tabs">
           {tabs.map((tab) => (
@@ -935,10 +934,10 @@ const AboutManagement = ({ embedded = false }) => {
           ))}
         </nav>
       </div>
+      )}
 
       {/* Tab Content */}
-      {activeTab === 'about' && renderAboutTab()}
-      {activeTab === 'contact' && renderContactTab()}
+      {renderContactTab()}
     </div>
   );
 };

@@ -13,7 +13,7 @@ import Footer from '../../components/Footer';
 const HomepageFixed = () => {
   const navigate = useNavigate();
   const { logo: schoolLogo } = useSchoolLogo();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [data, setData] = useState({
     jurusans: [],
@@ -48,6 +48,61 @@ const HomepageFixed = () => {
   const [activeEventFilter, setActiveEventFilter] = useState('semua');
   const [currentTestimonialSlide, setCurrentTestimonialSlide] = useState(0);
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+
+  // Alumni review submission modal
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSubmitState, setReviewSubmitState] = useState('idle'); // idle | submitting | success | error
+  const [reviewError, setReviewError] = useState('');
+  const [reviewForm, setReviewForm] = useState({
+    name: '', graduationYear: '', jurusan: '',
+    currentOccupation: '', company: '', testimonial: '',
+    photoFile: null, photoPreview: '',
+  });
+
+  const handleReviewPhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReviewForm((f) => ({ ...f, photoFile: file, photoPreview: URL.createObjectURL(file) }));
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    setReviewError('');
+    const { name, graduationYear, jurusan, testimonial, photoFile } = reviewForm;
+    if (!name || !graduationYear || !jurusan || !testimonial) {
+      setReviewError('Nama, tahun lulus, jurusan, dan cerita wajib diisi.');
+      return;
+    }
+    if (!photoFile) {
+      setReviewError('Foto profil wajib diupload.');
+      return;
+    }
+    setReviewSubmitState('submitting');
+    try {
+      const fd = new FormData();
+      fd.append('photo', photoFile);
+      fd.append('name', name.trim());
+      fd.append('graduationYear', graduationYear);
+      fd.append('jurusan', jurusan.trim());
+      fd.append('currentOccupation', reviewForm.currentOccupation.trim());
+      fd.append('company', reviewForm.company.trim());
+      fd.append('testimonial', testimonial.trim());
+      await api.post('/api/alumni-submissions', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setReviewSubmitState('success');
+    } catch (err) {
+      setReviewError(err.response?.data?.message || 'Terjadi kesalahan, coba lagi.');
+      setReviewSubmitState('idle');
+    }
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setReviewSubmitState('idle');
+    setReviewError('');
+    setReviewForm({ name: '', graduationYear: '', jurusan: '', currentOccupation: '', company: '', testimonial: '', photoFile: null, photoPreview: '' });
+  };
 
   const lastScrollY = useRef(0);
 
@@ -119,7 +174,8 @@ const HomepageFixed = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (window.innerWidth <= 992) {
-        setCurrentTestimonialSlide((prev) => (prev + 1) % 2);
+        const totalDots = Math.ceil((data.alumnis || []).length / 3) || 1;
+        setCurrentTestimonialSlide((prev) => (prev + 1) % totalDots);
       }
     }, 5000);
 
@@ -136,6 +192,20 @@ const HomepageFixed = () => {
       return () => clearInterval(interval);
     }
   }, [data.heroSlides.length, data.heroSettings.slideDuration, data.heroSettings.autoPlay]);
+
+  // Auto-rotate activity carousel
+  useEffect(() => {
+    const tabs = data.activityTabs.length > 0 ? data.activityTabs : null;
+    if (!tabs) return;
+    const currentTab = tabs[activeActivityTab] || tabs[0];
+    const len = currentTab?.items?.length || 0;
+    if (len <= 1) return;
+    const duration = data.activitySettings?.slideDuration || 4000;
+    const interval = setInterval(() => {
+      setActiveActivitySlide((p) => (p + 1) % len);
+    }, duration);
+    return () => clearInterval(interval);
+  }, [data.activityTabs, activeActivityTab, data.activitySettings?.slideDuration]);
 
   // Swipe handlers for carousels
   const heroSwipe = useSwipe({
@@ -159,8 +229,14 @@ const HomepageFixed = () => {
   });
 
   const testimonialSwipe = useSwipe({
-    onLeft: () => setCurrentTestimonialSlide((p) => (p + 1) % 2),
-    onRight: () => setCurrentTestimonialSlide((p) => (p - 1 + 2) % 2),
+    onLeft: () => {
+      const total = Math.ceil((data.alumnis || []).length / 3) || 1;
+      setCurrentTestimonialSlide((p) => (p + 1) % total);
+    },
+    onRight: () => {
+      const total = Math.ceil((data.alumnis || []).length / 3) || 1;
+      setCurrentTestimonialSlide((p) => (p - 1 + total) % total);
+    },
   });
 
   const accordionContainerRef = useRef(null);
@@ -280,7 +356,7 @@ const HomepageFixed = () => {
       <Navbar activePage="beranda" visible={navbarVisible} />
 
       {/* Hero Section */}
-      <section className="relative w-full min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] overflow-hidden" {...heroSwipe}>
+      <section className="relative w-full min-h-[88vh] md:min-h-[600px] lg:min-h-[700px] overflow-hidden" {...heroSwipe}>
         {/* Background Images - Rotating slides */}
         {(() => {
           const defaultSlides = [
@@ -316,51 +392,32 @@ const HomepageFixed = () => {
                 }}
               ></div>
 
-              {/* Running Text - Inside Hero */}
-              {(data.runningText || []).length > 0 && (
-                <div className="absolute top-[72px] left-0 right-0 z-20 bg-yellow-400 text-gray-900 py-1.5 sm:py-2 overflow-hidden">
-                  <div className="flex animate-marquee whitespace-nowrap">
-                    {(data.runningText || []).map((text, textIdx) => (
-                      <span key={textIdx} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
-                        📢 {text.text}
-                      </span>
-                    ))}
-                    {/* Duplicate for seamless loop */}
-                    {(data.runningText || []).map((text, textIdx) => (
-                      <span key={`dup-${textIdx}`} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
-                        📢 {text.text}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Hero Content - Left Aligned */}
-              <div className="absolute top-[55%] left-4 sm:left-8 lg:left-16 transform -translate-y-1/2 text-left z-10 w-11/12 max-w-xl lg:max-w-2xl px-2 sm:px-4">
-                <h1 className="russo text-[16px] sm:text-[18px] md:text-[20px] lg:text-[24px] leading-tight text-white uppercase mb-3 sm:mb-5 drop-shadow-lg transition-all duration-500">
+              {/* Hero Content - Centered on mobile, left on desktop */}
+              <div className="absolute top-1/2 md:top-[55%] left-1/2 md:left-8 lg:left-16 -translate-x-1/2 md:translate-x-0 -translate-y-1/2 text-center md:text-left z-10 w-10/12 md:w-11/12 max-w-xl lg:max-w-2xl px-2 sm:px-4">
+                <h1 className="russo text-2xl md:text-[20px] lg:text-[24px] leading-tight text-white uppercase mb-4 md:mb-3 drop-shadow-lg transition-all duration-500">
                   <T>{currentSlide.title}</T>
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/95 transition-all duration-500">
                   <T>{currentSlide.subtitle}</T>
                 </p>
-                <div className="flex justify-start gap-3 sm:gap-4 mt-6 sm:mt-9 flex-wrap">
-                  <button className="bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 sm:px-8 py-3 sm:py-[14px] rounded-lg text-[11px] sm:text-xs font-semibold tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 mt-7 md:mt-9 flex-wrap">
+                  <button className="w-full md:w-auto bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 md:px-8 py-3 md:py-[14px] rounded-lg text-[11px] md:text-xs font-semibold tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
                     {currentSlide.primaryButtonText || 'BAGIKAN CERITAMU'}
                   </button>
-                  <button className="bg-transparent text-yellow-300 px-5 sm:px-8 py-3 sm:py-[14px] border-2 border-yellow-300 rounded-lg text-[11px] sm:text-xs font-semibold tracking-wide hover:bg-yellow-300/10 transition-all">
+                  <button className="w-full md:w-auto bg-transparent text-yellow-300 px-5 md:px-8 py-3 md:py-[14px] border-2 border-yellow-300 rounded-lg text-[11px] md:text-xs font-semibold tracking-wide hover:bg-yellow-300/10 transition-all">
                     {currentSlide.secondaryButtonText || 'LIHAT LEBIH LANJUT'}
                   </button>
                 </div>
 
                 {/* Slide indicators */}
                 {slides.length > 1 && data.heroSettings.showIndicators && (
-                  <div className="flex justify-start gap-2 mt-6">
+                  <div className="flex justify-center md:justify-start gap-2 mt-6">
                     {slides.map((_, dotIdx) => (
                       <button
                         key={dotIdx}
                         onClick={() => setCurrentHeroSlide(dotIdx)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          dotIdx === currentHeroSlide ? 'bg-yellow-300 w-6' : 'bg-white/50'
+                        className={`h-2 rounded-full transition-all ${
+                          dotIdx === currentHeroSlide ? 'bg-yellow-300 w-6' : 'w-2 bg-white/50'
                         }`}
                       ></button>
                     ))}
@@ -378,6 +435,25 @@ const HomepageFixed = () => {
           </svg>
         </div>
       </section>
+
+      {/* Running Text - Below Hero */}
+      {(data.runningText || []).length > 0 && (
+        <div className="w-full bg-yellow-400 text-gray-900 py-2 sm:py-3 overflow-hidden">
+          <div className="flex animate-marquee whitespace-nowrap">
+            {(data.runningText || []).map((text, textIdx) => (
+              <span key={textIdx} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
+                📢 {text.text}
+              </span>
+            ))}
+            {/* Duplicate for seamless loop */}
+            {(data.runningText || []).map((text, textIdx) => (
+              <span key={`dup-${textIdx}`} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
+                📢 {text.text}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Why Section */}
       <div className="relative w-full overflow-hidden bg-gray-50">
@@ -409,7 +485,7 @@ const HomepageFixed = () => {
 
               {/* Alumni Companies */}
               <div className="mt-6 lg:mt-10">
-                <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide">{hp.statsHeading || 'ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY'}</h4>
+                <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide"><T>{hp.statsHeading || 'ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY'}</T></h4>
                 <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[400px]">
                   {(data.partners || []).slice(0, 6).map((partner, idx) => (
                     <div key={idx} className="bg-white rounded-md p-1.5 lg:p-2.5 h-12 lg:h-16 flex items-center justify-center">
@@ -507,7 +583,7 @@ const HomepageFixed = () => {
               >
                 <div>
                   <h3 className="russo text-xl lg:text-2xl text-gray-700">{jurusan.code || jurusan.name.slice(0, 4).toUpperCase()}</h3>
-                  <h4 className="text-sm lg:text-base text-gray-700 font-medium mt-1.5">{jurusan.name}</h4>
+                  <h4 className="text-sm lg:text-base text-gray-700 font-medium mt-1.5"><T>{jurusan.name}</T></h4>
                 </div>
                 <span className="text-4xl leading-none text-gray-700 cursor-pointer transition-transform">
                   {activeProgram === idx ? '−' : '+'}
@@ -528,7 +604,7 @@ const HomepageFixed = () => {
                 {/* Short Description (plain text) or fallback to full description */}
                 {jurusan.shortDescription ? (
                   <p className="text-sm leading-relaxed text-gray-700 mb-4">
-                    {jurusan.shortDescription}
+                    <T>{jurusan.shortDescription}</T>
                   </p>
                 ) : (
                   <div
@@ -540,11 +616,11 @@ const HomepageFixed = () => {
                 {/* Career Prospects */}
                 {jurusan.careerProspects && jurusan.careerProspects.length > 0 && (
                   <div>
-                    <h5 className="text-[11px] font-semibold text-gray-700 tracking-wide mb-2.5">PROSPEK KARIR:</h5>
+                    <h5 className="text-[11px] font-semibold text-gray-700 tracking-wide mb-2.5">{t('home.careerProspects').toUpperCase()}</h5>
                     <div className="flex flex-wrap gap-2">
                       {jurusan.careerProspects.map((career, cIdx) => (
                         <span key={cIdx} className="text-[11px] text-gray-600 bg-[#f6f3e4] px-4 py-1.5 rounded font-medium">
-                          {career}
+                          <T>{career}</T>
                         </span>
                       ))}
                     </div>
@@ -560,9 +636,9 @@ const HomepageFixed = () => {
       <section className="bg-[#1e1e1e] py-10 lg:py-[60px] relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
         <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-base lg:text-lg font-bold text-white">{data.activitySettings?.sectionTitle || 'PEMBELAJARAN & KEGIATAN NYATA'}</h2>
+          <h2 className="text-base lg:text-lg font-bold text-white"><T>{data.activitySettings?.sectionTitle || 'PEMBELAJARAN & KEGIATAN NYATA'}</T></h2>
           <p className="text-sm lg:text-base leading-relaxed text-[#6a6b6d] font-medium max-w-[600px] mx-auto mt-2 px-4">
-            {data.activitySettings?.sectionSubtitle || 'SISWA DILATIH DAN DIDUKUNG DENGAN PROGRAM DAN KOMPETISI YANG MELATIH RASA DAN KEBERANIAN'}
+            <T>{data.activitySettings?.sectionSubtitle || 'SISWA DILATIH DAN DIDUKUNG DENGAN PROGRAM DAN KOMPETISI YANG MELATIH RASA DAN KEBERANIAN'}</T>
           </p>
         </div>
 
@@ -606,7 +682,7 @@ const HomepageFixed = () => {
                       activeActivityTab === idx ? 'bg-[rgba(207,233,246,0.17)]' : ''
                     }`}
                   >
-                    {tab.name}
+                    <T>{tab.name}</T>
                   </div>
                 ))}
               </div>
@@ -673,11 +749,11 @@ const HomepageFixed = () => {
                   {/* Text content */}
                   <div className="max-w-[600px] pt-3 pb-6 lg:pb-8 px-4 lg:pl-10 lg:pr-0 text-left">
                     <p className="text-sm lg:text-[15px] leading-relaxed font-medium">
-                      <span className="text-white">{currentItem.title}. </span>
-                      <span className="text-[#bbb]">{currentItem.description}</span>
+                      <span className="text-white"><T>{currentItem.title}</T>. </span>
+                      <span className="text-[#bbb]"><T>{currentItem.description}</T></span>
                     </p>
                     <Link to={data.activitySettings?.globalLink || '/artikel'} className="text-[#008fd7] text-xs lg:text-sm font-medium mt-3 lg:mt-4 inline-block hover:text-[#00D9FF] transition-colors">
-                      {data.activitySettings?.globalButtonText || t('home.exploreActivities')} &gt;
+                      {data.activitySettings?.globalButtonText ? <T>{data.activitySettings.globalButtonText}</T> : t('home.exploreActivities')} &gt;
                     </Link>
                   </div>
                 </div>
@@ -689,59 +765,56 @@ const HomepageFixed = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="bg-[rgba(30,30,30,0.95)] py-10 lg:py-16 relative overflow-hidden">
+      <section className="bg-[#1e1e1e] py-10 lg:py-16 relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
             {/* Left - Testimonials */}
             <div className="flex-1">
-              {/* Desktop: Scrolling columns */}
-              <div className="hidden lg:grid grid-cols-2 gap-5 h-[600px] overflow-hidden">
-                {/* Column 1 */}
-                <div className="flex flex-col gap-5 animate-scroll-up">
-                  {(data.alumnis || []).slice(0, 6).map((alumni, idx) => (
-                    <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg">
-                      <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
-                      <div className="flex items-center gap-3.5 mt-5">
-                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" />
-                        <div>
-                          <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
-                          <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
-                        </div>
+              {/* Desktop: Seamless infinite scrolling columns */}
+              {(() => {
+                const list = data.alumnis || [];
+                // Need at least 2 items to look good; pad with repeats if very few
+                const padded = list.length === 0 ? [] : list.length === 1 ? [...list, ...list, ...list] : list;
+                const col1 = [...padded, ...padded]; // duplicate for seamless loop
+                const col2 = [...[...padded].reverse(), ...[...padded].reverse()]; // reversed + duplicate
+                const AlumniCard = ({ alumni, idx }) => (
+                  <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg flex-shrink-0">
+                    <p className="text-sm leading-relaxed text-[#d9d9d9]"><T>{alumni.testimonial}</T></p>
+                    <div className="flex items-center gap-3.5 mt-5">
+                      <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
+                        <span className="text-[11px] text-[#b8b8b8] block mt-0.5"><T>{alumni.currentOccupation}</T> - <T>{alumni.company}</T></span>
                       </div>
-                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
                     </div>
-                  ))}
-                </div>
-
-                {/* Column 2 */}
-                <div className="flex flex-col gap-5 animate-scroll-down">
-                  {(data.alumnis || []).slice(0, 6).map((alumni, idx) => (
-                    <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg">
-                      <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
-                      <div className="flex items-center gap-3.5 mt-5">
-                        <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" />
-                        <div>
-                          <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
-                          <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
-                        </div>
-                      </div>
-                      <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
+                    <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
+                  </div>
+                );
+                return (
+                  <div className="hidden lg:grid grid-cols-2 gap-5 h-[600px] overflow-hidden">
+                    {/* Column 1 — scrolls up */}
+                    <div className="flex flex-col gap-5 animate-scroll-up">
+                      {col1.map((alumni, idx) => <AlumniCard key={idx} alumni={alumni} idx={idx} />)}
                     </div>
-                  ))}
-                </div>
-              </div>
+                    {/* Column 2 — scrolls down, reversed order */}
+                    <div className="flex flex-col gap-5 animate-scroll-down">
+                      {col2.map((alumni, idx) => <AlumniCard key={idx} alumni={alumni} idx={idx} />)}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Mobile: 3 cards with slide */}
               <div className="lg:hidden" {...testimonialSwipe}>
                 <div className="flex flex-col gap-4">
                   {(data.alumnis || []).slice(currentTestimonialSlide * 3, currentTestimonialSlide * 3 + 3).map((alumni, idx) => (
                     <div key={idx} className="p-4 bg-transparent border border-white/10 rounded-lg">
-                      <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
+                      <p className="text-sm leading-relaxed text-[#d9d9d9]"><T>{alumni.testimonial}</T></p>
                       <div className="flex items-center gap-3 mt-4">
                         <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                         <div>
                           <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
-                          <span className="text-[10px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
+                          <span className="text-[10px] text-[#b8b8b8] block mt-0.5"><T>{alumni.currentOccupation}</T> - <T>{alumni.company}</T></span>
                         </div>
                       </div>
                       <p className="text-right text-[10px] text-[#7a7a7a] font-medium mt-2 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
@@ -749,30 +822,39 @@ const HomepageFixed = () => {
                   ))}
                 </div>
 
-                {/* Mobile Navigation Dots - left aligned, smaller */}
-                <div className="flex justify-start gap-2 mt-4">
-                  {[0, 1].map((dot) => (
-                    <button
-                      key={dot}
-                      className={`w-2 h-2 rounded-full border-0 transition-all ${
-                        currentTestimonialSlide === dot ? 'bg-yellow-300' : 'bg-white/30'
-                      }`}
-                      onClick={() => setCurrentTestimonialSlide(dot)}
-                    ></button>
-                  ))}
-                </div>
+                {/* Mobile Navigation Dots */}
+                {(() => {
+                  const totalDots = Math.ceil((data.alumnis || []).length / 3);
+                  if (totalDots <= 1) return null;
+                  return (
+                    <div className="flex justify-start gap-2 mt-4">
+                      {Array.from({ length: totalDots }).map((_, dot) => (
+                        <button
+                          key={dot}
+                          className={`w-2 h-2 rounded-full border-0 transition-all ${
+                            currentTestimonialSlide === dot ? 'bg-yellow-300' : 'bg-white/30'
+                          }`}
+                          onClick={() => setCurrentTestimonialSlide(dot)}
+                        ></button>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
             {/* Right - Info */}
             <div className="w-full lg:w-[400px] flex-shrink-0 order-first lg:order-last">
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white">
-                {hp.testimonialsTitle || 'Cerita pengalaman menarik dan berkesan oleh alumni kami'}
+                <T>{hp.testimonialsTitle || 'Cerita pengalaman menarik dan berkesan oleh alumni kami'}</T>
               </h2>
               <p className="text-sm sm:text-base leading-relaxed text-white mt-3 lg:mt-5">
-                {hp.testimonialsDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
+                <T>{hp.testimonialsDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}</T>
               </p>
-              <button className="inline-flex items-center px-5 lg:px-7 py-3 lg:py-3.5 bg-transparent border-2 border-yellow-300 text-yellow-300 text-[11px] lg:text-xs font-semibold rounded-lg mt-5 lg:mt-8 hover:bg-yellow-300/10 hover:-translate-y-0.5 transition-all tracking-wide">
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="inline-flex items-center px-5 lg:px-7 py-3 lg:py-3.5 bg-transparent border-2 border-yellow-300 text-yellow-300 text-[11px] lg:text-xs font-semibold rounded-lg mt-5 lg:mt-8 hover:bg-yellow-300/10 hover:-translate-y-0.5 transition-all tracking-wide"
+              >
                 {hp.testimonialsButtonText || t('home.shareStory')}
               </button>
             </div>
@@ -860,10 +942,10 @@ const HomepageFixed = () => {
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm lg:text-base font-medium text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2 lg:line-clamp-3">
-                      {article.title}
+                      <T>{article.title}</T>
                     </p>
                     <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 block">
-                      {article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}
+                      <T>{article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}</T>
                     </span>
                   </div>
                 </Link>
@@ -886,10 +968,10 @@ const HomepageFixed = () => {
                 className={`group ${idx < 2 ? 'md:border-r md:border-gray-200 md:pr-6 md:mr-6' : ''}`}
               >
                 <h4 className="text-sm lg:text-base font-semibold text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2">
-                  {article.title}
+                  <T>{article.title}</T>
                 </h4>
                 <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 lg:mt-2 block">
-                  {article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}
+                  <T>{article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}</T>
                 </span>
               </Link>
             ))}
@@ -968,9 +1050,9 @@ const HomepageFixed = () => {
                         <span className={`text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide ${
                           event.category === 'akademik' ? 'text-[#008fd7]' : 'text-purple-600'
                         }`}>
-                          {event.category === 'akademik' ? 'AKADEMIK' : 'NON AKADEMIK'}
+                          {event.category === 'akademik' ? t('home.academic').toUpperCase() : t('home.nonAcademic').toUpperCase()}
                         </span>
-                        <h4 className="text-sm lg:text-base font-semibold text-black mt-0.5 line-clamp-1">{event.title}</h4>
+                        <h4 className="text-sm lg:text-base font-semibold text-black mt-0.5 line-clamp-1"><T>{event.title}</T></h4>
                         <div className="flex flex-row flex-wrap gap-3 lg:gap-5 mt-2 lg:mt-3 text-xs lg:text-sm text-gray-700">
                           <div className="flex items-center gap-1.5">
                             <span>📅</span>
@@ -983,7 +1065,7 @@ const HomepageFixed = () => {
                           {event.location && (
                             <div className="flex items-center gap-1.5">
                               <span>📍</span>
-                              <span>{event.location}</span>
+                              <span><T>{event.location}</T></span>
                             </div>
                           )}
                         </div>
@@ -993,7 +1075,7 @@ const HomepageFixed = () => {
                 })
               ) : (
                 <div className="col-span-2 text-center py-8">
-                  <p className="text-gray-600">Belum ada agenda yang tersedia.</p>
+                  <p className="text-gray-600">{language === 'en' ? 'No events available.' : 'Belum ada agenda yang tersedia.'}</p>
                 </div>
               )}
             </div>
@@ -1027,24 +1109,24 @@ const HomepageFixed = () => {
         <div className="relative z-40 flex items-center justify-center w-full min-h-[400px] lg:min-h-[550px] px-4 sm:px-6 lg:px-20 lg:pl-[50%] py-16 lg:py-0">
           <div className="max-w-[550px] text-center lg:text-left">
             <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white uppercase">
-              {data.cta?.title || t('home.ctaTitle')}
+              {data.cta?.title ? <T>{data.cta.title}</T> : t('home.ctaTitle')}
             </h2>
             <p className="text-sm sm:text-base lg:text-lg leading-relaxed text-white/90 mt-3 lg:mt-4">
-              {data.cta?.description || t('home.ctaDescription')}
+              {data.cta?.description ? <T>{data.cta.description}</T> : t('home.ctaDescription')}
             </p>
             <div className="flex gap-3 lg:gap-4 mt-5 lg:mt-7 flex-wrap justify-center lg:justify-start">
               <Link
                 to={data.cta?.primaryButtonLink || '/pendaftaran'}
                 className="bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 lg:px-7 py-3 lg:py-3.5 rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
-                {data.cta?.primaryButtonText || t('home.registerNow')}
+                {data.cta?.primaryButtonText ? <T>{data.cta.primaryButtonText}</T> : t('home.registerNow')}
               </Link>
               {(data.cta?.secondaryButtonText || !data.cta) && (
                 <Link
                   to={data.cta?.secondaryButtonLink || '/kontak'}
                   className="bg-transparent text-white px-5 lg:px-7 py-3 lg:py-3.5 border-2 border-white rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide hover:bg-white/10 hover:-translate-y-0.5 transition-all"
                 >
-                  {data.cta?.secondaryButtonText || t('home.infoService')}
+                  {data.cta?.secondaryButtonText ? <T>{data.cta.secondaryButtonText}</T> : t('home.infoService')}
                 </Link>
               )}
             </div>
@@ -1054,6 +1136,184 @@ const HomepageFixed = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Alumni Review Submission Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && closeReviewModal()}>
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">Bagikan Ceritamu</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Ceritamu akan ditampilkan setelah diverifikasi admin</p>
+              </div>
+              <button onClick={closeReviewModal} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {reviewSubmitState === 'success' ? (
+              /* Success state */
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Terima Kasih!</h3>
+                <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+                  Ceritamu sedang menunggu persetujuan kami dan akan segera tampil di halaman ini.
+                </p>
+                <button onClick={closeReviewModal} className="mt-6 px-6 py-2.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white text-sm font-semibold rounded-lg transition-colors">
+                  Tutup
+                </button>
+              </div>
+            ) : (
+              /* Form */
+              <form onSubmit={handleReviewSubmit} className="overflow-y-auto flex-1">
+                <div className="px-6 py-5 space-y-4">
+                  {/* Photo upload */}
+                  <div className="flex flex-col items-center">
+                    <label className="cursor-pointer group relative">
+                      <div className={`w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden transition-colors ${reviewForm.photoPreview ? 'border-transparent' : 'border-gray-300 group-hover:border-[#0d76be]'}`}>
+                        {reviewForm.photoPreview ? (
+                          <img src={reviewForm.photoPreview} alt="preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-center">
+                            <svg className="w-7 h-7 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      {reviewForm.photoPreview && (
+                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleReviewPhotoChange} />
+                    </label>
+                    <p className="text-xs text-gray-500 mt-2">Foto Profil <span className="text-red-500">*</span></p>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={reviewForm.name}
+                      onChange={(e) => setReviewForm((f) => ({ ...f, name: e.target.value }))}
+                      placeholder="Nama kamu"
+                      maxLength={100}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be]"
+                    />
+                  </div>
+
+                  {/* Year + Jurusan */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Tahun Lulus <span className="text-red-500">*</span></label>
+                      <input
+                        type="number"
+                        value={reviewForm.graduationYear}
+                        onChange={(e) => setReviewForm((f) => ({ ...f, graduationYear: e.target.value }))}
+                        placeholder={String(new Date().getFullYear() - 2)}
+                        min={1990}
+                        max={new Date().getFullYear()}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Jurusan <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        value={reviewForm.jurusan}
+                        onChange={(e) => setReviewForm((f) => ({ ...f, jurusan: e.target.value }))}
+                        placeholder="Jurusanmu"
+                        maxLength={100}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Occupation + Company */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Pekerjaan / Jabatan</label>
+                      <input
+                        type="text"
+                        value={reviewForm.currentOccupation}
+                        onChange={(e) => setReviewForm((f) => ({ ...f, currentOccupation: e.target.value }))}
+                        placeholder="UI/UX Designer"
+                        maxLength={200}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Perusahaan / Institusi</label>
+                      <input
+                        type="text"
+                        value={reviewForm.company}
+                        onChange={(e) => setReviewForm((f) => ({ ...f, company: e.target.value }))}
+                        placeholder="PT Contoh"
+                        maxLength={200}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Testimonial */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Ceritamu <span className="text-red-500">*</span>
+                      <span className="text-gray-400 font-normal ml-1">({reviewForm.testimonial.length}/1000)</span>
+                    </label>
+                    <textarea
+                      value={reviewForm.testimonial}
+                      onChange={(e) => setReviewForm((f) => ({ ...f, testimonial: e.target.value }))}
+                      placeholder="Ceritakan pengalamanmu selama bersekolah di sini, pencapaian, atau pesan untuk adik kelas..."
+                      rows={4}
+                      maxLength={1000}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be] resize-none"
+                    />
+                  </div>
+
+                  {/* Error */}
+                  {reviewError && (
+                    <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{reviewError}</p>
+                  )}
+                </div>
+
+                {/* Footer actions */}
+                <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+                  <button type="button" onClick={closeReviewModal} className="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={reviewSubmitState === 'submitting'}
+                    className="flex-1 py-2.5 text-sm bg-[#0d76be] hover:bg-[#0a5a91] disabled:opacity-60 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    {reviewSubmitState === 'submitting' ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                        </svg>
+                        Mengirim...
+                      </>
+                    ) : 'Kirim Ceritamu'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 };

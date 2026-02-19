@@ -1750,6 +1750,47 @@ const NestedBlocksRenderer = ({
   );
 };
 
+// ── Mini image upload component for use inside prop editors ─────────────────
+const StepImageUpload = ({ value, onChange }) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await api.post('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const url = res.data.url || res.data.data?.url;
+      if (url) onChange(url);
+    } catch (err) {
+      alert('Gagal upload: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      {value && (
+        <div className="relative">
+          <img src={value} alt="preview" className="w-full h-24 object-cover rounded-lg border border-gray-200" />
+          <button type="button" onClick={() => onChange('')}
+            className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center">✕</button>
+        </div>
+      )}
+      <label className={`flex items-center justify-center gap-1.5 py-1.5 border-2 border-dashed rounded-lg cursor-pointer transition-colors text-xs font-medium ${uploading ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-400 hover:border-blue-400 hover:text-blue-500'}`}>
+        {uploading ? '⏳ Uploading...' : '📁 Upload Gambar'}
+        <input type="file" accept="image/*" className="hidden" disabled={uploading}
+          onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+      </label>
+      <input type="text" value={value || ''} onChange={(e) => onChange(e.target.value)}
+        placeholder="atau paste URL gambar..."
+        className="w-full px-2 py-1 border border-gray-200 rounded text-xs text-gray-600" />
+    </div>
+  );
+};
+
 // Block Editor Component
 const BlockEditor = ({ block, onChange, onFileUpload, uploadingFile, onAddBlockToTab, onDeleteBlockFromTab, onSelectBlock, onAddBlockToColumn, onDeleteBlockFromColumn }) => {
   const definition = BLOCK_DEFINITIONS.find((d) => d.type === block.type);
@@ -2765,7 +2806,473 @@ const BlockEditor = ({ block, onChange, onFileUpload, uploadingFile, onAddBlockT
       );
     }
 
-    // Handle image/file upload fields
+    // ── Image block: text wrap style ────────────────────────────────────────
+    if (propName === 'wrapStyle' && block.type === 'image') {
+      const wrapOpts = [
+        { value: 'none',     label: 'Blok Penuh',   desc: 'Gambar mengambil lebar penuh (default)' },
+        { value: 'square',   label: 'Square',        desc: 'Teks mengelilingi gambar secara persegi' },
+        { value: 'tight',    label: 'Tight',         desc: 'Teks mengikuti konten gambar lebih rapat' },
+        { value: 'through',  label: 'Through',       desc: 'Teks menembus area transparan gambar' },
+        { value: 'topbottom',label: 'Atas & Bawah', desc: 'Teks hanya di atas dan bawah gambar' },
+      ];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Text Wrapping (Word-style)</label>
+          <div className="space-y-1.5">
+            {wrapOpts.map((opt) => (
+              <button key={opt.value} type="button"
+                onClick={() => onChange({ [propName]: opt.value })}
+                className={`w-full px-3 py-2 rounded-lg border text-left transition-all ${propValue === opt.value ? 'bg-blue-50 border-blue-500' : 'bg-white border-gray-200 hover:border-gray-300'}`}
+              >
+                <span className={`text-xs font-medium block ${propValue === opt.value ? 'text-blue-700' : 'text-gray-700'}`}>{opt.label}</span>
+                <span className="text-[10px] text-gray-400">{opt.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Image block: float side ───────────────────────────────────────────
+    if (propName === 'floatSide' && block.type === 'image') {
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Sisi Float</label>
+          <div className="flex gap-2">
+            {[{ value: 'left', label: '◀ Kiri' }, { value: 'right', label: 'Kanan ▶' }].map((opt) => (
+              <button key={opt.value} type="button"
+                onClick={() => onChange({ [propName]: opt.value })}
+                className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${propValue === opt.value ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 hover:border-gray-300 text-gray-600'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Aktif saat Text Wrapping ≠ Blok Penuh / Atas&Bawah</p>
+        </div>
+      );
+    }
+
+    // ── Image block: wrap width ────────────────────────────────────────────
+    if (propName === 'wrapWidth' && block.type === 'image') {
+      const presets = ['25%', '33%', '40%', '50%', '200px', '300px'];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Lebar Gambar (saat floating)</label>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {presets.map((p) => (
+              <button key={p} type="button" onClick={() => onChange({ [propName]: p })}
+                className={`px-3 py-1.5 text-xs rounded-lg border font-medium transition-all ${propValue === p ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-300 text-gray-600'}`}
+              >{p}</button>
+            ))}
+          </div>
+          <input type="text" value={propValue || ''} onChange={(e) => onChange({ [propName]: e.target.value })}
+            placeholder="Contoh: 40%, 300px" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+        </div>
+      );
+    }
+
+    // ── Image block: wrap margin ───────────────────────────────────────────
+    if (propName === 'wrapMargin' && block.type === 'image') {
+      const presets = ['8px', '12px', '16px', '24px', '32px'];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Jarak ke Teks</label>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {presets.map((p) => (
+              <button key={p} type="button" onClick={() => onChange({ [propName]: p })}
+                className={`px-3 py-1.5 text-xs rounded-lg border font-medium transition-all ${propValue === p ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-300 text-gray-600'}`}
+              >{p}</button>
+            ))}
+          </div>
+          <input type="text" value={propValue || ''} onChange={(e) => onChange({ [propName]: e.target.value })}
+            placeholder="Contoh: 16px" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+        </div>
+      );
+    }
+
+    // ── Hex color picker (for props that hold #xxxxxx colors) ─────────────
+    const hexColorProps = [
+      'overlayTagBg','overlayTagTextColor','titleColor','descriptionColor',
+      'meta1Color','meta2Color','buttonBg','buttonTextColor','cardBg',
+      'completedColor','activeColor','pendingColor','lineColor','completedLineFill',
+      'activeTitleColor','completedTitleColor','pendingTitleColor','pendingDescColor',
+    ];
+    if (hexColorProps.includes(propName)) {
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-1">{propName}</label>
+          <div className="flex items-center gap-2">
+            <input type="color" value={propValue || '#000000'}
+              onChange={(e) => onChange({ [propName]: e.target.value })}
+              className="w-10 h-10 rounded border border-gray-300 cursor-pointer p-0.5 bg-white"
+            />
+            <input type="text" value={propValue || ''}
+              onChange={(e) => onChange({ [propName]: e.target.value })}
+              placeholder="#000000" className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // ── Icon picker for meta icons (richCard/stepper blocks) ──────────────
+    if ((propName === 'meta1Icon' || propName === 'meta2Icon') && block.type === 'richCard') {
+      const iconOpts = [
+        { value: 'calendar', label: '📅 Kalender' },
+        { value: 'clock',    label: '🕐 Jam' },
+        { value: 'map',      label: '📍 Lokasi' },
+        { value: 'user',     label: '👤 Orang' },
+        { value: 'users',    label: '👥 Grup' },
+        { value: 'tag',      label: '🏷️ Tag' },
+        { value: 'star',     label: '⭐ Bintang' },
+        { value: 'phone',    label: '📞 Telepon' },
+        { value: 'mail',     label: '✉️ Email' },
+        { value: 'info',     label: 'ℹ️ Info' },
+        { value: 'link',     label: '🔗 Link' },
+      ];
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-2">{propName === 'meta1Icon' ? 'Ikon Meta 1' : 'Ikon Meta 2'}</label>
+          <div className="grid grid-cols-2 gap-1">
+            {iconOpts.map((opt) => (
+              <button key={opt.value} type="button" onClick={() => onChange({ [propName]: opt.value })}
+                className={`px-2 py-1.5 rounded border text-xs text-left transition-all ${propValue === opt.value ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 hover:border-gray-300 text-gray-700'}`}
+              >{opt.label}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── imageHeight select for richCard ───────────────────────────────────
+    if (propName === 'imageHeight' && block.type === 'richCard') {
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-2">Tinggi Gambar</label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[{ v:'sm',l:'Kecil (128px)'},{v:'md',l:'Sedang (192px)'},{v:'lg',l:'Besar (256px)'},{v:'xl',l:'XL (320px)'}].map((o) => (
+              <button key={o.v} type="button" onClick={() => onChange({ [propName]: o.v })}
+                className={`px-3 py-2 rounded-lg border text-xs font-medium transition-all ${propValue===o.v ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-200 hover:border-gray-300 text-gray-700'}`}
+              >{o.l}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── buttonRadius / cardRadius select for richCard ─────────────────────
+    if ((propName === 'buttonRadius' || propName === 'cardRadius') && block.type === 'richCard') {
+      const opts = ['none','sm','md','lg','xl','2xl','full'];
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-2">{propName === 'buttonRadius' ? 'Radius Button' : 'Radius Card'}</label>
+          <div className="flex flex-wrap gap-1.5">
+            {opts.map((o) => (
+              <button key={o} type="button" onClick={() => onChange({ [propName]: o })}
+                className={`px-3 py-1.5 text-xs rounded border font-medium transition-all ${propValue===o ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-300 text-gray-600'}`}
+              >{o}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── cardShadow select for richCard ────────────────────────────────────
+    if (propName === 'cardShadow' && block.type === 'richCard') {
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-2">Bayangan Card</label>
+          <div className="flex flex-wrap gap-1.5">
+            {['none','sm','md','lg','xl'].map((o) => (
+              <button key={o} type="button" onClick={() => onChange({ [propName]: o })}
+                className={`px-3 py-1.5 text-xs rounded border font-medium transition-all ${propValue===o ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-300 text-gray-600'}`}
+              >{o || 'none'}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── maxWidth select for richCard ──────────────────────────────────────
+    if (propName === 'maxWidth' && block.type === 'richCard') {
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-2">Lebar Maksimal Card</label>
+          <div className="flex flex-wrap gap-1.5">
+            {['xs','sm','md','lg','xl','full'].map((o) => (
+              <button key={o} type="button" onClick={() => onChange({ [propName]: o })}
+                className={`px-3 py-1.5 text-xs rounded border font-medium transition-all ${propValue===o ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-300 text-gray-600'}`}
+              >{o}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── titleSize select for richCard ─────────────────────────────────────
+    if (propName === 'titleSize' && block.type === 'richCard') {
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-2">Ukuran Judul</label>
+          <div className="flex flex-wrap gap-1.5">
+            {['base','lg','xl','2xl','3xl'].map((o) => (
+              <button key={o} type="button" onClick={() => onChange({ [propName]: o })}
+                className={`px-3 py-1.5 text-xs rounded border font-medium transition-all ${propValue===o ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-300 text-gray-600'}`}
+              >{o}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── descriptionClamp for richCard ─────────────────────────────────────
+    if (propName === 'descriptionClamp' && block.type === 'richCard') {
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-2">Baris Deskripsi (0 = tampil semua)</label>
+          <div className="flex flex-wrap gap-1.5">
+            {['0','1','2','3','4','5','6'].map((o) => (
+              <button key={o} type="button" onClick={() => onChange({ [propName]: o })}
+                className={`px-3 py-1.5 text-xs rounded border font-medium transition-all ${propValue===o ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 hover:border-blue-300 text-gray-600'}`}
+              >{o === '0' ? 'Semua' : `${o} baris`}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Stepper: iconSize selector ────────────────────────────────────────
+    if (propName === 'iconSize' && block.type === 'stepper') {
+      const opts = [{ v: 'sm', l: 'S — Kecil' }, { v: 'md', l: 'M — Sedang' }, { v: 'lg', l: 'L — Besar' }];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Ukuran Icon</label>
+          <div className="flex gap-2">
+            {opts.map(({ v, l }) => (
+              <button key={v} type="button" onClick={() => onChange({ [propName]: v })}
+                className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${propValue === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
+              >{l}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Stepper: connectorStyle selector ─────────────────────────────────
+    if (propName === 'connectorStyle' && block.type === 'stepper') {
+      const opts = [{ v: 'solid', l: '— Solid' }, { v: 'dashed', l: '- - Dashed' }, { v: 'dotted', l: '··· Dotted' }];
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Gaya Konektor</label>
+          <div className="flex gap-2">
+            {opts.map(({ v, l }) => (
+              <button key={v} type="button" onClick={() => onChange({ [propName]: v })}
+                className={`flex-1 py-1.5 text-xs rounded border font-medium transition-all ${propValue === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
+              >{l}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Visual step editor for stepper block ────────────────────────────────
+    if (propName === 'stepsJson' && block.type === 'stepper') {
+      let steps = [];
+      try { steps = typeof propValue === 'string' ? JSON.parse(propValue) : (Array.isArray(propValue) ? propValue : []); } catch { steps = []; }
+
+      const updateSteps = (newSteps) => onChange({ [propName]: JSON.stringify(newSteps) });
+      const addStep = () => updateSteps([...steps, { title: 'Langkah Baru', description: '', icon: String(steps.length + 1), status: 'pending' }]);
+      const removeStep = (i) => updateSteps(steps.filter((_, idx) => idx !== i));
+      const updateStep = (i, field, val) => updateSteps(steps.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
+      const moveStep = (i, dir) => {
+        const j = i + dir;
+        if (j < 0 || j >= steps.length) return;
+        const ns = [...steps];
+        [ns[i], ns[j]] = [ns[j], ns[i]];
+        updateSteps(ns);
+      };
+
+      const statusConf = {
+        completed: { label: 'Selesai', bg: 'bg-green-100 border-green-500 text-green-700' },
+        active:    { label: 'Aktif',   bg: 'bg-blue-100 border-blue-500 text-blue-700' },
+        pending:   { label: 'Pending', bg: 'bg-gray-100 border-gray-400 text-gray-600' },
+      };
+
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-3">Langkah-langkah ({steps.length})</label>
+          <div className="space-y-2">
+            {steps.map((step, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+                {/* Step header */}
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
+                  <span className="text-xs font-bold text-gray-400 flex-shrink-0">#{i + 1}</span>
+                  <input
+                    value={step.title || ''}
+                    onChange={(e) => updateStep(i, 'title', e.target.value)}
+                    placeholder="Judul langkah..."
+                    className="flex-1 text-sm font-medium bg-transparent border-0 outline-none text-gray-800 min-w-0"
+                  />
+                  <div className="flex gap-0.5 flex-shrink-0">
+                    <button type="button" onClick={() => moveStep(i, -1)} disabled={i === 0}
+                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-200 disabled:opacity-30 text-xs">↑</button>
+                    <button type="button" onClick={() => moveStep(i, 1)} disabled={i === steps.length - 1}
+                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-200 disabled:opacity-30 text-xs">↓</button>
+                    <button type="button" onClick={() => removeStep(i)}
+                      className="w-6 h-6 flex items-center justify-center rounded text-red-400 hover:text-red-600 hover:bg-red-50 text-xs">✕</button>
+                  </div>
+                </div>
+                {/* Step body */}
+                <div className="px-3 py-2 space-y-2">
+                  {/* Status buttons */}
+                  <div className="flex gap-1">
+                    {Object.entries(statusConf).map(([val, conf]) => (
+                      <button key={val} type="button"
+                        onClick={() => updateStep(i, 'status', val)}
+                        className={`flex-1 py-1 text-[10px] font-semibold rounded border transition-all ${step.status === val ? conf.bg : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                      >
+                        {conf.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Icon + Description row */}
+                  <div className="flex gap-2">
+                    <div className="w-14 flex-shrink-0">
+                      <label className="text-[10px] text-gray-400 block mb-0.5">Icon</label>
+                      <input
+                        value={step.icon || ''}
+                        onChange={(e) => updateStep(i, 'icon', e.target.value)}
+                        placeholder={String(i + 1)}
+                        className="w-full px-2 py-1 border border-gray-200 rounded text-sm text-center"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] text-gray-400 block mb-0.5">Deskripsi</label>
+                      <textarea
+                        value={step.description || ''}
+                        onChange={(e) => updateStep(i, 'description', e.target.value)}
+                        placeholder="Deskripsi langkah..."
+                        rows={2}
+                        className="w-full px-2 py-1 border border-gray-200 rounded text-xs resize-none leading-relaxed"
+                      />
+                    </div>
+                  </div>
+                  {/* Link row */}
+                  <div className="flex gap-2 pt-1 border-t border-gray-100">
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] text-gray-400 block mb-0.5">Link URL <span className="text-gray-300">(opsional)</span></label>
+                      <input
+                        value={step.link || ''}
+                        onChange={(e) => updateStep(i, 'link', e.target.value)}
+                        placeholder="https://... atau /halaman"
+                        className="w-full px-2 py-1 border border-gray-200 rounded text-xs"
+                      />
+                    </div>
+                    <div className="w-24 flex-shrink-0">
+                      <label className="text-[10px] text-gray-400 block mb-0.5">Teks Link</label>
+                      <input
+                        value={step.linkText || ''}
+                        onChange={(e) => updateStep(i, 'linkText', e.target.value)}
+                        placeholder="Selengkapnya"
+                        className="w-full px-2 py-1 border border-gray-200 rounded text-xs"
+                      />
+                    </div>
+                  </div>
+                  {/* Image row */}
+                  <div className="pt-1 border-t border-gray-100">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[10px] text-gray-400 font-medium">Gambar <span className="text-gray-300">(opsional)</span></label>
+                      {step.image && (
+                        <div className="flex gap-1">
+                          {[
+                            { v: 'sm',   l: 'S' },
+                            { v: 'md',   l: 'M' },
+                            { v: 'lg',   l: 'L' },
+                            { v: 'full', l: '↔' },
+                          ].map(({ v, l }) => (
+                            <button key={v} type="button"
+                              onClick={() => updateStep(i, 'imageSize', v)}
+                              className={`w-6 h-5 text-[9px] rounded border font-bold transition-all ${(step.imageSize || 'md') === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                            >{l}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <StepImageUpload
+                      value={step.image || ''}
+                      onChange={(url) => updateStep(i, 'image', url)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={addStep}
+            className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors font-medium">
+            + Tambah Langkah
+          </button>
+        </div>
+      );
+    }
+
+    // ── Visual tag editor for richCard block ─────────────────────────────────
+    if (propName === 'tagsJson' && block.type === 'richCard') {
+      let tags = [];
+      try { tags = typeof propValue === 'string' ? JSON.parse(propValue) : (Array.isArray(propValue) ? propValue : []); } catch { tags = []; }
+
+      const updateTags = (newTags) => onChange({ [propName]: JSON.stringify(newTags) });
+      const addTag = () => updateTags([...tags, { text: 'Tag Baru', bg: '#1f2937', color: '#ffffff' }]);
+      const removeTag = (i) => updateTags(tags.filter((_, idx) => idx !== i));
+      const updateTag = (i, field, val) => updateTags(tags.map((t, idx) => idx === i ? { ...t, [field]: val } : t));
+
+      return (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Tags ({tags.length})</label>
+          <div className="space-y-2">
+            {tags.map((tag, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                <input
+                  value={tag.text || ''}
+                  onChange={(e) => updateTag(i, 'text', e.target.value)}
+                  placeholder="Teks tag"
+                  className="flex-1 px-2 py-1 border border-gray-200 rounded text-sm min-w-0"
+                />
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <div title="Warna latar">
+                    <input type="color" value={tag.bg || '#1f2937'}
+                      onChange={(e) => updateTag(i, 'bg', e.target.value)}
+                      className="w-7 h-7 rounded cursor-pointer border border-gray-300 p-0.5"
+                    />
+                  </div>
+                  <div title="Warna teks">
+                    <input type="color" value={tag.color || '#ffffff'}
+                      onChange={(e) => updateTag(i, 'color', e.target.value)}
+                      className="w-7 h-7 rounded cursor-pointer border border-gray-300 p-0.5"
+                    />
+                  </div>
+                </div>
+                {/* Preview */}
+                <span
+                  className="px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 max-w-[60px] truncate"
+                  style={{ backgroundColor: tag.bg || '#1f2937', color: tag.color || '#ffffff' }}
+                >
+                  {tag.text || 'Tag'}
+                </span>
+                <button type="button" onClick={() => removeTag(i)}
+                  className="text-red-400 hover:text-red-600 text-sm flex-shrink-0">✕</button>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={addTag}
+            className="mt-2 w-full py-1.5 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors font-medium">
+            + Tambah Tag
+          </button>
+        </div>
+      );
+    }
+
+    // ── Handle image/file upload fields
     const imageFields = ['src', 'image', 'backgroundImage', 'logo', 'avatar', 'thumbnail', 'poster'];
     if (imageFields.includes(propName)) {
       return (
@@ -3066,9 +3573,13 @@ const BlockEditor = ({ block, onChange, onFileUpload, uploadingFile, onAddBlockT
     return false;
   };
 
+  // Merge definition defaultProps with block.props so settings for new props
+  // (added after block was created) always appear in the editor panel
+  const mergedProps = { ...(definition?.defaultProps || {}), ...block.props };
+
   return (
     <div className="space-y-3">
-      {Object.entries(block.props)
+      {Object.entries(mergedProps)
         .filter(([key]) => !shouldSkipProp(key))
         .map(([key, value]) => (
           <div key={key}>{renderPropEditor(key, value)}</div>

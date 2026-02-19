@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
+import { useLanguage } from '../../contexts/LanguageContext';
+import T from '../../components/T';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -8,6 +10,7 @@ const FasilitasList = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [categories, setCategories] = useState([]);
+  const { t } = useLanguage();
 
   // Navbar state
   const [navbarVisible, setNavbarVisible] = useState(true);
@@ -105,10 +108,10 @@ const FasilitasList = () => {
 
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-16 py-20 md:py-28 text-center text-white">
           <h1 className="russo text-3xl md:text-5xl lg:text-6xl mb-4 drop-shadow-lg">
-            FASILITAS SEKOLAH
+            {t('facility.title').toUpperCase()}
           </h1>
           <p className="text-base md:text-lg lg:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
-            Menunjang kegiatan belajar mengajar dengan fasilitas modern dan lengkap untuk seluruh siswa
+            {t('facility.subtitle')}
           </p>
         </div>
       </section>
@@ -125,7 +128,7 @@ const FasilitasList = () => {
                   : 'bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200'
               }`}
             >
-              Semua
+              {t('facility.allCategories')}
             </button>
             {categories.map((category) => (
               <button
@@ -152,17 +155,17 @@ const FasilitasList = () => {
               {filteredFasilitas.map((item) => (
                 <div
                   key={item._id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                  className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group"
                 >
                   {/* Image */}
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-52 overflow-hidden">
                     <img
                       src={item.image?.url || item.image || '/placeholder.jpg'}
                       alt={item.name}
-                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     {item.category && (
-                      <span className="absolute top-3 left-3 bg-[#0d76be] text-white text-xs font-semibold px-3 py-1 rounded-full">
+                      <span className="absolute top-3 left-3 bg-gray-900/80 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
                         {item.category}
                       </span>
                     )}
@@ -170,56 +173,50 @@ const FasilitasList = () => {
 
                   {/* Content */}
                   <div className="p-5">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-[#0d76be] transition-colors">
-                      {item.name}
+                    {/* Tags row */}
+                    {(item.category || item.isActive) && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {item.category && (
+                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-900 text-white">
+                            {item.category}
+                          </span>
+                        )}
+                        {item.isActive && (
+                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-[#0d76be] text-white">
+                            Aktif
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 leading-snug group-hover:text-[#0d76be] transition-colors">
+                      <T>{item.name}</T>
                     </h3>
+
                     {item.description && (
-                      <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                        {item.description}
+                      <p className="text-gray-500 text-sm mb-4 leading-relaxed"
+                         style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <T>{item.description}</T>
                       </p>
                     )}
 
-                    <div className="flex items-center gap-4 text-gray-500 text-xs">
+                    {/* Meta row */}
+                    <div className="flex flex-wrap items-center gap-4">
                       {item.location && (
-                        <div className="flex items-center gap-1">
-                          <svg
-                            className="w-4 h-4 text-[#0d76be]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
+                        <div className="flex items-center gap-1.5 text-[#0d76be]">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          <span>{item.location}</span>
+                          <span className="text-sm">{item.location}</span>
                         </div>
                       )}
                       {item.capacity && (
-                        <div className="flex items-center gap-1">
-                          <svg
-                            className="w-4 h-4 text-[#0d76be]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
+                        <div className="flex items-center gap-1.5 text-[#0d76be]">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
-                          <span>{item.capacity}</span>
+                          <span className="text-sm">{item.capacity}</span>
                         </div>
                       )}
                     </div>
@@ -242,13 +239,13 @@ const FasilitasList = () => {
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                 />
               </svg>
-              <p className="text-gray-600 text-lg">Tidak ada fasilitas yang ditemukan.</p>
+              <p className="text-gray-600 text-lg">{t('facility.noFacilities')}</p>
               {selectedCategory !== 'Semua' && (
                 <button
                   onClick={() => setSelectedCategory('Semua')}
                   className="mt-4 px-6 py-2 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full transition-colors text-sm font-medium"
                 >
-                  Lihat Semua Fasilitas
+                  {t('facility.viewAll')}
                 </button>
               )}
             </div>

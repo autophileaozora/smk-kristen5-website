@@ -101,7 +101,7 @@ router.get('/:id', async (req, res) => {
 // @access  Protected + Admin
 router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, res) => {
   try {
-    const { name, description, category, semester, hoursPerWeek, isActive, displayOrder } = req.body;
+    const { name, description, category, semester, hoursPerWeek, isActive, displayOrder, image } = req.body;
 
     if (!name || !description || !category) {
       return res.status(400).json({
@@ -121,7 +121,7 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
       createdBy: req.user.id,
     };
 
-    // Upload image to Cloudinary if provided
+    // Upload image to Cloudinary if binary file uploaded, or use URL if provided
     if (req.file) {
       try {
         console.log('Uploading image to Cloudinary...');
@@ -136,6 +136,8 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
           message: 'Failed to upload image to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (image) {
+      mataPelajaranData.image = image;
     }
 
     const mataPelajaran = await MataPelajaran.create(mataPelajaranData);

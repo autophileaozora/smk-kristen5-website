@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
         .limit(6)
         .lean(),
       Ekskul.find().sort({ createdAt: -1 }).lean(),
-      Alumni.find().sort({ graduationYear: -1, createdAt: -1 }).lean(),
+      Alumni.find({ isPublished: true }).sort({ graduationYear: -1, createdAt: -1 }).lean(),
       Partner.find().sort({ order: 1, createdAt: -1 }).lean(),
       Fasilitas.find().sort({ displayOrder: 1, name: 1 }).lean(),
       Prestasi.find().sort({ date: -1, createdAt: -1 }).lean(),

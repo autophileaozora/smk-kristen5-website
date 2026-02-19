@@ -235,7 +235,7 @@ const Alumni = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded && (
+      {!embedded ? (
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Alumni</h1>
@@ -244,6 +244,16 @@ const Alumni = ({ embedded = false }) => {
         <button
           onClick={openCreateModal}
           className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2"
+        >
+          <span>➕</span>
+          Tambah Alumni
+        </button>
+      </div>
+      ) : (
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={openCreateModal}
+          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2 text-sm"
         >
           <span>➕</span>
           Tambah Alumni

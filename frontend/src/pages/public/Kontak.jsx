@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { useLanguage } from '../../contexts/LanguageContext';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
 const Kontak = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [navbarVisible, setNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const scrollTimeout = useRef(null);
@@ -176,9 +178,9 @@ const Kontak = () => {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-16 text-center text-white">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">Hubungi Kami</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">{t('contact.title')}</h1>
           <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow">
-            Kami siap membantu Anda. Jangan ragu untuk menghubungi kami kapan saja.
+            {t('contact.subtitle')}
           </p>
         </div>
       </section>
@@ -197,7 +199,7 @@ const Kontak = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Alamat</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{t('contact.address')}</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     {contactInfo.address}
                   </p>
@@ -214,7 +216,7 @@ const Kontak = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Kontak</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{t('contact.phone')}</h3>
                   <div className="text-gray-600 text-sm space-y-1">
                     <p className="font-semibold">{contactInfo.phone}</p>
                     <p>WA: {contactInfo.whatsapp}</p>
@@ -233,18 +235,18 @@ const Kontak = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Jam Operasional</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{t('contact.operatingHours')}</h3>
                   <div className="text-gray-600 text-sm space-y-1">
                     <div className="flex justify-between">
-                      <span className="font-medium">Sen - Jum</span>
+                      <span className="font-medium">{t('contact.weekdays')}</span>
                       <span>{contactInfo.operatingHours.weekdays}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Sabtu</span>
+                      <span className="font-medium">{t('contact.saturday')}</span>
                       <span>{contactInfo.operatingHours.saturday}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Minggu</span>
+                      <span className="font-medium">{t('contact.sunday')}</span>
                       <span className="text-red-600">{contactInfo.operatingHours.sunday}</span>
                     </div>
                   </div>
@@ -261,7 +263,7 @@ const Kontak = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Google Maps */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Lokasi Kami</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('contact.ourLocation')}</h2>
               <div className="bg-gray-100 rounded-lg shadow-lg overflow-hidden h-[500px]">
                 <iframe
                   src={contactInfo.mapUrl}
@@ -278,7 +280,7 @@ const Kontak = () => {
 
             {/* Contact Form */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Form untuk Bertanya</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('contact.formTitle')}</h2>
 
               {/* Success Message */}
               {submitStatus === 'success' && (
@@ -287,8 +289,8 @@ const Kontak = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-green-800 font-semibold">Terima kasih!</p>
-                    <p className="text-green-700 text-sm">Pesan Anda telah berhasil dikirim. Kami akan segera menghubungi Anda.</p>
+                    <p className="text-green-800 font-semibold">{t('contact.thankYou')}</p>
+                    <p className="text-green-700 text-sm">{t('contact.messageSentDetails')}</p>
                   </div>
                 </div>
               )}
@@ -300,8 +302,8 @@ const Kontak = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-red-800 font-semibold">Terjadi kesalahan</p>
-                    <p className="text-red-700 text-sm">Maaf, pesan Anda gagal dikirim. Silakan coba lagi.</p>
+                    <p className="text-red-800 font-semibold">{t('contact.errorTitle')}</p>
+                    <p className="text-red-700 text-sm">{t('contact.errorDetails')}</p>
                   </div>
                 </div>
               )}
@@ -310,7 +312,7 @@ const Kontak = () => {
                 {/* Nama Lengkap */}
                 <div>
                   <label htmlFor="namaLengkap" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nama Lengkap <span className="text-red-500">*</span>
+                    {t('contact.fullName')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -321,7 +323,7 @@ const Kontak = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.namaLengkap ? 'border-red-500 bg-red-50' : 'border-gray-300'
                     }`}
-                    placeholder="Masukkan nama lengkap Anda"
+                    placeholder={t('contact.namePlaceholder')}
                   />
                   {errors.namaLengkap && (
                     <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
@@ -362,7 +364,7 @@ const Kontak = () => {
                 {/* Pertanyaan */}
                 <div>
                   <label htmlFor="pertanyaan" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Pertanyaan <span className="text-red-500">*</span>
+                    {t('contact.yourQuestion')} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     id="pertanyaan"
@@ -373,7 +375,7 @@ const Kontak = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
                       errors.pertanyaan ? 'border-red-500 bg-red-50' : 'border-gray-300'
                     }`}
-                    placeholder="Tulis pertanyaan atau pesan Anda di sini..."
+                    placeholder={t('contact.questionPlaceholder')}
                   ></textarea>
                   {errors.pertanyaan && (
                     <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
@@ -397,11 +399,11 @@ const Kontak = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>Mengirim...</span>
+                      <span>{t('contact.sending')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Kirim</span>
+                      <span>{t('contact.send')}</span>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
@@ -418,8 +420,8 @@ const Kontak = () => {
       <section className="py-16 bg-gray-50">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ikuti Kami di Sosial Media</h2>
-            <p className="text-gray-600 text-lg">Tetap terhubung dengan kami melalui platform sosial media</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{t('contact.followSocial')}</h2>
+            <p className="text-gray-600 text-lg">{t('contact.stayConnected')}</p>
           </div>
 
           <div className="flex items-center justify-center gap-6 flex-wrap">

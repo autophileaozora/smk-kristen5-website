@@ -52,7 +52,8 @@ const auditLogSchema = new mongoose.Schema(
         'navbarItem',
         'siteSettings',
         'customPage',
-        'footerColumn'
+        'footerColumn',
+        'alumniSubmission'
       ],
     },
     resourceId: {

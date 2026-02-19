@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
+import { useLanguage } from '../../contexts/LanguageContext';
+import T from '../../components/T';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -9,6 +11,7 @@ const Artikel = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logo: schoolLogo } = useSchoolLogo();
+  const { t } = useLanguage();
 
   const [articles, setArticles] = useState([]);
   const [featuredArticles, setFeaturedArticles] = useState([]);
@@ -297,16 +300,16 @@ const Artikel = () => {
                   </span>
                 </div>
                 <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
-                  {article.title}
+                  <T>{article.title}</T>
                 </h1>
                 <p className="text-base md:text-lg mb-6 line-clamp-3 text-white/90">
-                  {article.excerpt}
+                  <T>{article.excerpt}</T>
                 </p>
                 <Link
                   to={`/artikel/${article.slug}`}
                   className="inline-flex items-center justify-center px-6 md:px-8 py-2.5 md:py-3 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full transition-colors font-medium text-xs md:text-sm"
                 >
-                  Baca Selengkapnya
+                  {t('article.readMore')}
                 </Link>
               </div>
             </div>
@@ -361,7 +364,7 @@ const Artikel = () => {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Cari Berita SMK KRISTEN 5 KLATEN"
+                placeholder={t('article.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 bg-transparent py-4 pr-4 text-white placeholder-white/60 focus:outline-none text-sm"
@@ -382,7 +385,7 @@ const Artikel = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
-                <span className="text-sm font-medium">Filter</span>
+                <span className="text-sm font-medium">{t('article.filter')}</span>
               {(selectedTopik || selectedJurusan || selectedTime) && (
                 <span className="bg-yellow-400 text-gray-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {[selectedTopik, selectedJurusan, selectedTime].filter(Boolean).length}
@@ -395,7 +398,7 @@ const Artikel = () => {
           {/* Active Filter Tags */}
           {(selectedTopik || selectedJurusan || selectedTime) && (
             <div className="flex flex-wrap items-center gap-2 mt-3 max-w-4xl mx-auto">
-              <span className="text-white/70 text-xs">Filter aktif:</span>
+              <span className="text-white/70 text-xs">{t('article.activeFilter')}</span>
               {selectedTopik && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs">
                   {topikCategories.find(c => c._id === selectedTopik)?.name || 'Topik'}
@@ -424,9 +427,9 @@ const Artikel = () => {
               )}
               {selectedTime && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs">
-                  {selectedTime === '7days' ? '7 Hari Terakhir' :
-                   selectedTime === '30days' ? '30 Hari Terakhir' :
-                   selectedTime === '90days' ? '3 Bulan Terakhir' : '1 Tahun Terakhir'}
+                  {selectedTime === '7days' ? t('article.last7Days') :
+                   selectedTime === '30days' ? t('article.last30Days') :
+                   selectedTime === '90days' ? t('article.last90Days') : t('article.lastYear')}
                   <button
                     onClick={() => setSelectedTime('')}
                     className="hover:bg-white/20 rounded-full p-0.5"
@@ -441,7 +444,7 @@ const Artikel = () => {
                 onClick={resetFilters}
                 className="text-yellow-300 hover:text-yellow-200 text-xs font-medium ml-2"
               >
-                Hapus Semua
+                {t('article.clearAll')}
               </button>
             </div>
           )}
@@ -470,8 +473,8 @@ const Artikel = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold">Filter Artikel</h3>
-                      <p className="text-white/70 text-xs">Temukan artikel yang Anda cari</p>
+                      <h3 className="text-white font-semibold">{t('article.filterTitle')}</h3>
+                      <p className="text-white/70 text-xs">{t('article.filterSubtitle')}</p>
                     </div>
                   </div>
                   <button
@@ -493,18 +496,18 @@ const Artikel = () => {
                         <svg className="w-4 h-4 text-[#0D76BE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Waktu Publikasi
+                        {t('article.publicationTime')}
                       </label>
                       <select
                         value={selectedTime}
                         onChange={(e) => setSelectedTime(e.target.value)}
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0D76BE] focus:border-transparent transition-all text-sm"
                       >
-                        <option value="">Semua Waktu</option>
-                        <option value="7days">7 Hari Terakhir</option>
-                        <option value="30days">30 Hari Terakhir</option>
-                        <option value="90days">3 Bulan Terakhir</option>
-                        <option value="1year">1 Tahun Terakhir</option>
+                        <option value="">{t('article.allPeriods')}</option>
+                        <option value="7days">{t('article.last7Days')}</option>
+                        <option value="30days">{t('article.last30Days')}</option>
+                        <option value="90days">{t('article.last90Days')}</option>
+                        <option value="1year">{t('article.lastYear')}</option>
                       </select>
                     </div>
 
@@ -514,14 +517,14 @@ const Artikel = () => {
                         <svg className="w-4 h-4 text-[#0D76BE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        Jurusan
+                        {t('nav.programs')}
                       </label>
                       <select
                         value={selectedJurusan}
                         onChange={(e) => setSelectedJurusan(e.target.value)}
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0D76BE] focus:border-transparent transition-all text-sm"
                       >
-                        <option value="">Semua Jurusan</option>
+                        <option value="">{t('article.allPrograms')}</option>
                         {jurusanCategories.map((jurusan) => (
                           <option key={jurusan._id} value={jurusan._id}>
                             {jurusan.code} - {jurusan.name}
@@ -536,14 +539,14 @@ const Artikel = () => {
                         <svg className="w-4 h-4 text-[#0D76BE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
-                        Topik
+                        {t('article.topic')}
                       </label>
                       <select
                         value={selectedTopik}
                         onChange={(e) => setSelectedTopik(e.target.value)}
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0D76BE] focus:border-transparent transition-all text-sm"
                       >
-                        <option value="">Semua Topik</option>
+                        <option value="">{t('article.allTopics')}</option>
                         {topikCategories.filter(cat => cat.type === 'topik').map((category) => (
                           <option key={category._id} value={category._id}>
                             {category.name}
@@ -562,17 +565,17 @@ const Artikel = () => {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      Reset Filter
+                      {t('article.resetFilter')}
                     </button>
                     <div className="flex items-center gap-4">
                       <span className="text-sm text-gray-500">
-                        <span className="font-semibold text-[#0D76BE]">{filteredArticles.length}</span> artikel ditemukan
+                        <span className="font-semibold text-[#0D76BE]">{filteredArticles.length}</span> {t('article.articlesFound')}
                       </span>
                       <button
                         onClick={() => setShowFilterModal(false)}
                         className="px-6 py-2.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white text-sm font-medium rounded-full transition-colors"
                       >
-                        Terapkan Filter
+                        {t('article.applyFilter')}
                       </button>
                     </div>
                   </div>
@@ -632,12 +635,12 @@ const Artikel = () => {
                       </p>
                       {article.categoryTopik && (
                         <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                          {article.categoryTopik.name}
+                          <T>{article.categoryTopik.name}</T>
                         </span>
                       )}
                     </div>
                     <h3 className="text-sm md:text-base font-semibold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                      {article.title}
+                      <T>{article.title}</T>
                     </h3>
                   </div>
                 </Link>
@@ -645,7 +648,7 @@ const Artikel = () => {
             </div>
           ) : (
             <div className="text-center py-16">
-              <p className="text-gray-600 text-lg">Tidak ada artikel yang ditemukan.</p>
+              <p className="text-gray-600 text-lg">{t('article.noArticles')}</p>
             </div>
           )}
 

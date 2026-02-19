@@ -11,6 +11,10 @@ const FooterManagement = ({ embedded = false }) => {
   const [editingColumnId, setEditingColumnId] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  // Footer text settings (from SiteSettings)
+  const [footerTextSettings, setFooterTextSettings] = useState({ footerText: '', footerDescription: '' });
+  const [savingFooterText, setSavingFooterText] = useState(false);
+
   const [columnForm, setColumnForm] = useState({
     title: '',
     type: 'links',
@@ -68,6 +72,7 @@ const FooterManagement = ({ embedded = false }) => {
 
   useEffect(() => {
     fetchColumns();
+    fetchFooterTextSettings();
   }, []);
 
   const fetchColumns = async () => {
@@ -78,6 +83,31 @@ const FooterManagement = ({ embedded = false }) => {
       showToast('Gagal memuat data footer', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFooterTextSettings = async () => {
+    try {
+      const res = await api.get('/api/site-settings');
+      const s = res.data.data;
+      setFooterTextSettings({
+        footerText: s.footerText || '',
+        footerDescription: s.footerDescription || '',
+      });
+    } catch {
+      // ignore silently
+    }
+  };
+
+  const handleSaveFooterText = async () => {
+    setSavingFooterText(true);
+    try {
+      await api.put('/api/site-settings', footerTextSettings);
+      showToast('Pengaturan teks footer berhasil disimpan');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Gagal menyimpan pengaturan teks footer', 'error');
+    } finally {
+      setSavingFooterText(false);
     }
   };
 
@@ -352,7 +382,7 @@ const FooterManagement = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded && (
+      {!embedded ? (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Manajemen Footer</h1>
@@ -382,6 +412,100 @@ const FooterManagement = ({ embedded = false }) => {
           </button>
         </div>
       </div>
+      ) : (
+      <div className="flex items-center justify-end gap-2 mb-4">
+        {columns.length === 0 ? (
+          <button
+            onClick={handleSeedDefault}
+            className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+          >
+            Buat Footer Default
+          </button>
+        ) : (
+          <button
+            onClick={handleResetAndSeed}
+            className="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm"
+          >
+            Reset ke Default
+          </button>
+        )}
+        <button
+          onClick={() => openColumnModal()}
+          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+        >
+          + Tambah Kolom
+        </button>
+      </div>
+      )}
+
+      {/* Footer Text Settings */}
+      <div className="bg-white rounded-lg shadow-md p-5 mb-6">
+        <h2 className="text-base font-semibold text-gray-800 mb-4">Teks Copyright & Deskripsi Footer</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Teks Copyright <span className="text-gray-400 font-normal">(nama sekolah / hak cipta)</span>
+            </label>
+            <input
+              type="text"
+              value={footerTextSettings.footerText}
+              onChange={(e) => setFooterTextSettings({ ...footerTextSettings, footerText: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Contoh: SMK Kristen 5 Klaten"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Deskripsi Footer <span className="text-gray-400 font-normal">(tagline atau keterangan singkat)</span>
+            </label>
+            <textarea
+              value={footerTextSettings.footerDescription}
+              onChange={(e) => setFooterTextSettings({ ...footerTextSettings, footerDescription: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows={3}
+              placeholder="Contoh: Sekolah Menengah Kejuruan berstandar ISO di Klaten"
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveFooterText}
+              disabled={savingFooterText}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingFooterText ? 'Menyimpan...' : 'Simpan Teks Footer'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Column Controls (embedded header) */}
+      {embedded && (
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-gray-800">Kolom Footer</h2>
+          <div className="flex gap-2">
+            {columns.length === 0 ? (
+              <button
+                onClick={handleSeedDefault}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+              >
+                Buat Footer Default
+              </button>
+            ) : (
+              <button
+                onClick={handleResetAndSeed}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm"
+              >
+                Reset ke Default
+              </button>
+            )}
+            <button
+              onClick={() => openColumnModal()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            >
+              + Tambah Kolom
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Footer Preview */}

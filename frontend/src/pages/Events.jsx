@@ -10,6 +10,7 @@ const Events = ({ embedded = false }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [toast, setToast] = useState(null);
+  const [showPast, setShowPast] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -171,7 +172,7 @@ const Events = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded && (
+      {!embedded ? (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Agenda & Kegiatan</h1>
@@ -182,6 +183,16 @@ const Events = ({ embedded = false }) => {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <span className="text-xl">+</span>
+          <span>Tambah Event</span>
+        </button>
+      </div>
+      ) : (
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={openCreateModal}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
+        >
+          <span className="text-lg">+</span>
           <span>Tambah Event</span>
         </button>
       </div>
@@ -212,7 +223,10 @@ const Events = ({ embedded = false }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {events.map((event) => (
+              {events.filter((event) => {
+                const isPast = new Date(event.eventDate) < new Date(new Date().setHours(0, 0, 0, 0));
+                return showPast ? isPast : !isPast;
+              }).map((event) => (
                 <tr key={event._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
@@ -265,6 +279,21 @@ const Events = ({ embedded = false }) => {
             </tbody>
           </table>
         )}
+      </div>
+
+      {/* Past Events Toggle */}
+      <div className="flex justify-end mt-3">
+        <button
+          onClick={() => setShowPast((p) => !p)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+            showPast
+              ? 'bg-gray-700 text-white border-gray-700 hover:bg-gray-800'
+              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <span>{showPast ? '📅' : '🕐'}</span>
+          <span>{showPast ? 'Lihat Agenda Mendatang' : 'Lihat Agenda Berlalu'}</span>
+        </button>
       </div>
 
       {/* Create/Edit Modal */}

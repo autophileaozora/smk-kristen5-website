@@ -30,6 +30,7 @@ const MataPelajaran = ({ embedded = false }) => {
 
   // Preview image
   const [imagePreview, setImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     fetchMataPelajarans();
@@ -122,15 +123,27 @@ const MataPelajaran = ({ embedded = false }) => {
     setMataPelajaranToDelete(null);
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Ukuran gambar maksimal 5MB', 'error');
-        return;
-      }
-      setFormData({ ...formData, image: file });
-      setImagePreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Ukuran gambar maksimal 5MB', 'error');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const uploadData = new FormData();
+      uploadData.append('image', file);
+      const response = await api.post('/api/upload/image', uploadData);
+      const url = response.data.data.url;
+      setFormData(prev => ({ ...prev, image: url }));
+      setImagePreview(url);
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Gagal mengupload gambar', 'error');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -138,27 +151,22 @@ const MataPelajaran = ({ embedded = false }) => {
     e.preventDefault();
 
     try {
-      const submitData = new FormData();
-      submitData.append('name', formData.name);
-      submitData.append('description', formData.description);
-      submitData.append('category', formData.category);
-      if (formData.semester) submitData.append('semester', formData.semester);
-      if (formData.hoursPerWeek) submitData.append('hoursPerWeek', formData.hoursPerWeek);
-      submitData.append('isActive', formData.isActive);
-      submitData.append('displayOrder', formData.displayOrder);
-      if (formData.image) {
-        submitData.append('image', formData.image);
-      }
+      const submitData = {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        isActive: formData.isActive,
+        displayOrder: formData.displayOrder,
+      };
+      if (formData.semester) submitData.semester = formData.semester;
+      if (formData.hoursPerWeek) submitData.hoursPerWeek = formData.hoursPerWeek;
+      if (formData.image) submitData.image = formData.image;
 
       if (modalMode === 'create') {
-        await api.post('/api/mata-pelajaran', submitData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await api.post('/api/mata-pelajaran', submitData);
         showToast('Mata pelajaran berhasil dibuat!', 'success');
       } else {
-        await api.put(`/api/mata-pelajaran/${currentMataPelajaran._id}`, submitData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await api.put(`/api/mata-pelajaran/${currentMataPelajaran._id}`, submitData);
         showToast('Mata pelajaran berhasil diupdate!', 'success');
       }
 
@@ -210,7 +218,7 @@ const MataPelajaran = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded && (
+      {!embedded ? (
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Mata Pelajaran</h1>
@@ -219,6 +227,15 @@ const MataPelajaran = ({ embedded = false }) => {
         <button
           onClick={openCreateModal}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          + Tambah Mata Pelajaran
+        </button>
+      </div>
+      ) : (
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={openCreateModal}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
         >
           + Tambah Mata Pelajaran
         </button>
@@ -451,9 +468,13 @@ const MataPelajaran = ({ embedded = false }) => {
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={uploadingImage}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   />
-                  {imagePreview && (
+                  {uploadingImage && (
+                    <p className="text-sm text-blue-600 mt-1">Mengupload gambar...</p>
+                  )}
+                  {imagePreview && !uploadingImage && (
                     <img
                       src={imagePreview}
                       alt="Preview"
@@ -500,7 +521,8 @@ const MataPelajaran = ({ embedded = false }) => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    disabled={uploadingImage}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
                     {modalMode === 'create' ? 'Buat' : 'Simpan'}
                   </button>

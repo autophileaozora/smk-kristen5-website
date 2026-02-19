@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
+import { useLanguage } from '../../contexts/LanguageContext';
+import T from '../../components/T';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -9,6 +11,7 @@ const ArtikelDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { logo: schoolLogo } = useSchoolLogo();
+  const { t } = useLanguage();
 
   const [article, setArticle] = useState(null);
   const [recentArticles, setRecentArticles] = useState([]);
@@ -147,9 +150,9 @@ const ArtikelDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Artikel tidak ditemukan</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('article.noArticles')}</h2>
           <Link to="/artikel" className="text-blue-600 hover:underline">
-            Kembali ke halaman artikel
+            {t('common.back')}
           </Link>
         </div>
       </div>
@@ -166,9 +169,9 @@ const ArtikelDetail = () => {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-6 flex-wrap">
-            <Link to="/" className="hover:text-blue-600 transition-colors">Beranda</Link>
+            <Link to="/" className="hover:text-blue-600 transition-colors">{t('nav.home')}</Link>
             <span>/</span>
-            <Link to="/artikel" className="hover:text-blue-600 transition-colors">Artikel</Link>
+            <Link to="/artikel" className="hover:text-blue-600 transition-colors">{t('nav.allArticles')}</Link>
             {article.categoryTopik && (
               <>
                 <span>/</span>
@@ -211,7 +214,7 @@ const ArtikelDetail = () => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>{readingTime} menit baca</span>
+                  <span>{readingTime} {t('article.readingTime')}</span>
                 </div>
                 {article.categoryTopik && (
                   <div className="flex items-center gap-2">
@@ -256,7 +259,7 @@ const ArtikelDetail = () => {
 
               {/* Social Sharing */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">BAGIKAN POSTINGAN</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('article.shareArticle').toUpperCase()}</h3>
                 <div className="flex items-center gap-3">
                   <a
                     href={`https://www.instagram.com/`}
@@ -305,7 +308,7 @@ const ArtikelDetail = () => {
               {/* Berita Terbaru */}
               <div className="bg-white rounded-lg shadow-md p-6 mb-8">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">BERITA TERBARU</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{t('article.latestNews')}</h2>
                 </div>
                 <div className="space-y-4">
                   {recentArticles.length > 0 ? (
@@ -324,7 +327,7 @@ const ArtikelDetail = () => {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-1">
-                            {recentArticle.title}
+                            <T>{recentArticle.title}</T>
                           </h3>
                           <p className="text-xs text-gray-500">
                             {new Date(recentArticle.publishedAt).toLocaleDateString('id-ID', {
@@ -337,7 +340,7 @@ const ArtikelDetail = () => {
                       </Link>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">Belum ada berita lainnya</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('article.noArticles')}</p>
                   )}
                 </div>
                 {recentArticles.length > 0 && (
@@ -345,7 +348,7 @@ const ArtikelDetail = () => {
                     to="/artikel"
                     className="inline-flex items-center justify-center w-full mt-6 px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-full hover:bg-blue-50 transition-colors"
                   >
-                    Berita Lainnya →
+                    {t('article.latestNews')} →
                   </Link>
                 )}
               </div>
@@ -353,7 +356,7 @@ const ArtikelDetail = () => {
               {/* Artikel Terkait */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">ARTIKEL TERKAIT</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{t('article.relatedArticles')}</h2>
                 </div>
                 <div className="space-y-4">
                   {relatedArticles.length > 0 ? (
@@ -372,7 +375,7 @@ const ArtikelDetail = () => {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-1">
-                            {relatedArticle.title}
+                            <T>{relatedArticle.title}</T>
                           </h3>
                           <p className="text-xs text-gray-500">
                             {new Date(relatedArticle.publishedAt).toLocaleDateString('id-ID', {
@@ -385,7 +388,7 @@ const ArtikelDetail = () => {
                       </Link>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">Belum ada artikel terkait</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('article.noArticles')}</p>
                   )}
                 </div>
                 {relatedArticles.length > 0 && (
@@ -393,7 +396,7 @@ const ArtikelDetail = () => {
                     to="/artikel"
                     className="inline-flex items-center justify-center w-full mt-6 px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-full hover:bg-blue-50 transition-colors"
                   >
-                    Baca Lainnya →
+                    {t('article.relatedArticles')} →
                   </Link>
                 )}
               </div>

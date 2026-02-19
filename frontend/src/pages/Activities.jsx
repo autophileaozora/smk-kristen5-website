@@ -8,6 +8,7 @@ const Activities = ({ embedded = false }) => {
     globalButtonText: 'Explore Kegiatan Siswa',
     sectionTitle: 'Pembelajaran & Kegiatan',
     sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
+    slideDuration: 4000,
   });
   const [loading, setLoading] = useState(true);
   const [activeTabId, setActiveTabId] = useState(null);
@@ -47,6 +48,7 @@ const Activities = ({ embedded = false }) => {
     globalButtonText: '',
     sectionTitle: '',
     sectionSubtitle: '',
+    slideDuration: 4000,
   });
 
   useEffect(() => {
@@ -301,6 +303,7 @@ const Activities = ({ embedded = false }) => {
       globalButtonText: settings.globalButtonText || 'Explore Kegiatan Siswa',
       sectionTitle: settings.sectionTitle || 'Pembelajaran & Kegiatan',
       sectionSubtitle: settings.sectionSubtitle || 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
+      slideDuration: settings.slideDuration || 4000,
     });
     setShowSettingsModal(true);
   };
@@ -707,6 +710,21 @@ const Activities = ({ embedded = false }) => {
                     placeholder="/kegiatan"
                   />
                   <p className="text-xs text-gray-500 mt-1">Contoh: /kegiatan atau https://example.com</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Durasi Slide Carousel (detik)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={Math.round((settingsFormData.slideDuration || 4000) / 1000)}
+                    onChange={(e) => setSettingsFormData({ ...settingsFormData, slideDuration: Number(e.target.value) * 1000 })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Carousel akan berganti slide setiap N detik secara otomatis. Default: 4 detik.</p>
                 </div>
 
                 <div className="flex gap-3 pt-4">
