@@ -398,7 +398,6 @@ const Jurusan = ({ embedded = false }) => {
             {/* Background overlay */}
             <div
               className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-              onClick={closeModal}
             ></div>
 
             {/* Modal panel */}
@@ -727,7 +726,6 @@ const Jurusan = ({ embedded = false }) => {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div
               className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-              onClick={closeDeleteModal}
             ></div>
 
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">

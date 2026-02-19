@@ -11,14 +11,13 @@ const router = express.Router();
 // @access  Public
 router.get('/public', async (req, res) => {
   try {
-    const { jurusanCode, limit = 10 } = req.query;
+    const { jurusanCode, topikSlug, limit = 10 } = req.query;
 
     const query = { status: 'published' };
+    const Category = (await import('../models/Category.js')).default;
 
     // Filter by jurusan code if provided
     if (jurusanCode) {
-      // First find the category with this jurusan code
-      const Category = (await import('../models/Category.js')).default;
       const jurusanCategory = await Category.findOne({
         name: jurusanCode.toUpperCase(),
         type: 'jurusan'
@@ -26,6 +25,18 @@ router.get('/public', async (req, res) => {
 
       if (jurusanCategory) {
         query.categoryJurusan = jurusanCategory._id;
+      }
+    }
+
+    // Filter by topik slug if provided
+    if (topikSlug) {
+      const topikCategory = await Category.findOne({
+        slug: topikSlug.toLowerCase(),
+        type: 'topik'
+      });
+
+      if (topikCategory) {
+        query.categoryTopik = topikCategory._id;
       }
     }
 
@@ -238,7 +249,7 @@ router.get('/:id', protect, async (req, res) => {
 // @access  Protected
 router.post('/', protect, async (req, res) => {
   try {
-    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage } = req.body;
+    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metadata } = req.body;
 
     // Validation
     if (!title || !content) {
@@ -261,6 +272,7 @@ router.post('/', protect, async (req, res) => {
       featuredImage: featuredImage ? { url: featuredImage } : undefined,
       author: req.user.id,
       status: initialStatus,
+      metadata: metadata || {},
     });
 
     // Audit log
@@ -328,7 +340,7 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage } = req.body;
+    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metadata } = req.body;
 
     article.title = title || article.title;
     article.content = content || article.content;
@@ -337,6 +349,10 @@ router.put('/:id', protect, async (req, res) => {
     if (categoryTopik !== undefined) article.categoryTopik = categoryTopik || null;
     if (featuredImage !== undefined) {
       article.featuredImage = featuredImage ? { url: featuredImage } : undefined;
+    }
+    if (metadata !== undefined) {
+      article.metadata = metadata || {};
+      article.markModified('metadata');
     }
 
     await article.save();

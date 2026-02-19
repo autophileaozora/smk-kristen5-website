@@ -146,7 +146,7 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
     await AuditLog.create({
       user: req.user.id,
       action: 'create',
-      resource: 'mata-pelajaran',
+      resource: 'mataPelajaran',
       resourceId: mataPelajaran._id,
       details: {
         name: mataPelajaran.name,
@@ -219,7 +219,7 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
     await AuditLog.create({
       user: req.user.id,
       action: 'update',
-      resource: 'mata-pelajaran',
+      resource: 'mataPelajaran',
       resourceId: mataPelajaran._id,
       details: {
         updatedFields: Object.keys(req.body),
@@ -262,7 +262,7 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
     await AuditLog.create({
       user: req.user.id,
       action: 'delete',
-      resource: 'mata-pelajaran',
+      resource: 'mataPelajaran',
       resourceId: req.params.id,
       details: {
         name: mataPelajaran.name,

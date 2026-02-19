@@ -86,6 +86,7 @@ const ImageToolbar = ({ position, onAction, onClose }) => {
         <span className="text-[10px] text-gray-400 font-medium w-10">Size</span>
         {sizes.map((s) => (
           <button
+            type="button"
             key={s.value}
             onClick={() => onAction('size', s.value)}
             className="px-2.5 py-1 text-xs rounded-lg hover:bg-blue-50 hover:text-[#0d76be] transition-colors border border-gray-200 font-medium"
@@ -99,6 +100,7 @@ const ImageToolbar = ({ position, onAction, onClose }) => {
         <span className="text-[10px] text-gray-400 font-medium w-10">Wrap</span>
         {floats.map((f) => (
           <button
+            type="button"
             key={f.value}
             onClick={() => onAction('float', f.value)}
             className="px-2.5 py-1 text-xs rounded-lg hover:bg-blue-50 hover:text-[#0d76be] transition-colors border border-gray-200 font-medium"
@@ -107,7 +109,7 @@ const ImageToolbar = ({ position, onAction, onClose }) => {
           </button>
         ))}
       </div>
-      <button onClick={onClose} className="text-[10px] text-gray-400 hover:text-gray-600 text-right">
+      <button type="button" onClick={onClose} className="text-[10px] text-gray-400 hover:text-gray-600 text-right">
         Tutup
       </button>
     </div>

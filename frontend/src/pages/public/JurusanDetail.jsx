@@ -72,15 +72,10 @@ export default function JurusanDetail() {
         let fasilitass = [];
         let articles = [];
 
-        // Fetch related prestasi (filter by jurusan if available)
+        // Fetch prestasi articles (articles with topik 'prestasi' for this jurusan)
         try {
-          const prestasiRes = await api.get(`/api/prestasi`);
-          console.log('Prestasi API Response:', prestasiRes.data);
-          const prestasis = prestasiRes.data?.data?.prestasis || [];
-          filteredPrestasi = prestasis.filter(p =>
-            p.jurusan?.toUpperCase() === foundJurusan.code?.toUpperCase() || p.jurusan === null
-          );
-          console.log('Filtered Prestasi:', filteredPrestasi);
+          const prestasiRes = await api.get(`/api/articles/public?jurusanCode=${foundJurusan.code}&topikSlug=prestasi&limit=20`);
+          filteredPrestasi = prestasiRes.data?.data?.articles || [];
         } catch (error) {
           console.error('Error fetching prestasi:', error);
         }
@@ -98,10 +93,10 @@ export default function JurusanDetail() {
           console.error('Error fetching alumni:', error);
         }
 
-        // Fetch mata pelajaran (filter by category = jurusan code OR PUBLIC)
+        // Fetch mata pelajaran (all, not filtered by category)
         try {
           console.log('Fetching mata pelajaran for:', foundJurusan.code);
-          const mataPelajaranRes = await api.get(`/api/mata-pelajaran?category=${foundJurusan.code}`);
+          const mataPelajaranRes = await api.get(`/api/mata-pelajaran`);
           console.log('Mata Pelajaran API Response:', mataPelajaranRes.data);
           mataPelajarans = mataPelajaranRes.data?.data?.mataPelajaran || [];
           console.log('Mata Pelajaran:', mataPelajarans);
@@ -132,7 +127,7 @@ export default function JurusanDetail() {
         }
 
         setRelatedData({
-          prestasis: filteredPrestasi.slice(0, 4),
+          prestasis: filteredPrestasi,
           alumnis: filteredAlumni.slice(0, 3),
           posts: articles,
           mataPelajarans: mataPelajarans,
@@ -261,12 +256,12 @@ export default function JurusanDetail() {
                   jurusan.blocks && jurusan.blocks.length > 0 ? (
                     <PageRenderer blocks={jurusan.blocks} />
                   ) : (
-                  <div className="prose max-w-none">
+                  <div>
                     {/* Description */}
                     <div className="mb-8">
                       <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">Deskripsi</h3>
                       <div
-                        className="text-gray-700 leading-relaxed text-sm md:text-base prose max-w-none"
+                        className="article-content text-gray-700 leading-relaxed text-sm md:text-base"
                         dangerouslySetInnerHTML={{ __html: jurusan.description }}
                       />
                     </div>
@@ -382,7 +377,7 @@ export default function JurusanDetail() {
                   <div>
                     <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Fasilitas</h3>
                     {relatedData.fasilitass.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         {relatedData.fasilitass.map((fasilitas) => (
                           <div key={fasilitas._id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                             {fasilitas.image && (
@@ -432,25 +427,75 @@ export default function JurusanDetail() {
                   <div>
                     <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Prestasi</h3>
                     {relatedData.prestasis.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {relatedData.prestasis.map(prestasi => (
-                          <div key={prestasi._id} className="bg-gray-800 text-white rounded-xl p-4 md:p-6">
-                            <div className="text-xs md:text-sm font-normal mb-2">
-                              {prestasi.students || 'SISWA'}, {prestasi.level?.toUpperCase() || '2024'}
-                            </div>
-                            <div className="w-full h-px bg-white/30 mb-3"></div>
-                            <h4 className="text-sm md:text-lg font-bold mb-3">{prestasi.title?.toUpperCase()}</h4>
-                            {prestasi.image && (
-                              <div className="w-full h-32 md:h-40 mb-3">
-                                <img src={prestasi.image} alt={prestasi.title} className="w-full h-full object-cover rounded" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {relatedData.prestasis.map(article => {
+                          const meta = article.metadata || {};
+                          const rankStyle = (() => {
+                            const r = meta.rank || '';
+                            if ((r === 'Juara I' || r === 'Medali Emas'))
+                              return { background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff' };
+                            if ((r === 'Juara II' || r === 'Medali Perak'))
+                              return { background: 'linear-gradient(135deg, #94a3b8, #64748b)', color: '#fff' };
+                            if ((r === 'Juara III' || r === 'Medali Perunggu'))
+                              return { background: 'linear-gradient(135deg, #cd7f32, #92400e)', color: '#fff' };
+                            if (r) return { background: 'rgba(17,24,39,0.85)', color: '#fff' };
+                            return null;
+                          })();
+                          const levelClass = (() => {
+                            const l = meta.level || '';
+                            if (l === 'Internasional') return 'bg-purple-500 text-white';
+                            if (l === 'Nasional') return 'bg-orange-500 text-white';
+                            if (l === 'Provinsi') return 'bg-green-500 text-white';
+                            if (l.includes('Kabupaten')) return 'bg-blue-500 text-white';
+                            return null;
+                          })();
+                          return (
+                            <Link key={article._id} to={`/artikel/${article.slug}`} className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 block">
+                              <div className="relative h-64 overflow-hidden">
+                                {article.featuredImage?.url ? (
+                                  <img
+                                    src={article.featuredImage.url}
+                                    alt={article.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                                {rankStyle && (
+                                  <div className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wide shadow-lg" style={rankStyle}>
+                                    {meta.rank}
+                                  </div>
+                                )}
+                                <div className="absolute bottom-0 left-0 right-0 p-4">
+                                  {levelClass && (
+                                    <span className={`inline-block px-2.5 py-0.5 rounded-md text-xs font-bold mb-2 ${levelClass}`}>
+                                      {meta.level}
+                                    </span>
+                                  )}
+                                  <h4 className="text-white font-bold text-base leading-snug line-clamp-2 group-hover:text-amber-300 transition-colors">
+                                    {article.title}
+                                  </h4>
+                                  {meta.studentName ? (
+                                    <p className="text-white/70 text-xs mt-1.5 flex items-center gap-1">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3 flex-shrink-0">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                      </svg>
+                                      {meta.studentName}
+                                    </p>
+                                  ) : (
+                                    <p className="text-white/50 text-xs mt-1.5">
+                                      {new Date(article.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                            <p className="text-xs md:text-sm line-clamp-2">{prestasi.description?.toUpperCase()}</p>
-                          </div>
-                        ))}
+                            </Link>
+                          );
+                        })}
                       </div>
                     ) : (
-                      <p className="text-gray-600 text-sm md:text-base">Belum ada data prestasi untuk jurusan ini.</p>
+                      <p className="text-gray-600 text-sm md:text-base">Belum ada artikel prestasi untuk jurusan ini.</p>
                     )}
                   </div>
                 )}
@@ -484,88 +529,98 @@ export default function JurusanDetail() {
             </div>
 
             {/* Right Sidebar */}
-            <div className="space-y-8">
+            <div className="space-y-6">
+
               {/* Postingan */}
-              <div>
+              <div className="rounded-xl px-5 py-4 border border-gray-200" style={{ backgroundColor: '#fffefb' }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-800" style={{ fontFamily: 'Russo One, sans-serif' }}>
-                    POSTINGAN {jurusan.code?.toUpperCase()}
+                  <h3 className="text-base font-bold text-gray-800 tracking-wide uppercase" style={{ fontFamily: 'Russo One, sans-serif' }}>
+                    Postingan {jurusan.code?.toUpperCase()}
                   </h3>
                   {relatedData.posts.length > 0 && (
-                    <Link to="/artikel" className="text-[#0d76be] text-sm hover:text-[#0a5a91] hover:underline transition-colors">
-                      LIHAT LAINNYA
+                    <Link to="/artikel" className="text-[#0d76be] text-sm font-semibold hover:text-[#0a5a91] transition-colors">
+                      Lihat Lainnya
                     </Link>
                   )}
                 </div>
-                <div className="space-y-4">
+                <div>
                   {relatedData.posts.length > 0 ? (
-                    relatedData.posts.map(post => (
-                      <div key={post._id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                        {post.featuredImage?.url && (
-                          <img
-                            src={post.featuredImage.url}
-                            alt={post.title}
-                            className="w-full h-32 object-cover"
-                          />
-                        )}
-                        <div className="p-4">
-                          <p className="text-xs text-gray-500 mb-1">
-                            {new Date(post.publishedAt).toLocaleDateString('id-ID', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </p>
-                          <h4 className="text-sm font-bold text-gray-800 line-clamp-2">
-                            {post.title}
-                          </h4>
-                          {post.excerpt && (
-                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                              {post.excerpt}
-                            </p>
+                    relatedData.posts.map((post, idx) => (
+                      <div key={post._id}>
+                        <Link to={`/artikel/${post.slug}`} className="flex gap-3 py-3 hover:opacity-70 transition-opacity">
+                          {post.featuredImage?.url && (
+                            <img
+                              src={post.featuredImage.url}
+                              alt={post.title}
+                              className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                            />
                           )}
-                        </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-400 mb-1">
+                              {new Date(post.publishedAt).toLocaleDateString('id-ID', {
+                                day: 'numeric', month: 'long', year: 'numeric'
+                              })}
+                            </p>
+                            <h4 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
+                              {post.title}
+                            </h4>
+                            {post.excerpt && (
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                {post.excerpt}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
+                        {idx < relatedData.posts.length - 1 && (
+                          <div className="border-t border-gray-100" />
+                        )}
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-600 text-sm">Belum ada postingan untuk jurusan ini.</p>
+                    <p className="text-gray-400 text-sm py-2">Belum ada postingan untuk jurusan ini.</p>
                   )}
                 </div>
               </div>
 
               {/* Cerita Alumni */}
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'Russo One, sans-serif' }}>
-                  CERITA ALUMNI
+              <div className="rounded-xl px-5 py-4 border border-gray-200" style={{ backgroundColor: '#fffefb' }}>
+                <h3 className="text-base font-bold text-gray-800 tracking-wide uppercase mb-4" style={{ fontFamily: 'Russo One, sans-serif' }}>
+                  Cerita Alumni
                 </h3>
-                <div className="space-y-4">
+                <div>
                   {relatedData.alumnis.length > 0 ? (
-                    relatedData.alumnis.map(alumni => (
-                      <div key={alumni._id} className="bg-transparent rounded-xl p-4 border border-gray-800" style={{ borderWidth: '0.7px' }}>
-                        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-800" style={{ borderBottomWidth: '0.7px' }}>
-                          <img
-                            src={alumni.photo || 'https://i.pravatar.cc/150'}
-                            alt={alumni.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                          <div>
-                            <h4 className="font-bold text-gray-800 text-sm">{alumni.name}</h4>
-                            <p className="text-xs text-gray-600 uppercase">
-                              {alumni.currentOccupation || 'ALUMNI'}
-                            </p>
+                    relatedData.alumnis.map((alumni, idx) => (
+                      <div key={alumni._id}>
+                        <div className="py-3">
+                          <div className="flex items-center gap-3 mb-2">
+                            <img
+                              src={alumni.photo || 'https://i.pravatar.cc/150'}
+                              alt={alumni.name}
+                              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                            />
+                            <div>
+                              <h4 className="font-bold text-gray-800 text-sm">{alumni.name}</h4>
+                              <p className="text-xs text-[#0d76be] uppercase font-medium">
+                                {alumni.currentOccupation || 'ALUMNI'}
+                              </p>
+                            </div>
                           </div>
+                          <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">{alumni.testimonial}</p>
+                          <p className="text-xs text-gray-400 italic mt-1">
+                            — {alumni.jurusan || 'ALUMNI'}, {alumni.graduationYear || '2022'}
+                          </p>
                         </div>
-                        <p className="text-sm text-gray-700 line-clamp-3">{alumni.testimonial}</p>
-                        <div className="text-xs text-gray-500 italic mt-2">
-                          -{alumni.jurusan || 'ALUMNI'} {alumni.graduationYear || '2022'}
-                        </div>
+                        {idx < relatedData.alumnis.length - 1 && (
+                          <div className="border-t border-gray-100" />
+                        )}
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-600 text-sm">Belum ada testimoni alumni dari jurusan ini.</p>
+                    <p className="text-gray-400 text-xs py-2">Belum ada testimoni alumni dari jurusan ini.</p>
                   )}
                 </div>
               </div>
+
             </div>
           </div>
         </div>

@@ -607,44 +607,65 @@ const Artikel = () => {
       <section className="py-12">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           {currentArticles.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {currentArticles.map((article) => (
-                <Link
-                  key={article._id}
-                  to={`/artikel/${article.slug}`}
-                  className="group"
-                >
-                  {/* Image */}
-                  <div className="relative h-48 overflow-hidden rounded-lg mb-3">
-                    <img
-                      src={article.featuredImage?.url || '/placeholder.jpg'}
-                      alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+              {currentArticles.map((article) => {
+                const topikSlug = article.categoryTopik?.slug?.toLowerCase() || '';
+                const topikColor = {
+                  prestasi: 'bg-amber-500 text-white',
+                  kegiatan: 'bg-blue-500 text-white',
+                  pengumuman: 'bg-red-500 text-white',
+                  berita: 'bg-green-600 text-white',
+                  info: 'bg-purple-500 text-white',
+                }[topikSlug] || 'bg-gray-800 text-white';
 
-                  {/* Content */}
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <p className="text-xs text-gray-500">
-                        {new Date(article.publishedAt).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </p>
+                const plainText = (article.content || article.excerpt || '').replace(/<[^>]*>/g, '').trim();
+                const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+                const readTime = Math.max(1, Math.ceil(wordCount / 200));
+
+                const excerpt = article.excerpt
+                  ? article.excerpt.replace(/<[^>]*>/g, '').trim()
+                  : plainText.substring(0, 120);
+
+                return (
+                  <Link key={article._id} to={`/artikel/${article.slug}`} className="group block">
+                    {/* Image */}
+                    <div className="relative h-48 rounded-xl overflow-hidden mb-4">
+                      <img
+                        src={article.featuredImage?.url || '/placeholder.jpg'}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       {article.categoryTopik && (
-                        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                        <span className={`absolute bottom-3 left-3 px-2.5 py-1 text-xs font-semibold rounded-lg leading-tight ${topikColor}`}>
                           <T>{article.categoryTopik.name}</T>
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm md:text-base font-semibold text-gray-800 line-clamp-2 group-hover:text-blue-600 transition-colors">
+
+                    {/* Text */}
+                    <h3 className="font-bold text-gray-900 leading-snug line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors" style={{ fontSize: '15px' }}>
                       <T>{article.title}</T>
                     </h3>
-                  </div>
-                </Link>
-              ))}
+
+                    {excerpt && (
+                      <p className="text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">
+                        {excerpt}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">
+                        {new Date(article.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {' · '}{readTime} menit baca
+                      </span>
+                      <span className="text-xs text-blue-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                        Baca <span>→</span>
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-16">

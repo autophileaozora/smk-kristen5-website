@@ -304,102 +304,79 @@ const ArtikelDetail = () => {
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-6 rounded-xl p-4" style={{ backgroundColor: '#fffefb' }}>
+
               {/* Berita Terbaru */}
-              <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">{t('article.latestNews')}</h2>
+              <div className="px-1 py-2">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-bold text-gray-800 tracking-wide uppercase" style={{ fontFamily: 'Russo One, sans-serif' }}>{t('article.latestNews')}</h2>
+                  {recentArticles.length > 0 && (
+                    <Link to="/artikel" className="text-[#0d76be] text-sm font-semibold hover:text-[#0a5a91] transition-colors">
+                      Lihat Lainnya
+                    </Link>
+                  )}
                 </div>
-                <div className="space-y-4">
+                <div>
                   {recentArticles.length > 0 ? (
-                    recentArticles.map((recentArticle) => (
-                      <Link
-                        key={recentArticle._id}
-                        to={`/artikel/${recentArticle.slug}`}
-                        className="flex gap-3 group"
-                      >
-                        <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+                    recentArticles.map((recentArticle, idx) => (
+                      <div key={recentArticle._id}>
+                        <Link to={`/artikel/${recentArticle.slug}`} className="flex gap-3 py-3 hover:opacity-70 transition-opacity">
                           <img
                             src={recentArticle.featuredImage?.url || '/placeholder.jpg'}
                             alt={recentArticle.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            className="w-20 h-20 flex-shrink-0 rounded-lg object-cover"
                           />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-1">
-                            <T>{recentArticle.title}</T>
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            {new Date(recentArticle.publishedAt).toLocaleDateString('id-ID', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </p>
-                        </div>
-                      </Link>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-400 mb-1">
+                              {new Date(recentArticle.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                            <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
+                              <T>{recentArticle.title}</T>
+                            </h3>
+                          </div>
+                        </Link>
+                        {idx < recentArticles.length - 1 && <div className="border-t border-gray-100" />}
+                      </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">{t('article.noArticles')}</p>
+                    <p className="text-sm text-gray-400 py-2">{t('article.noArticles')}</p>
                   )}
                 </div>
-                {recentArticles.length > 0 && (
-                  <Link
-                    to="/artikel"
-                    className="inline-flex items-center justify-center w-full mt-6 px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-full hover:bg-blue-50 transition-colors"
-                  >
-                    {t('article.latestNews')} →
-                  </Link>
-                )}
               </div>
 
               {/* Artikel Terkait */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">{t('article.relatedArticles')}</h2>
+              <div className="px-1 py-2">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-bold text-gray-800 tracking-wide uppercase" style={{ fontFamily: 'Russo One, sans-serif' }}>{t('article.relatedArticles')}</h2>
                 </div>
-                <div className="space-y-4">
+                <div>
                   {relatedArticles.length > 0 ? (
-                    relatedArticles.map((relatedArticle) => (
-                      <Link
-                        key={relatedArticle._id}
-                        to={`/artikel/${relatedArticle.slug}`}
-                        className="flex gap-3 group"
-                      >
-                        <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+                    relatedArticles.map((relatedArticle, idx) => (
+                      <div key={relatedArticle._id}>
+                        <Link to={`/artikel/${relatedArticle.slug}`} className="flex gap-3 py-3 hover:opacity-70 transition-opacity">
                           <img
                             src={relatedArticle.featuredImage?.url || '/placeholder.jpg'}
                             alt={relatedArticle.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            className="w-20 h-20 flex-shrink-0 rounded-lg object-cover"
                           />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors mb-1">
-                            <T>{relatedArticle.title}</T>
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            {new Date(relatedArticle.publishedAt).toLocaleDateString('id-ID', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </p>
-                        </div>
-                      </Link>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-400 mb-1">
+                              {new Date(relatedArticle.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                            <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
+                              <T>{relatedArticle.title}</T>
+                            </h3>
+                          </div>
+                        </Link>
+                        {idx < relatedArticles.length - 1 && <div className="border-t border-gray-100" />}
+                      </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">{t('article.noArticles')}</p>
+                    <p className="text-sm text-gray-400 py-2">{t('article.noArticles')}</p>
                   )}
                 </div>
-                {relatedArticles.length > 0 && (
-                  <Link
-                    to="/artikel"
-                    className="inline-flex items-center justify-center w-full mt-6 px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-full hover:bg-blue-50 transition-colors"
-                  >
-                    {t('article.relatedArticles')} →
-                  </Link>
-                )}
               </div>
+
             </div>
           </div>
         </div>

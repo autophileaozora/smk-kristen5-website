@@ -53,6 +53,7 @@ const Articles = ({ embedded = false }) => {
     categoryTopik: '',
     featuredImage: '',
     status: 'draft',
+    metadata: { rank: '', level: '', studentName: '' },
   });
 
   const [toast, setToast] = useState(null);
@@ -196,6 +197,7 @@ const Articles = ({ embedded = false }) => {
         categoryTopik: formData.categoryTopik || null,
         featuredImage: formData.featuredImage || null,
         status: formData.status,
+        metadata: formData.metadata,
       };
 
       await api.post('/api/articles', createData);
@@ -220,6 +222,7 @@ const Articles = ({ embedded = false }) => {
         categoryJurusan: formData.categoryJurusan || null,
         categoryTopik: formData.categoryTopik || null,
         featuredImage: formData.featuredImage || null,
+        metadata: formData.metadata,
       };
 
       await api.put(`/api/articles/${selectedArticle._id}`, updateData);
@@ -332,6 +335,11 @@ const Articles = ({ embedded = false }) => {
       categoryTopik: article.categoryTopik?._id || '',
       featuredImage: article.featuredImage?.url || '',
       status: article.status,
+      metadata: {
+        rank: article.metadata?.rank || '',
+        level: article.metadata?.level || '',
+        studentName: article.metadata?.studentName || '',
+      },
     });
     setShowEditModal(true);
   };
@@ -355,6 +363,7 @@ const Articles = ({ embedded = false }) => {
       categoryTopik: '',
       featuredImage: '',
       status: 'draft',
+      metadata: { rank: '', level: '', studentName: '' },
     });
     setSelectedArticle(null);
   };
@@ -1068,6 +1077,65 @@ const Articles = ({ embedded = false }) => {
               ))}
             </select>
           </div>
+
+          {/* Prestasi Metadata — conditional on topik slug */}
+          {(() => {
+            const selectedTopik = categories.find(c => c._id === formData.categoryTopik);
+            if (selectedTopik?.slug?.toLowerCase() !== 'prestasi') return null;
+            return (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">🏆</span>
+                  <span className="text-sm font-semibold text-amber-800">Informasi Prestasi</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-amber-700 mb-1">Peringkat</label>
+                    <select
+                      value={formData.metadata.rank}
+                      onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, rank: e.target.value } })}
+                      className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 bg-white"
+                    >
+                      <option value="">Pilih peringkat...</option>
+                      <option value="Juara I">Juara I</option>
+                      <option value="Juara II">Juara II</option>
+                      <option value="Juara III">Juara III</option>
+                      <option value="Harapan I">Harapan I</option>
+                      <option value="Harapan II">Harapan II</option>
+                      <option value="Medali Emas">Medali Emas</option>
+                      <option value="Medali Perak">Medali Perak</option>
+                      <option value="Medali Perunggu">Medali Perunggu</option>
+                      <option value="Finalis">Finalis</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-amber-700 mb-1">Tingkat</label>
+                    <select
+                      value={formData.metadata.level}
+                      onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, level: e.target.value } })}
+                      className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 bg-white"
+                    >
+                      <option value="">Pilih tingkat...</option>
+                      <option value="Kabupaten/Kota">Kabupaten/Kota</option>
+                      <option value="Provinsi">Provinsi</option>
+                      <option value="Nasional">Nasional</option>
+                      <option value="Internasional">Internasional</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-amber-700 mb-1">Nama Siswa / Tim</label>
+                  <input
+                    type="text"
+                    value={formData.metadata.studentName}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, studentName: e.target.value } })}
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 bg-white"
+                    placeholder="Contoh: Imanuel Damanik / Tim A"
+                  />
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Excerpt */}
           <div>
