@@ -536,19 +536,22 @@ const HomepageFixed = () => {
         </div>
       </div>
 
-      {/* Accelerate Section */}
-      <section className="text-center py-10 lg:py-16 px-4 lg:px-5 max-w-3xl mx-auto">
-        <div className="flex justify-center mb-2">
-          <Mascot3D size={100} />
+      {/* Accelerate + Programs Section — seamless bg-gray-50 block */}
+      <section className="bg-gray-50 pt-6 pb-0 px-4">
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto pb-6">
+          <div className="flex justify-center mb-1">
+            <Mascot3D size={64} />
+          </div>
+          <h2 className="russo text-xl lg:text-2xl text-gray-700 mt-2">{hp.accelerateTitle || 'ACCELERATE YOUR ENTIRE POTENTIAL'}</h2>
+          <p className="text-sm lg:text-base leading-relaxed text-gray-600 font-light mt-2">
+            <T>{hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}</T>
+          </p>
         </div>
-        <h2 className="russo text-xl lg:text-2xl text-gray-700 mt-3">{hp.accelerateTitle || 'ACCELERATE YOUR ENTIRE POTENTIAL'}</h2>
-        <p className="text-sm lg:text-base leading-relaxed text-black font-light mt-3 lg:mt-4">
-          <T>{hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}</T>
-        </p>
       </section>
 
       {/* Programs Section */}
-      <section className="flex flex-col lg:flex-row items-stretch bg-gray-50 border-t border-b border-gray-300 relative lg:h-[600px] lg:max-h-[600px] overflow-hidden">
+      <section className="flex flex-col lg:flex-row items-stretch bg-gray-50 border-t border-gray-300 relative lg:h-[600px] lg:max-h-[600px] overflow-hidden">
         {/* Left - Image with Gradient Background (Desktop Only) */}
         <div className="hidden lg:block relative w-1/2 h-full bg-gradient-to-b from-[#0a0a0a] to-[#1a1a2e] overflow-hidden flex-shrink-0">
           {/* Animated Gradient Glow */}
@@ -747,7 +750,7 @@ const HomepageFixed = () => {
                   </div>
 
                   {/* Text content */}
-                  <div className="max-w-[600px] pt-3 pb-6 lg:pb-8 px-4 lg:pl-10 lg:pr-0 text-left">
+                  <div className="pt-3 pb-6 lg:pb-8 px-2 lg:px-10 text-left">
                     <p className="text-sm lg:text-[15px] leading-relaxed font-medium">
                       <span className="text-white"><T>{currentItem.title}</T>. </span>
                       <span className="text-[#bbb]"><T>{currentItem.description}</T></span>
