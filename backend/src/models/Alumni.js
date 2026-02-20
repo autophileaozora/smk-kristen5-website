@@ -87,7 +87,6 @@ alumniSchema.pre('save', function (next) {
 alumniSchema.index({ name: 1 });
 alumniSchema.index({ graduationYear: -1 });
 alumniSchema.index({ jurusan: 1 });
-alumniSchema.index({ slug: 1 });
 alumniSchema.index({ isFeatured: 1, isPublished: 1 });
 
 const Alumni = mongoose.model('Alumni', alumniSchema);

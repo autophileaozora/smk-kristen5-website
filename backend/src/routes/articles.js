@@ -3,6 +3,7 @@ import Article from '../models/Article.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
 import AuditLog from '../models/AuditLog.js';
+import { sanitizePagination } from '../middleware/validate.js';
 
 const router = express.Router();
 
@@ -14,27 +15,23 @@ router.get('/public', async (req, res) => {
     const { jurusanCode, topikSlug, limit = 10 } = req.query;
 
     const query = { status: 'published' };
-    const Category = (await import('../models/Category.js')).default;
 
-    // Filter by jurusan code if provided
+    // Filter by jurusan code if provided (Article.categoryJurusan refs Jurusan model)
     if (jurusanCode) {
-      const jurusanCategory = await Category.findOne({
-        name: jurusanCode.toUpperCase(),
-        type: 'jurusan'
-      });
-
-      if (jurusanCategory) {
-        query.categoryJurusan = jurusanCategory._id;
+      const Jurusan = (await import('../models/Jurusan.js')).default;
+      const jurusan = await Jurusan.findOne({ code: jurusanCode.toUpperCase() });
+      if (jurusan) {
+        query.categoryJurusan = jurusan._id;
       }
     }
 
     // Filter by topik slug if provided
     if (topikSlug) {
+      const Category = (await import('../models/Category.js')).default;
       const topikCategory = await Category.findOne({
         slug: topikSlug.toLowerCase(),
         type: 'topik'
       });
-
       if (topikCategory) {
         query.categoryTopik = topikCategory._id;
       }
@@ -94,7 +91,7 @@ router.get('/slug/:slug', async (req, res) => {
 // @route   GET /api/articles
 // @desc    Get all articles (admin) or own articles (siswa)
 // @access  Protected
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, sanitizePagination, async (req, res) => {
   try {
     const {
       page = 1,

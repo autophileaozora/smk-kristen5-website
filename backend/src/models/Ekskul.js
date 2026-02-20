@@ -75,7 +75,6 @@ ekskulSchema.pre('save', function (next) {
 // Index for better query performance
 ekskulSchema.index({ name: 1 });
 ekskulSchema.index({ category: 1 });
-ekskulSchema.index({ slug: 1 });
 
 const Ekskul = mongoose.model('Ekskul', ekskulSchema);
 

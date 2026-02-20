@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
-import { useLanguage } from '../../contexts/LanguageContext';
-import T from '../../components/T';
 import useSwipe from '../../hooks/useSwipe';
 import SEO from '../../components/SEO';
 import Mascot3D from '../../components/Mascot3D';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import T from '../../components/T';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const HomepageFixed = () => {
   const navigate = useNavigate();
@@ -395,10 +395,10 @@ const HomepageFixed = () => {
               {/* Hero Content - Centered on mobile, left on desktop */}
               <div className="absolute top-1/2 md:top-[55%] left-1/2 md:left-8 lg:left-16 -translate-x-1/2 md:translate-x-0 -translate-y-1/2 text-center md:text-left z-10 w-10/12 md:w-11/12 max-w-xl lg:max-w-2xl px-2 sm:px-4">
                 <h1 className="russo text-2xl md:text-[20px] lg:text-[24px] leading-tight text-white uppercase mb-4 md:mb-3 drop-shadow-lg transition-all duration-500">
-                  <T>{currentSlide.title}</T>
+                  {currentSlide.title}
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/95 transition-all duration-500">
-                  <T>{currentSlide.subtitle}</T>
+                  {currentSlide.subtitle}
                 </p>
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 mt-7 md:mt-9 flex-wrap">
                   <button className="w-full md:w-auto bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 md:px-8 py-3 md:py-[14px] rounded-lg text-[11px] md:text-xs font-semibold tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
@@ -473,10 +473,10 @@ const HomepageFixed = () => {
             <div className="w-full lg:w-1/2 lg:pr-10">
               <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">{hp.whyTitle || t('home.whyTitle')}</h3>
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-tight text-[#0d76be] mb-3 lg:mb-4">
-                <T>{hp.whyHeading || 'SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL'}</T>
+                {hp.whyHeading || 'SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL'}
               </h2>
               <p className="text-sm lg:text-base leading-relaxed text-gray-700">
-                <T>{hp.whyDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}</T>
+                {hp.whyDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
               </p>
 
               <Link to={hp.whyButtonUrl || '/tentang'} className="inline-flex items-center justify-center px-5 lg:px-7 py-2.5 lg:py-3 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-lg mt-4 lg:mt-6 text-[11px] lg:text-xs font-semibold tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
@@ -485,7 +485,7 @@ const HomepageFixed = () => {
 
               {/* Alumni Companies */}
               <div className="mt-6 lg:mt-10">
-                <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide"><T>{hp.statsHeading || 'ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY'}</T></h4>
+                <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide">{hp.statsHeading || 'ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY'}</h4>
                 <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[400px]">
                   {(data.partners || []).slice(0, 6).map((partner, idx) => (
                     <div key={idx} className="bg-white rounded-md p-1.5 lg:p-2.5 h-12 lg:h-16 flex items-center justify-center">
@@ -501,7 +501,7 @@ const HomepageFixed = () => {
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-0 lg:mt-24 w-full">
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-[#008fd7] sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.ekskuls || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.extracurricular')}</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Ekstrakurikuler</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.ekskuls || []).slice(0, 3).map(e => e.name).join(', ') || 'Loading...'}{(data.ekskuls || []).length > 3 ? ', dan lainnya' : ''}
                 </p>
@@ -509,7 +509,7 @@ const HomepageFixed = () => {
 
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-yellow-300 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.fasilitas || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.facilities')}</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Fasilitas</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.fasilitas || []).slice(0, 3).map(f => f.name).join(', ') || 'Loading...'}{(data.fasilitas || []).length > 3 ? ', dan lainnya' : ''}
                 </p>
@@ -517,15 +517,15 @@ const HomepageFixed = () => {
 
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-red-500 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{new Date().getFullYear() - (hp.foundingYear || 1999)}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.yearsServing')}</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Tahun Melayani</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
-                  <T>{`Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`}</T>
+                  {`Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`}
                 </p>
               </div>
 
               <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-orange-600 sm:aspect-square flex flex-col">
                 <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.jurusans || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{t('home.stats.competencyFields')}</h4>
+                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Bidang Kompetensi</h4>
                 <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
                   {(data.jurusans || []).slice(0, 3).map(j => j.name).join(', ') || 'Loading...'}{(data.jurusans || []).length > 3 ? '' : ''}
                 </p>
@@ -545,7 +545,7 @@ const HomepageFixed = () => {
           </div>
           <h2 className="russo text-xl lg:text-2xl text-gray-700 mt-2">{hp.accelerateTitle || 'ACCELERATE YOUR ENTIRE POTENTIAL'}</h2>
           <p className="text-sm lg:text-base leading-relaxed text-gray-600 font-light mt-2">
-            <T>{hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}</T>
+            {hp.accelerateDescription || 'MULAI DARI HARI PERTAMA, PROSES BELAJAR, HINGGA LULUS, SETIAP GURU SIAP MEMBANTU SISWA SMK KRISTEN 5 KLATEN MENCAPAI IMPIAN DAN SKILL YANG DIBUTUHKAN OLEH PERUSAHAAN AGAR SIAP BEKERJA'}
           </p>
         </div>
       </section>
@@ -586,7 +586,7 @@ const HomepageFixed = () => {
               >
                 <div>
                   <h3 className="russo text-xl lg:text-2xl text-gray-700">{jurusan.code || jurusan.name.slice(0, 4).toUpperCase()}</h3>
-                  <h4 className="text-sm lg:text-base text-gray-700 font-medium mt-1.5"><T>{jurusan.name}</T></h4>
+                  <h4 className="text-sm lg:text-base text-gray-700 font-medium mt-1.5">{jurusan.name}</h4>
                 </div>
                 <span className="text-4xl leading-none text-gray-700 cursor-pointer transition-transform">
                   {activeProgram === idx ? '−' : '+'}
@@ -607,7 +607,7 @@ const HomepageFixed = () => {
                 {/* Short Description (plain text) or fallback to full description */}
                 {jurusan.shortDescription ? (
                   <p className="text-sm leading-relaxed text-gray-700 mb-4">
-                    <T>{jurusan.shortDescription}</T>
+                    {jurusan.shortDescription}
                   </p>
                 ) : (
                   <div
@@ -619,11 +619,11 @@ const HomepageFixed = () => {
                 {/* Career Prospects */}
                 {jurusan.careerProspects && jurusan.careerProspects.length > 0 && (
                   <div>
-                    <h5 className="text-[11px] font-semibold text-gray-700 tracking-wide mb-2.5">{t('home.careerProspects').toUpperCase()}</h5>
+                    <h5 className="text-[11px] font-semibold text-gray-700 tracking-wide mb-2.5">PROSPEK KARIR:</h5>
                     <div className="flex flex-wrap gap-2">
                       {jurusan.careerProspects.map((career, cIdx) => (
                         <span key={cIdx} className="text-[11px] text-gray-600 bg-[#f6f3e4] px-4 py-1.5 rounded font-medium">
-                          <T>{career}</T>
+                          {career}
                         </span>
                       ))}
                     </div>
@@ -639,9 +639,9 @@ const HomepageFixed = () => {
       <section className="bg-[#1e1e1e] py-10 lg:py-[60px] relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
         <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-base lg:text-lg font-bold text-white"><T>{data.activitySettings?.sectionTitle || 'PEMBELAJARAN & KEGIATAN NYATA'}</T></h2>
+          <h2 className="text-base lg:text-lg font-bold text-white">{data.activitySettings?.sectionTitle || 'PEMBELAJARAN & KEGIATAN NYATA'}</h2>
           <p className="text-sm lg:text-base leading-relaxed text-[#6a6b6d] font-medium max-w-[600px] mx-auto mt-2 px-4">
-            <T>{data.activitySettings?.sectionSubtitle || 'SISWA DILATIH DAN DIDUKUNG DENGAN PROGRAM DAN KOMPETISI YANG MELATIH RASA DAN KEBERANIAN'}</T>
+            {data.activitySettings?.sectionSubtitle || 'SISWA DILATIH DAN DIDUKUNG DENGAN PROGRAM DAN KOMPETISI YANG MELATIH RASA DAN KEBERANIAN'}
           </p>
         </div>
 
@@ -685,7 +685,7 @@ const HomepageFixed = () => {
                       activeActivityTab === idx ? 'bg-[rgba(207,233,246,0.17)]' : ''
                     }`}
                   >
-                    <T>{tab.name}</T>
+                    {tab.name}
                   </div>
                 ))}
               </div>
@@ -752,11 +752,11 @@ const HomepageFixed = () => {
                   {/* Text content */}
                   <div className="pt-3 pb-6 lg:pb-8 px-2 lg:px-10 text-left">
                     <p className="text-sm lg:text-[15px] leading-relaxed font-medium">
-                      <span className="text-white"><T>{currentItem.title}</T>. </span>
-                      <span className="text-[#bbb]"><T>{currentItem.description}</T></span>
+                      <span className="text-white">{currentItem.title}. </span>
+                      <span className="text-[#bbb]">{currentItem.description}</span>
                     </p>
                     <Link to={data.activitySettings?.globalLink || '/artikel'} className="text-[#008fd7] text-xs lg:text-sm font-medium mt-3 lg:mt-4 inline-block hover:text-[#00D9FF] transition-colors">
-                      {data.activitySettings?.globalButtonText ? <T>{data.activitySettings.globalButtonText}</T> : t('home.exploreActivities')} &gt;
+                      {data.activitySettings?.globalButtonText || 'Explore Kegiatan Siswa'} &gt;
                     </Link>
                   </div>
                 </div>
@@ -782,12 +782,12 @@ const HomepageFixed = () => {
                 const col2 = [...[...padded].reverse(), ...[...padded].reverse()]; // reversed + duplicate
                 const AlumniCard = ({ alumni, idx }) => (
                   <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg flex-shrink-0">
-                    <p className="text-sm leading-relaxed text-[#d9d9d9]"><T>{alumni.testimonial}</T></p>
+                    <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
                     <div className="flex items-center gap-3.5 mt-5">
                       <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" />
                       <div>
                         <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
-                        <span className="text-[11px] text-[#b8b8b8] block mt-0.5"><T>{alumni.currentOccupation}</T> - <T>{alumni.company}</T></span>
+                        <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
                       </div>
                     </div>
                     <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
@@ -812,7 +812,7 @@ const HomepageFixed = () => {
                 <div className="flex flex-col gap-4">
                   {(data.alumnis || []).slice(currentTestimonialSlide * 3, currentTestimonialSlide * 3 + 3).map((alumni, idx) => (
                     <div key={idx} className="p-4 bg-transparent border border-white/10 rounded-lg">
-                      <p className="text-sm leading-relaxed text-[#d9d9d9]"><T>{alumni.testimonial}</T></p>
+                      <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
                       <div className="flex items-center gap-3 mt-4">
                         <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                         <div>

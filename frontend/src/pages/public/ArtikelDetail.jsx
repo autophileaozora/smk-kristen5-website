@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
-import { useLanguage } from '../../contexts/LanguageContext';
-import T from '../../components/T';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -11,7 +9,6 @@ const ArtikelDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { logo: schoolLogo } = useSchoolLogo();
-  const { t } = useLanguage();
 
   const [article, setArticle] = useState(null);
   const [recentArticles, setRecentArticles] = useState([]);
@@ -150,9 +147,9 @@ const ArtikelDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('article.noArticles')}</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Tidak ada artikel yang ditemukan.</h2>
           <Link to="/artikel" className="text-blue-600 hover:underline">
-            {t('common.back')}
+            Kembali
           </Link>
         </div>
       </div>
@@ -169,9 +166,9 @@ const ArtikelDetail = () => {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-6 flex-wrap">
-            <Link to="/" className="hover:text-blue-600 transition-colors">{t('nav.home')}</Link>
+            <Link to="/" className="hover:text-blue-600 transition-colors">Beranda</Link>
             <span>/</span>
-            <Link to="/artikel" className="hover:text-blue-600 transition-colors">{t('nav.allArticles')}</Link>
+            <Link to="/artikel" className="hover:text-blue-600 transition-colors">Semua Artikel</Link>
             {article.categoryTopik && (
               <>
                 <span>/</span>
@@ -214,7 +211,7 @@ const ArtikelDetail = () => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>{readingTime} {t('article.readingTime')}</span>
+                  <span>{readingTime} menit baca</span>
                 </div>
                 {article.categoryTopik && (
                   <div className="flex items-center gap-2">
@@ -259,7 +256,7 @@ const ArtikelDetail = () => {
 
               {/* Social Sharing */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">{t('article.shareArticle').toUpperCase()}</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">BAGIKAN ARTIKEL</h3>
                 <div className="flex items-center gap-3">
                   <a
                     href={`https://www.instagram.com/`}
@@ -304,12 +301,12 @@ const ArtikelDetail = () => {
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1 space-y-6 rounded-xl p-4" style={{ backgroundColor: '#fffefb' }}>
+            <div className="lg:col-span-1 space-y-6">
 
               {/* Berita Terbaru */}
-              <div className="px-1 py-2">
+              <div className="rounded-xl px-5 py-4 border border-gray-200" style={{ backgroundColor: '#fffefb' }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-bold text-gray-800 tracking-wide uppercase" style={{ fontFamily: 'Russo One, sans-serif' }}>{t('article.latestNews')}</h2>
+                  <h2 className="text-base font-bold text-gray-800 tracking-wide uppercase" style={{ fontFamily: 'Russo One, sans-serif' }}>BERITA TERBARU</h2>
                   {recentArticles.length > 0 && (
                     <Link to="/artikel" className="text-[#0d76be] text-sm font-semibold hover:text-[#0a5a91] transition-colors">
                       Lihat Lainnya
@@ -331,7 +328,7 @@ const ArtikelDetail = () => {
                               {new Date(recentArticle.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </p>
                             <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
-                              <T>{recentArticle.title}</T>
+                              {recentArticle.title}
                             </h3>
                           </div>
                         </Link>
@@ -339,15 +336,15 @@ const ArtikelDetail = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-400 py-2">{t('article.noArticles')}</p>
+                    <p className="text-sm text-gray-400 py-2">Tidak ada artikel yang ditemukan.</p>
                   )}
                 </div>
               </div>
 
               {/* Artikel Terkait */}
-              <div className="px-1 py-2">
+              <div className="rounded-xl px-5 py-4 border border-gray-200" style={{ backgroundColor: '#fffefb' }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-bold text-gray-800 tracking-wide uppercase" style={{ fontFamily: 'Russo One, sans-serif' }}>{t('article.relatedArticles')}</h2>
+                  <h2 className="text-base font-bold text-gray-800 tracking-wide uppercase" style={{ fontFamily: 'Russo One, sans-serif' }}>ARTIKEL TERKAIT</h2>
                 </div>
                 <div>
                   {relatedArticles.length > 0 ? (
@@ -364,7 +361,7 @@ const ArtikelDetail = () => {
                               {new Date(relatedArticle.publishedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </p>
                             <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
-                              <T>{relatedArticle.title}</T>
+                              {relatedArticle.title}
                             </h3>
                           </div>
                         </Link>
@@ -372,7 +369,7 @@ const ArtikelDetail = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-400 py-2">{t('article.noArticles')}</p>
+                    <p className="text-sm text-gray-400 py-2">Tidak ada artikel yang ditemukan.</p>
                   )}
                 </div>
               </div>

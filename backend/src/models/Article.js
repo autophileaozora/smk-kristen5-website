@@ -126,7 +126,6 @@ articleSchema.pre('save', function (next) {
 articleSchema.index({ status: 1, publishedAt: -1 });
 articleSchema.index({ author: 1, status: 1 });
 articleSchema.index({ categoryJurusan: 1, categoryTopik: 1 });
-articleSchema.index({ slug: 1 });
 
 const Article = mongoose.model('Article', articleSchema);
 

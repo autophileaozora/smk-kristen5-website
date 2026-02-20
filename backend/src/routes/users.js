@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import AuditLog from '../models/AuditLog.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
+import { validateCreateUser } from '../middleware/validate.js';
 
 const router = express.Router();
 
@@ -85,7 +86,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
  * @desc    Create new user (Admin Siswa or Administrator)
  * @access  Private (Administrator only)
  */
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', validateCreateUser, asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
 
   // Validation

@@ -3,6 +3,7 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 import AuditLog from '../models/AuditLog.js';
 import { protect } from '../middleware/auth.js';
+import { validateLogin, validateChangePassword, validateUpdateProfile } from '../middleware/validate.js';
 
 const router = express.Router();
 
@@ -11,14 +12,8 @@ const router = express.Router();
  * @desc    Login user and get JWT token
  * @access  Public
  */
-router.post('/login', asyncHandler(async (req, res) => {
+router.post('/login', validateLogin, asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
-  // Validation
-  if (!email || !password) {
-    res.status(400);
-    throw new Error('Please provide email and password');
-  }
 
   // Find user by email (include password for comparison)
   const user = await User.findOne({ email }).select('+password');
@@ -128,7 +123,7 @@ router.get('/me', protect, asyncHandler(async (req, res) => {
  * @desc    Update user profile (name, email)
  * @access  Private
  */
-router.put('/profile', protect, asyncHandler(async (req, res) => {
+router.put('/profile', protect, validateUpdateProfile, asyncHandler(async (req, res) => {
   const { name, email } = req.body;
 
   const user = await User.findById(req.user._id);
@@ -184,19 +179,8 @@ router.put('/profile', protect, asyncHandler(async (req, res) => {
  * @desc    Change user password
  * @access  Private
  */
-router.put('/change-password', protect, asyncHandler(async (req, res) => {
+router.put('/change-password', protect, validateChangePassword, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-
-  // Validation
-  if (!currentPassword || !newPassword) {
-    res.status(400);
-    throw new Error('Please provide current password and new password');
-  }
-
-  if (newPassword.length < 6) {
-    res.status(400);
-    throw new Error('New password must be at least 6 characters');
-  }
 
   const user = await User.findById(req.user._id).select('+password');
 
