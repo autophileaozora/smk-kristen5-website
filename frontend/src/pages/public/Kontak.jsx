@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { useLanguage } from '../../contexts/LanguageContext';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import { useSchoolProfile } from '../../contexts/SchoolProfileContext';
 
 const Kontak = () => {
-  const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { contact, socialMedia: socialMediaList, loading: contactLoading } = useSchoolProfile();
   const [navbarVisible, setNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const scrollTimeout = useRef(null);
@@ -20,46 +18,18 @@ const Kontak = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
-  const [contactLoading, setContactLoading] = useState(true);
 
-  // Contact info state (fetched from API)
-  const [contactInfo, setContactInfo] = useState({
+  // Fallback defaults when contact data not yet loaded
+  const contactInfo = contact || {
     address: 'Jl. Opak, Metuk, Tegalyoso, Dusun 1, Tegalyoso, Kec. Klaten Sel., Kabupaten Klaten, Jawa Tengah 57424',
     phone: '(0272) 325260',
     whatsapp: '08881082xx',
     email: 'smkrisma@sch.id',
-    operatingHours: {
-      weekdays: '07:00 - 16:00',
-      saturday: '07:00 - 14:00',
-      sunday: 'Tutup'
-    },
-    socialMedia: {
-      instagram: 'https://www.instagram.com/',
-      facebook: 'https://www.facebook.com/',
-      youtube: 'https://www.youtube.com/',
-      twitter: 'https://www.twitter.com/'
-    },
-    mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3953.6789!2d110.6078!3d-7.7123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwNDInNDQuMyJTIDExMMKwMzYnMjguMSJF!5e0!3m2!1sen!2sid!4v1234567890',
+    operatingHours: { weekdays: '07:00 - 16:00', saturday: '07:00 - 14:00', sunday: 'Tutup' },
+    socialMedia: { instagram: '', facebook: '', youtube: '', twitter: '' },
+    mapUrl: '',
     heroImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80'
-  });
-
-  // Fetch contact info on mount
-  useEffect(() => {
-    const fetchContactInfo = async () => {
-      try {
-        const response = await api.get(`/api/contact`);
-        if (response.data.success) {
-          setContactInfo(response.data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching contact info:', error);
-      } finally {
-        setContactLoading(false);
-      }
-    };
-
-    fetchContactInfo();
-  }, []);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -178,9 +148,9 @@ const Kontak = () => {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-16 text-center text-white">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">{t('contact.title')}</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">Hubungi Kami</h1>
           <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow">
-            {t('contact.subtitle')}
+            Kami siap membantu Anda. Jangan ragu untuk menghubungi kami kapan saja.
           </p>
         </div>
       </section>
@@ -199,7 +169,7 @@ const Kontak = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{t('contact.address')}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Alamat</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     {contactInfo.address}
                   </p>
@@ -216,7 +186,7 @@ const Kontak = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{t('contact.phone')}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Telepon</h3>
                   <div className="text-gray-600 text-sm space-y-1">
                     <p className="font-semibold">{contactInfo.phone}</p>
                     <p>WA: {contactInfo.whatsapp}</p>
@@ -235,18 +205,18 @@ const Kontak = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{t('contact.operatingHours')}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Jam Operasional</h3>
                   <div className="text-gray-600 text-sm space-y-1">
                     <div className="flex justify-between">
-                      <span className="font-medium">{t('contact.weekdays')}</span>
+                      <span className="font-medium">Sen - Jum</span>
                       <span>{contactInfo.operatingHours.weekdays}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">{t('contact.saturday')}</span>
+                      <span className="font-medium">Sabtu</span>
                       <span>{contactInfo.operatingHours.saturday}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">{t('contact.sunday')}</span>
+                      <span className="font-medium">Minggu</span>
                       <span className="text-red-600">{contactInfo.operatingHours.sunday}</span>
                     </div>
                   </div>
@@ -263,7 +233,7 @@ const Kontak = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Google Maps */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('contact.ourLocation')}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Lokasi Kami</h2>
               <div className="bg-gray-100 rounded-lg shadow-lg overflow-hidden h-[500px]">
                 <iframe
                   src={contactInfo.mapUrl}
@@ -280,7 +250,7 @@ const Kontak = () => {
 
             {/* Contact Form */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('contact.formTitle')}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Form untuk Bertanya</h2>
 
               {/* Success Message */}
               {submitStatus === 'success' && (
@@ -289,8 +259,8 @@ const Kontak = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-green-800 font-semibold">{t('contact.thankYou')}</p>
-                    <p className="text-green-700 text-sm">{t('contact.messageSentDetails')}</p>
+                    <p className="text-green-800 font-semibold">Terima kasih!</p>
+                    <p className="text-green-700 text-sm">Pesan Anda telah berhasil dikirim. Kami akan segera menghubungi Anda.</p>
                   </div>
                 </div>
               )}
@@ -302,8 +272,8 @@ const Kontak = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-red-800 font-semibold">{t('contact.errorTitle')}</p>
-                    <p className="text-red-700 text-sm">{t('contact.errorDetails')}</p>
+                    <p className="text-red-800 font-semibold">Terjadi kesalahan</p>
+                    <p className="text-red-700 text-sm">Maaf, pesan Anda gagal dikirim. Silakan coba lagi.</p>
                   </div>
                 </div>
               )}
@@ -312,7 +282,7 @@ const Kontak = () => {
                 {/* Nama Lengkap */}
                 <div>
                   <label htmlFor="namaLengkap" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {t('contact.fullName')} <span className="text-red-500">*</span>
+                    Nama Lengkap <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -323,7 +293,7 @@ const Kontak = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       errors.namaLengkap ? 'border-red-500 bg-red-50' : 'border-gray-300'
                     }`}
-                    placeholder={t('contact.namePlaceholder')}
+                    placeholder="Masukkan nama lengkap Anda"
                   />
                   {errors.namaLengkap && (
                     <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
@@ -364,7 +334,7 @@ const Kontak = () => {
                 {/* Pertanyaan */}
                 <div>
                   <label htmlFor="pertanyaan" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {t('contact.yourQuestion')} <span className="text-red-500">*</span>
+                    Pertanyaan <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     id="pertanyaan"
@@ -375,7 +345,7 @@ const Kontak = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
                       errors.pertanyaan ? 'border-red-500 bg-red-50' : 'border-gray-300'
                     }`}
-                    placeholder={t('contact.questionPlaceholder')}
+                    placeholder="Tulis pertanyaan atau pesan Anda di sini..."
                   ></textarea>
                   {errors.pertanyaan && (
                     <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
@@ -399,11 +369,11 @@ const Kontak = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      <span>{t('contact.sending')}</span>
+                      <span>Mengirim...</span>
                     </>
                   ) : (
                     <>
-                      <span>{t('contact.send')}</span>
+                      <span>Kirim</span>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
@@ -417,84 +387,35 @@ const Kontak = () => {
       </section>
 
       {/* Social Media Section - Bottom of Page */}
+      {socialMediaList.filter(s => s.isActive).length > 0 && (
       <section className="py-16 bg-gray-50">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{t('contact.followSocial')}</h2>
-            <p className="text-gray-600 text-lg">{t('contact.stayConnected')}</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ikuti Kami di Sosial Media</h2>
+            <p className="text-gray-600 text-lg">Tetap terhubung dengan kami melalui platform sosial media</p>
           </div>
-
           <div className="flex items-center justify-center gap-6 flex-wrap">
-            {/* Instagram */}
-            {contactInfo.socialMedia.instagram && (
-              <a
-                href={contactInfo.socialMedia.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-semibold group-hover:text-pink-600 transition-colors">Instagram</span>
-              </a>
-            )}
-
-            {/* Facebook */}
-            {contactInfo.socialMedia.facebook && (
-              <a
-                href={contactInfo.socialMedia.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
-              >
-                <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-semibold group-hover:text-blue-600 transition-colors">Facebook</span>
-              </a>
-            )}
-
-            {/* YouTube */}
-            {contactInfo.socialMedia.youtube && (
-              <a
-                href={contactInfo.socialMedia.youtube}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
-              >
-                <div className="w-16 h-16 bg-red-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-semibold group-hover:text-red-600 transition-colors">YouTube</span>
-              </a>
-            )}
-
-            {/* Twitter */}
-            {contactInfo.socialMedia.twitter && (
-              <a
-                href={contactInfo.socialMedia.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
-              >
-                <div className="w-16 h-16 bg-sky-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                  </svg>
-                </div>
-                <span className="text-gray-700 font-semibold group-hover:text-sky-500 transition-colors">Twitter</span>
-              </a>
-            )}
+            {socialMediaList
+              .filter(s => s.isActive)
+              .sort((a, b) => (a.order || 0) - (b.order || 0))
+              .map(social => (
+                <a
+                  key={social._id}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+                >
+                  <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center group-hover:scale-110 transition-transform bg-gray-100">
+                    <img src={social.icon} alt={social.name} className="w-full h-full object-cover" />
+                  </div>
+                  <span className="text-gray-700 font-semibold group-hover:text-blue-600 transition-colors">{social.name}</span>
+                </a>
+              ))}
           </div>
         </div>
       </section>
+      )}
 
       <Footer />
     </div>

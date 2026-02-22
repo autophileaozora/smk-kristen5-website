@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSchoolLogo } from '../hooks/useContact';
+import { useSchoolProfile } from '../contexts/SchoolProfileContext';
 import api from '../services/api';
 
 const Footer = () => {
   const { logo: schoolLogo } = useSchoolLogo();
+  const { contact, socialMedia: contextSocialMedia } = useSchoolProfile();
   const [columns, setColumns] = useState([]);
-  const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Fallback data for backwards compatibility
   const [jurusans, setJurusans] = useState([]);
-  const [socialMedia, setSocialMedia] = useState([]);
 
   useEffect(() => {
     const fetchFooterData = async () => {
@@ -23,18 +23,10 @@ const Footer = () => {
         if (footerColumns.length > 0) {
           setColumns(footerColumns);
         } else {
-          // Fallback to old method if no dynamic columns
-          const [jurusanRes, socialMediaRes] = await Promise.all([
-            api.get('/api/jurusan').catch(() => ({ data: { data: { jurusans: [] } } })),
-            api.get('/api/social-media').catch(() => ({ data: { data: { socialMedia: [] } } })),
-          ]);
+          // Fallback: only fetch jurusan (social-media comes from context)
+          const jurusanRes = await api.get('/api/jurusan').catch(() => ({ data: { data: { jurusans: [] } } }));
           setJurusans(jurusanRes.data.data?.jurusans || []);
-          setSocialMedia(socialMediaRes.data.data?.socialMedia || []);
         }
-
-        // Always fetch contact for address fallback
-        const contactRes = await api.get('/api/contact').catch(() => ({ data: { data: null } }));
-        setContact(contactRes.data.data || null);
       } catch (error) {
         console.error('Error fetching footer data:', error);
       } finally {
@@ -242,8 +234,8 @@ const Footer = () => {
         <div>
           <h3 className="text-xs font-bold text-[#f6efe4] mb-2">Social Media</h3>
           <ul className="list-disc pl-5">
-            {socialMedia.length > 0 ? (
-              socialMedia.map((social, idx) => (
+            {contextSocialMedia.length > 0 ? (
+              contextSocialMedia.map((social, idx) => (
                 <li key={idx} className="text-xs leading-relaxed text-gray-200 font-medium">
                   <a href={social.url} target="_blank" rel="noopener noreferrer" className="hover:text-yellow-300 transition-colors">
                     {social.platform?.toUpperCase() || social.name?.toUpperCase() || 'SOCIAL MEDIA'}

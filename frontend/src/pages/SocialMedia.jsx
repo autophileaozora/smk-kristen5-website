@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { MoreVertical, X } from 'lucide-react';
 import api from '../services/api';
 
-const SocialMedia = ({ embedded = false }) => {
+const SocialMedia = ({ embedded = false, createTrigger = 0 }) => {
   const [socialMedia, setSocialMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -11,6 +13,7 @@ const SocialMedia = ({ embedded = false }) => {
   const [socialMediaToDelete, setSocialMediaToDelete] = useState(null);
   const [toast, setToast] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [rowMenu, setRowMenu] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -24,6 +27,10 @@ const SocialMedia = ({ embedded = false }) => {
   useEffect(() => {
     fetchSocialMedia();
   }, []);
+
+  useEffect(() => {
+    if (createTrigger > 0) openCreateModal();
+  }, [createTrigger]);
 
   const fetchSocialMedia = async () => {
     try {
@@ -175,7 +182,7 @@ const SocialMedia = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded ? (
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Sosial Media</h1>
@@ -186,16 +193,6 @@ const SocialMedia = ({ embedded = false }) => {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <span className="text-xl">➕</span>
-          <span>Tambah Sosial Media</span>
-        </button>
-      </div>
-      ) : (
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
-        >
-          <span>➕</span>
           <span>Tambah Sosial Media</span>
         </button>
       </div>
@@ -221,7 +218,7 @@ const SocialMedia = ({ embedded = false }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Urutan</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -253,18 +250,15 @@ const SocialMedia = ({ embedded = false }) => {
                       {item.isActive ? 'Aktif' : 'Nonaktif'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
                     <button
-                      onClick={() => openEditModal(item)}
-                      className="text-primary-600 hover:text-primary-900 mr-4"
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setRowMenu({ item, top: r.bottom + 4, right: window.innerWidth - r.right });
+                      }}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => openDeleteModal(item)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Hapus
+                      <MoreVertical size={15} />
                     </button>
                   </td>
                 </tr>
@@ -274,46 +268,80 @@ const SocialMedia = ({ embedded = false }) => {
         )}
       </div>
 
+      {/* Context Menu Portal */}
+      {rowMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setRowMenu(null)} />
+          <div
+            className="fixed z-50 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] py-1 min-w-[150px] overflow-hidden"
+            style={{ top: rowMenu.top, right: rowMenu.right }}
+          >
+            <button
+              onClick={() => { openEditModal(rowMenu.item); setRowMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => { openDeleteModal(rowMenu.item); setRowMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Hapus
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-md w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h2 className="text-sm font-semibold text-gray-800">
                 {modalMode === 'create' ? 'Tambah Sosial Media' : 'Edit Sosial Media'}
               </h2>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit}>
+              <div className="p-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Nama Platform <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Contoh: Facebook, Instagram, YouTube"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     URL <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="url"
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="https://..."
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Icon <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center gap-4">
@@ -325,7 +353,7 @@ const SocialMedia = ({ embedded = false }) => {
                         type="file"
                         accept="image/*"
                         onChange={handleIconUpload}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                       />
                       {uploading && (
                         <p className="text-sm text-gray-600 mt-1">Mengupload...</p>
@@ -336,14 +364,14 @@ const SocialMedia = ({ embedded = false }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Urutan
                   </label>
                   <input
                     type="number"
                     value={formData.order}
                     onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     min="1"
                   />
                 </div>
@@ -360,47 +388,58 @@ const SocialMedia = ({ embedded = false }) => {
                     Tampilkan di website
                   </label>
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                    disabled={uploading}
-                  >
-                    {uploading ? 'Mengupload...' : 'Simpan'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  disabled={uploading}
+                >
+                  {uploading ? 'Mengupload...' : 'Simpan'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && socialMediaToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Hapus</h2>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus <strong>{socialMediaToDelete.name}</strong>?
-            </p>
-            <div className="flex gap-3">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h2 className="text-sm font-semibold text-gray-800">Konfirmasi Hapus</h2>
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-gray-600">
+                Apakah Anda yakin ingin menghapus <strong>{socialMediaToDelete.name}</strong>?
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
               <button
                 onClick={closeDeleteModal}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
               >
                 Batal
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 text-xs bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
               >
                 Hapus
               </button>

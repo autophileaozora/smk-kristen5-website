@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { useSchoolProfile } from '../../contexts/SchoolProfileContext';
 
 const SearchPage = () => {
   const navigate = useNavigate();
+  const { contact: contactData } = useSchoolProfile();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState({
     articles: [],
@@ -52,7 +54,6 @@ const SearchPage = () => {
           prestasiRes,
           alumniRes,
           eventsRes,
-          contactRes,
         ] = await Promise.all([
           api.get(`/api/articles/public?search=${encodeURIComponent(searchQuery)}&limit=5`).catch(() => ({ data: { data: { articles: [] } } })),
           api.get('/api/jurusan').catch(() => ({ data: { data: { jurusans: [] } } })),
@@ -61,7 +62,6 @@ const SearchPage = () => {
           api.get('/api/prestasi').catch(() => ({ data: { data: { prestasis: [] } } })),
           api.get('/api/alumni').catch(() => ({ data: { data: { alumni: [] } } })),
           api.get('/api/events').catch(() => ({ data: { data: { events: [] } } })),
-          api.get('/api/contact').catch(() => ({ data: { data: null } })),
         ]);
 
         const articles = articlesRes.data.data?.articles || [];
@@ -71,7 +71,7 @@ const SearchPage = () => {
         const allPrestasi = prestasiRes.data.data?.prestasis || [];
         const allAlumni = alumniRes.data.data?.alumni || [];
         const allEvents = eventsRes.data.data?.events || [];
-        const contact = contactRes.data.data;
+        const contact = contactData;
 
         const query = searchQuery.toLowerCase();
 

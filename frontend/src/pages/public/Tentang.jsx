@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import { useSchoolProfile } from '../../contexts/SchoolProfileContext';
 
 const Tentang = () => {
+  const { contact: contactInfo } = useSchoolProfile();
   const [sections, setSections] = useState({
     sejarah: null,
     visiMisi: null,
   });
-  const [contactInfo, setContactInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('sejarah');
   const [navbarVisible, setNavbarVisible] = useState(true);
@@ -47,17 +48,15 @@ const Tentang = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [sejarahRes, visiMisiRes, contactRes] = await Promise.all([
+        const [sejarahRes, visiMisiRes] = await Promise.all([
           api.get('/api/about/sejarah').catch(() => ({ data: { data: { about: null } } })),
           api.get('/api/about/visi-misi').catch(() => ({ data: { data: { about: null } } })),
-          api.get('/api/contact').catch(() => ({ data: { data: null } })),
         ]);
 
         setSections({
           sejarah: sejarahRes.data.data.about,
           visiMisi: visiMisiRes.data.data.about,
         });
-        setContactInfo(contactRes.data.data);
       } catch (error) {
         console.error('Error fetching about data:', error);
       } finally {

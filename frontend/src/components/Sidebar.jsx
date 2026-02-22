@@ -3,39 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import {
-  LayoutDashboard, FileText, Megaphone, Trophy, GraduationCap,
-  BookOpen, Building2, Dribbble, Users, Video, Images, FilePlus,
-  FolderOpen, UserCog, ClipboardList, Share2, Handshake, MousePointerClick,
-  CalendarDays, CalendarCheck, School, Settings, Navigation, PanelBottom,
-  ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Search,
-  ExternalLink, LogOut, User,
+  LayoutDashboard, FileText, GraduationCap,
+  Users, Images, FilePlus,
+  UserCog, CalendarDays, Settings,
+  ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen,
+  ExternalLink, LogOut,
 } from 'lucide-react';
-
-// SVG gradient definition component
-const IconGradients = () => (
-  <svg width="0" height="0" className="absolute">
-    <defs>
-      <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#3B82F6" />
-        <stop offset="100%" stopColor="#8B5CF6" />
-      </linearGradient>
-      <linearGradient id="icon-grad-active" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#2563EB" />
-        <stop offset="100%" stopColor="#7C3AED" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
-
-// Wrapper to apply gradient to lucide icons
-const GradientIcon = ({ icon: Icon, size = 20, active = false, className = '' }) => (
-  <Icon
-    size={size}
-    stroke={active ? 'url(#icon-grad-active)' : 'url(#icon-grad)'}
-    strokeWidth={active ? 2.2 : 1.8}
-    className={className}
-  />
-);
 
 const Sidebar = ({ collapsed, onToggleCollapse }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -66,7 +39,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Menu structure - consolidated 9 items
+  // Menu structure
   const menuGroups = user?.role === 'administrator' ? [
     {
       id: 'main',
@@ -92,7 +65,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
     },
   ];
 
-  // Auto-expand group that contains the active route
+  // Auto-expand group containing the active route
   useEffect(() => {
     const newOpenGroups = {};
     menuGroups.forEach((group) => {
@@ -104,7 +77,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
   }, [location.pathname]);
 
   const toggleGroup = (groupId) => {
-    if (collapsed) return; // Don't toggle when collapsed
+    if (collapsed) return;
     setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
@@ -115,6 +88,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
 
   const renderMenuItem = (item) => {
     const active = isActive(item.path);
+    const Icon = item.icon;
     return (
       <Link
         key={item.path}
@@ -122,16 +96,20 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
         onClick={() => setIsMobileMenuOpen(false)}
         title={collapsed ? item.name : undefined}
         className={`
-          group flex items-center justify-between rounded-lg transition-all duration-200
-          ${collapsed ? 'px-3 py-2.5 mx-auto justify-center' : 'px-3 py-2.5'}
+          group relative flex items-center justify-between rounded-lg transition-colors
+          ${collapsed ? 'px-3 py-2.5 justify-center' : 'px-3 py-2.5'}
           ${active
-            ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 shadow-sm'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            ? 'bg-blue-50 text-blue-700'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
           }
         `}
       >
         <div className={`flex items-center ${collapsed ? '' : 'space-x-3'}`}>
-          <GradientIcon icon={item.icon} size={20} active={active} />
+          <Icon
+            size={20}
+            strokeWidth={active ? 2 : 1.8}
+            className={active ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}
+          />
           {!collapsed && (
             <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>
               {item.name}
@@ -144,17 +122,16 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
           </span>
         )}
         {collapsed && item.badge > 0 && (
-          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
         )}
       </Link>
     );
   };
 
   const renderGroup = (group) => {
-    // No label = top-level items (Dashboard)
     if (!group.label) {
       return (
-        <div key={group.id} className="space-y-1">
+        <div key={group.id} className="space-y-0.5">
           {group.items.map(renderMenuItem)}
         </div>
       );
@@ -163,10 +140,9 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
     const isOpen = openGroups[group.id];
     const hasActiveChild = group.items.some((item) => isActive(item.path));
 
-    // Collapsed mode: show only icons, no group headers
     if (collapsed) {
       return (
-        <div key={group.id} className="space-y-1 pt-2 border-t border-gray-100">
+        <div key={group.id} className="space-y-0.5 pt-2 border-t border-gray-100">
           {group.items.map(renderMenuItem)}
         </div>
       );
@@ -195,24 +171,22 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
 
   const sidebarContent = (
     <>
-      <IconGradients />
-
       {/* Logo/Header */}
-      <div className={`border-b border-gray-100 ${collapsed ? 'p-3' : 'p-5'}`}>
+      <div className={`border-b border-gray-100 ${collapsed ? 'p-3' : 'p-4'}`}>
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {collapsed ? (
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
               <span className="text-white font-bold text-sm">K5</span>
             </div>
           ) : (
             <>
               <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-bold text-sm">K5</span>
                 </div>
                 <div>
                   <h1 className="text-sm font-bold text-gray-900 leading-tight">KRISMA</h1>
-                  <p className="text-[10px] text-gray-400 font-medium">Dashboard</p>
+                  <p className="text-[10px] text-gray-400 font-medium">Admin Panel</p>
                 </div>
               </div>
               <button
@@ -226,7 +200,6 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
           )}
         </div>
 
-        {/* Collapse expand button (when collapsed) */}
         {collapsed && (
           <button
             onClick={onToggleCollapse}
@@ -245,13 +218,12 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
 
       {/* Footer */}
       <div className="border-t border-gray-100">
-        {/* View website link */}
         <a
           href="/"
           target="_blank"
           rel="noopener noreferrer"
           className={`flex items-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors ${
-            collapsed ? 'justify-center p-3' : 'px-5 py-2.5 space-x-3'
+            collapsed ? 'justify-center p-3' : 'px-4 py-2.5 space-x-3'
           }`}
           title={collapsed ? 'Lihat Website' : undefined}
         >
@@ -259,7 +231,6 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
           {!collapsed && <span className="text-xs font-medium">Lihat Website</span>}
         </a>
 
-        {/* User Info */}
         <div className={`border-t border-gray-100 ${collapsed ? 'p-2' : 'p-3'}`}>
           <Link
             to="/admin/profile"
@@ -269,7 +240,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
             }`}
             title={collapsed ? user?.name : undefined}
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-semibold">
                 {user?.name?.charAt(0).toUpperCase()}
               </span>
@@ -277,12 +248,13 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-                <p className="text-[11px] text-gray-400 truncate">{user?.role === 'administrator' ? 'Administrator' : 'Staff'}</p>
+                <p className="text-[11px] text-gray-400 truncate">
+                  {user?.role === 'administrator' ? 'Administrator' : 'Staff'}
+                </p>
               </div>
             )}
           </Link>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             className={`flex items-center text-gray-400 hover:text-red-500 transition-colors rounded-lg w-full mt-1 ${

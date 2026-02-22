@@ -1,19 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import Button from '../components/Button';
-import Card from '../components/Card';
-import Badge from '../components/Badge';
-import LoadingSpinner from '../components/LoadingSpinner';
-import EmptyState from '../components/EmptyState';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-import Pagination from '../components/Pagination';
+import {
+  Search, Plus, MoreVertical, X,
+  ChevronLeft, ChevronRight,
+  Eye, Edit3, Copy, Trash2, FileText,
+} from 'lucide-react';
+
+const StatusBadge = ({ status }) => {
+  const config = {
+    draft:      'bg-gray-400/12 text-gray-600 border border-gray-400/18 backdrop-blur-sm',
+    published:  'bg-emerald-400/12 text-emerald-700 border border-emerald-400/22 backdrop-blur-sm',
+    archived:   'bg-amber-400/12 text-amber-700 border border-amber-400/22 backdrop-blur-sm',
+  };
+  const labels = { draft: 'Draft', published: 'Published', archived: 'Arsip' };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${config[status] || config.draft}`}>
+      {labels[status] || status}
+    </span>
+  );
+};
 
 const CustomPages = () => {
   const navigate = useNavigate();
 
-  // State management
+  // ── State ──────────────────────────────────────────────────────────────────
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,31 +34,30 @@ const CustomPages = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pageToDelete, setPageToDelete] = useState(null);
   const [toast, setToast] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 1,
-  });
-
-  // Debounced search
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Fetch pages on mount and when filters change
-  useEffect(() => {
-    fetchPages();
-  }, [pagination.page, debouncedSearch, statusFilter]);
+  // Floating pill
+  const [pillExpanded, setPillExpanded] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const searchRef = useRef(null);
 
-  // Debounce search input
+  // ── Effects ────────────────────────────────────────────────────────────────
+  useEffect(() => { fetchPages(); }, [pagination.page, debouncedSearch, statusFilter]);
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setPagination({ ...pagination, page: 1 }); // Reset to page 1 on search
+      setPagination(p => ({ ...p, page: 1 }));
     }, 500);
-
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (showSearch && searchRef.current) searchRef.current.focus();
+  }, [showSearch]);
+
+  // ── Data ───────────────────────────────────────────────────────────────────
   const fetchPages = async () => {
     try {
       setLoading(true);
@@ -55,13 +67,9 @@ const CustomPages = () => {
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(statusFilter && { status: statusFilter }),
       };
-
       const response = await api.get('/api/custom-pages', { params });
       setPages(response.data.data.pages);
-      setPagination({
-        ...pagination,
-        ...response.data.data.pagination,
-      });
+      setPagination(p => ({ ...p, ...response.data.data.pagination }));
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal memuat halaman custom', 'error');
     } finally {
@@ -71,7 +79,7 @@ const CustomPages = () => {
 
   const handleDuplicate = async (pageId) => {
     try {
-      const response = await api.post(`/api/custom-pages/${pageId}/duplicate`);
+      await api.post(`/api/custom-pages/${pageId}/duplicate`);
       showToast('Halaman berhasil diduplikasi', 'success');
       fetchPages();
     } catch (error) {
@@ -91,38 +99,11 @@ const CustomPages = () => {
     }
   };
 
-  const openDeleteModal = (page) => {
-    setPageToDelete(page);
-    setShowDeleteModal(true);
-  };
+  const openDeleteModal = (page) => { setPageToDelete(page); setShowDeleteModal(true); };
+  const showToast = (message, type = 'success') => setToast({ message, type });
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      draft: { variant: 'default', label: 'Draft' },
-      published: { variant: 'success', label: 'Published' },
-      archived: { variant: 'warning', label: 'Archived' },
-    };
-
-    const config = statusConfig[status] || statusConfig.draft;
-    return (
-      <Badge variant={config.variant} size="sm">
-        {config.label}
-      </Badge>
-    );
-  };
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const handleViewPage = (page) => {
     if (page.status === 'published') {
@@ -135,264 +116,323 @@ const CustomPages = () => {
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('');
-    setPagination({ ...pagination, page: 1 });
+    setPagination(p => ({ ...p, page: 1 }));
   };
 
+  const hasActiveFilter = !!(searchQuery || statusFilter);
+
+  // Pagination page numbers with ellipsis
+  const pageNumbers = Array.from({ length: pagination.pages }, (_, i) => i + 1)
+    .filter(p => p === 1 || p === pagination.pages || Math.abs(p - pagination.page) <= 1)
+    .reduce((acc, p, idx, arr) => {
+      if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+      acc.push(p);
+      return acc;
+    }, []);
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+
+      {/* ── Blue header ──────────────────────────────────────────────────────── */}
+      <div className="bg-blue-600 text-white px-6 lg:px-8 py-4 flex items-center justify-between flex-shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Custom Pages</h1>
-          <p className="text-gray-600 mt-1">Kelola halaman custom untuk website</p>
+          <h1 className="text-xl font-bold leading-tight">Halaman Kustom</h1>
+          <p className="text-sm text-blue-200 leading-tight mt-0.5">Buat dan kelola halaman konten website</p>
         </div>
-        <Button
-          variant="primary"
+        <button
           onClick={() => navigate('/admin/custom-pages/create')}
-          icon={
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          }
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 text-white text-sm font-medium hover:bg-white/28 transition-all"
         >
-          Buat Halaman
-        </Button>
+          <Plus size={15} />
+          <span>Buat Halaman</span>
+        </button>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Cari judul atau slug..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <svg
-                className="absolute left-3 top-3 w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+      {/* ── Content area ─────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50/40 to-slate-100 relative p-3 lg:p-4">
+
+        {/* Glass scrollable panel */}
+        <div className="h-full bg-white/55 backdrop-blur-2xl rounded-2xl border border-white/75 shadow-[0_4px_32px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(0,0,0,0.03)] overflow-y-auto">
+
+          {/* Active filter chips */}
+          {hasActiveFilter && (
+            <div className="flex flex-wrap items-center gap-2 px-4 pt-4 pr-14">
+              {searchQuery && (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50/80 border border-blue-200/60 text-xs text-blue-700 font-medium">
+                  Cari: "{searchQuery}"
+                  <button onClick={() => setSearchQuery('')} className="text-blue-400 hover:text-blue-600">
+                    <X size={11} />
+                  </button>
+                </span>
+              )}
+              {statusFilter && (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50/80 border border-purple-200/60 text-xs text-purple-700 font-medium">
+                  Status: {statusFilter}
+                  <button
+                    onClick={() => { setStatusFilter(''); setPagination(p => ({ ...p, page: 1 })); }}
+                    className="text-purple-400 hover:text-purple-600"
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              )}
+              <button onClick={clearFilters} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                Hapus semua
+              </button>
+            </div>
+          )}
+
+          {/* ── Loading ── */}
+          {loading ? (
+            <div className="flex items-center justify-center h-48">
+              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+
+          /* ── Empty state ── */
+          ) : pages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+              <div className="w-16 h-16 rounded-2xl bg-blue-400/10 border border-blue-400/20 flex items-center justify-center mb-4">
+                <FileText size={28} className="text-blue-500/60" />
+              </div>
+              <p className="text-gray-500 font-medium">
+                {hasActiveFilter ? 'Tidak ada halaman yang sesuai filter' : 'Belum ada halaman custom'}
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                {hasActiveFilter
+                  ? 'Coba ubah atau hapus filter yang aktif'
+                  : 'Buat halaman pertama dengan tombol di atas'}
+              </p>
+              {hasActiveFilter && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 px-4 py-1.5 text-sm rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                >
+                  Hapus Filter
+                </button>
+              )}
+            </div>
+
+          /* ── Page cards ── */
+          ) : (
+            <div className={`p-3 lg:p-4 space-y-2 ${pagination.pages > 1 ? 'pb-24' : 'pb-16'}`}>
+              {pages.map((page) => (
+                <div
+                  key={page._id}
+                  className="group relative bg-white/70 backdrop-blur-sm rounded-xl border border-white/70 hover:border-white/95 hover:shadow-[0_4px_20px_rgba(0,0,0,0.09),inset_0_1px_0_rgba(255,255,255,0.95)] p-4 transition-all duration-200 shadow-[0_1px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+
+                    {/* Icon + info */}
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-400/10 border border-blue-400/20 flex items-center justify-center">
+                        <FileText size={17} className="text-blue-600/70" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-gray-900 truncate">{page.title}</span>
+                          <StatusBadge status={page.status} />
+                        </div>
+                        <p className="text-xs text-gray-400 font-mono mt-0.5">/{page.slug}</p>
+                        {page.description && (
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{page.description}</p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1.5">
+                          {formatDate(page.createdAt)}
+                          {page.createdBy && (
+                            <span> · <span className="text-gray-500">{page.createdBy.name}</span></span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action buttons — reveal on hover */}
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <button
+                        onClick={() => handleViewPage(page)}
+                        title="Lihat halaman"
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          page.status === 'published'
+                            ? 'text-blue-500 hover:bg-blue-400/12'
+                            : 'text-gray-400 hover:bg-black/[0.05]'
+                        }`}
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/custom-pages/${page._id}/edit`)}
+                        title="Edit halaman"
+                        className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-400/12 transition-colors"
+                      >
+                        <Edit3 size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDuplicate(page._id)}
+                        title="Duplikasi halaman"
+                        className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-400/12 transition-colors"
+                      >
+                        <Copy size={15} />
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(page)}
+                        title="Hapus halaman"
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-400/12 transition-colors"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Floating ⋮ pill — sticky inside scroll container ─────────────── */}
+          <div className="sticky bottom-0 z-20 h-0 overflow-visible pointer-events-none px-4 pb-4">
+            <div className="pointer-events-auto flex justify-end items-end translate-y-[-44px]">
+              {pillExpanded ? (
+                <div className="flex items-center gap-2 bg-gradient-to-b from-white/55 to-white/35 backdrop-blur-2xl border border-white/70 rounded-2xl px-3 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(0,0,0,0.04)]">
+
+                  {/* Search input */}
+                  {showSearch && (
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Cari halaman..."
+                      className="w-44 px-2.5 py-1 text-xs rounded-xl bg-black/[0.05] border border-black/10 text-gray-700 placeholder-gray-400/60 focus:outline-none focus:ring-1 focus:ring-blue-400/40"
+                    />
+                  )}
+
+                  {/* Search toggle */}
+                  <button
+                    onClick={() => setShowSearch(v => !v)}
+                    title="Cari"
+                    className={`p-1.5 rounded-xl transition-all ${
+                      showSearch
+                        ? 'bg-blue-500/15 text-blue-600'
+                        : 'text-gray-500/70 hover:text-gray-700 hover:bg-black/[0.05]'
+                    }`}
+                  >
+                    <Search size={15} />
+                  </button>
+
+                  <div className="w-px h-5 bg-black/[0.08]" />
+
+                  {/* Status filter segmented */}
+                  <div className="flex items-center gap-0.5 bg-black/[0.05] rounded-xl p-0.5">
+                    {[
+                      { v: '', l: 'Semua' },
+                      { v: 'published', l: 'Published' },
+                      { v: 'draft', l: 'Draft' },
+                      { v: 'archived', l: 'Arsip' },
+                    ].map(opt => (
+                      <button
+                        key={opt.v}
+                        onClick={() => { setStatusFilter(opt.v); setPagination(p => ({ ...p, page: 1 })); }}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 ${
+                          statusFilter === opt.v
+                            ? 'bg-white/90 shadow-sm text-gray-800'
+                            : 'text-gray-500/80 hover:text-gray-700'
+                        }`}
+                      >
+                        {opt.l}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="w-px h-5 bg-black/[0.08]" />
+
+                  {/* Create */}
+                  <button
+                    onClick={() => navigate('/admin/custom-pages/create')}
+                    title="Buat halaman baru"
+                    className="p-1.5 rounded-xl text-blue-600 hover:bg-blue-400/15 transition-colors"
+                  >
+                    <Plus size={15} />
+                  </button>
+
+                  {/* Close */}
+                  <button
+                    onClick={() => { setPillExpanded(false); setShowSearch(false); }}
+                    className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-black/[0.05] transition-colors"
+                  >
+                    <X size={15} />
+                  </button>
+
+                </div>
+              ) : (
+                <button
+                  onClick={() => setPillExpanded(true)}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-[0_4px_16px_rgba(59,130,246,0.45),0_1px_4px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.2)] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+                >
+                  <MoreVertical size={16} />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Status Filter */}
-          <div className="md:w-48">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPagination({ ...pagination, page: 1 });
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Semua Status</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
+        </div>{/* end glass panel */}
 
-          {/* Clear Filters */}
-          {(searchQuery || statusFilter) && (
-            <Button variant="ghost" onClick={clearFilters}>
-              Clear
-            </Button>
-          )}
-        </div>
+        {/* ── Floating glass pagination ─────────────────────────────────────── */}
+        {pagination.pages > 1 && (
+          <div className="absolute bottom-5 left-5 right-5 lg:bottom-6 lg:left-6 lg:right-6 z-20 bg-gradient-to-b from-white/60 to-white/40 backdrop-blur-2xl border border-white/70 shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(0,0,0,0.04)] rounded-2xl px-5 py-2.5 flex items-center justify-between">
+            <p className="text-sm text-gray-500/80">
+              Halaman{' '}
+              <span className="font-semibold text-gray-800">{pagination.page}</span>
+              {' '}dari{' '}
+              <span className="font-semibold text-gray-800">{pagination.pages}</span>
+              {pagination.total > 0 && (
+                <span className="text-xs text-gray-400/70 ml-2">({pagination.total} halaman)</span>
+              )}
+            </p>
 
-        {/* Active Filters */}
-        {(searchQuery || statusFilter) && (
-          <div className="mt-4 flex flex-wrap gap-2 items-center">
-            <span className="text-sm text-gray-600">Filter aktif:</span>
-            {searchQuery && (
-              <Badge variant="primary">
-                Search: "{searchQuery}"
-              </Badge>
-            )}
-            {statusFilter && (
-              <Badge variant="info">
-                Status: {statusFilter}
-              </Badge>
-            )}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                disabled={pagination.page <= 1}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-black/[0.05] border border-black/10 rounded-xl disabled:opacity-30 hover:bg-black/[0.09] text-gray-600 transition-all"
+              >
+                <ChevronLeft size={13} /> Prev
+              </button>
+
+              {pageNumbers.map((p, i) =>
+                p === '...' ? (
+                  <span key={`dots-${i}`} className="w-8 h-8 text-xs text-gray-400/60 flex items-center justify-center">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPagination(prev => ({ ...prev, page: p }))}
+                    className={`w-8 h-8 text-xs font-medium rounded-xl transition-all ${
+                      pagination.page === p
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-[0_2px_8px_rgba(59,130,246,0.45),inset_0_1px_0_rgba(255,255,255,0.2)]'
+                        : 'bg-black/[0.05] border border-black/10 text-gray-600 hover:bg-black/[0.09]'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                disabled={pagination.page >= pagination.pages}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-black/[0.05] border border-black/10 rounded-xl disabled:opacity-30 hover:bg-black/[0.09] text-gray-600 transition-all"
+              >
+                Next <ChevronRight size={13} />
+              </button>
+            </div>
           </div>
         )}
-      </Card>
 
-      {/* Content */}
-      {loading ? (
-        <LoadingSpinner fullScreen={false} text="Memuat halaman..." />
-      ) : pages.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon="📄"
-            title="Belum ada halaman custom"
-            description={
-              searchQuery || statusFilter
-                ? 'Tidak ada halaman yang sesuai dengan filter'
-                : 'Mulai buat halaman custom pertama Anda'
-            }
-            action={!searchQuery && !statusFilter ? () => navigate('/admin/custom-pages/create') : clearFilters}
-            actionText={!searchQuery && !statusFilter ? 'Buat Halaman' : 'Clear Filter'}
-          />
-        </Card>
-      ) : (
-        <>
-          {/* Results Info */}
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <p>
-              Menampilkan {pages.length} dari {pagination.total} halaman
-            </p>
-            {pagination.pages > 1 && (
-              <p>
-                Halaman {pagination.page} dari {pagination.pages}
-              </p>
-            )}
-          </div>
+      </div>{/* end content area */}
 
-          {/* Table */}
-          <Card padding="none">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Judul
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Slug
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dibuat
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {pages.map((page) => (
-                    <tr key={page._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {page.title}
-                            </div>
-                            {page.description && (
-                              <div className="text-xs text-gray-500 line-clamp-1">
-                                {page.description}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 font-mono">
-                          /{page.slug}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(page.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {formatDate(page.createdAt)}
-                        </div>
-                        {page.createdBy && (
-                          <div className="text-xs text-gray-400">
-                            oleh {page.createdBy.name}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* View Button */}
-                          <button
-                            onClick={() => handleViewPage(page)}
-                            className="text-blue-600 hover:text-blue-900 p-1.5 rounded hover:bg-blue-50 transition-colors"
-                            title="Lihat halaman"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-
-                          {/* Edit Button */}
-                          <button
-                            onClick={() => navigate(`/admin/custom-pages/${page._id}/edit`)}
-                            className="text-green-600 hover:text-green-900 p-1.5 rounded hover:bg-green-50 transition-colors"
-                            title="Edit halaman"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-
-                          {/* Duplicate Button */}
-                          <button
-                            onClick={() => handleDuplicate(page._id)}
-                            className="text-purple-600 hover:text-purple-900 p-1.5 rounded hover:bg-purple-50 transition-colors"
-                            title="Duplikasi halaman"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          </button>
-
-                          {/* Delete Button */}
-                          <button
-                            onClick={() => openDeleteModal(page)}
-                            className="text-red-600 hover:text-red-900 p-1.5 rounded hover:bg-red-50 transition-colors"
-                            title="Hapus halaman"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          {/* Pagination */}
-          {pagination.pages > 1 && (
-            <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.pages}
-              onPageChange={(page) => setPagination({ ...pagination, page })}
-            />
-          )}
-        </>
-      )}
-
-      {/* Delete Confirmation Modal */}
+      {/* ── Delete modal ─────────────────────────────────────────────────────── */}
       <Modal
         isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setPageToDelete(null);
-        }}
+        onClose={() => { setShowDeleteModal(false); setPageToDelete(null); }}
         title="Konfirmasi Hapus"
         size="sm"
       >
@@ -407,35 +447,27 @@ const CustomPages = () => {
             </p>
           </div>
           <div className="flex gap-3 pt-4">
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                setShowDeleteModal(false);
-                setPageToDelete(null);
-              }}
+            <button
+              onClick={() => { setShowDeleteModal(false); setPageToDelete(null); }}
+              className="flex-1 px-4 py-2 text-sm font-medium rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
             >
               Batal
-            </Button>
-            <Button
-              variant="danger"
-              fullWidth
+            </button>
+            <button
               onClick={handleDelete}
+              className="flex-1 px-4 py-2 text-sm font-medium rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
             >
               Hapus
-            </Button>
+            </button>
           </div>
         </div>
       </Modal>
 
-      {/* Toast Notification */}
+      {/* ── Toast ────────────────────────────────────────────────────────────── */}
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
+
     </div>
   );
 };

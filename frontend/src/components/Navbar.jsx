@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSchoolLogo } from '../hooks/useContact';
-import { useLanguage } from '../contexts/LanguageContext';
 import api from '../services/api';
 
 const Navbar = ({ activePage = '', visible = true, className = '' }) => {
   const { logo: schoolLogo } = useSchoolLogo();
-  const { language, toggleLanguage } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -293,20 +291,6 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
               </svg>
             </Link>
 
-            {/* Language Toggle — desktop only */}
-            <button
-              onClick={toggleLanguage}
-              className="hidden md:flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all border border-white/20"
-              title={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M2 12h20" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-              <span>{language === 'id' ? 'EN' : 'ID'}</span>
-            </button>
-
             {/* Button Items (e.g., PENDAFTARAN) - only from API, no fallback */}
             {buttonItems.map((item) => (
               <Link
@@ -365,29 +349,18 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
             </Link>
           ))}
 
-          {/* Mobile: Search & Language */}
-          <div className="mt-6 flex gap-3">
+          {/* Mobile: Search */}
+          <div className="mt-6">
             <Link
               to="/search"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-full text-sm font-semibold transition-all border border-white/20"
+              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-full text-sm font-semibold transition-all border border-white/20"
             >
               <svg className="w-4 h-4" viewBox="0 0 25 25" fill="currentColor">
                 <path d="M24.6582 21.6162L19.79 16.748C19.5703 16.5283 19.2725 16.4062 18.96 16.4062H18.1641C19.5117 14.6826 20.3125 12.5146 20.3125 10.1562C20.3125 4.5459 15.7666 0 10.1562 0C4.5459 0 0 4.5459 0 10.1562C0 15.7666 4.5459 20.3125 10.1562 20.3125C12.5146 20.3125 14.6826 19.5117 16.4062 18.1641V18.96C16.4062 19.2725 16.5283 19.5703 16.748 19.79L21.6162 24.6582C22.0752 25.1172 22.8174 25.1172 23.2715 24.6582L24.6533 23.2764C25.1123 22.8174 25.1123 22.0752 24.6582 21.6162ZM10.1562 16.4062C6.7041 16.4062 3.90625 13.6133 3.90625 10.1562C3.90625 6.7041 6.69922 3.90625 10.1562 3.90625C13.6084 3.90625 16.4062 6.69922 16.4062 10.1562C16.4062 13.6084 13.6133 16.4062 10.1562 16.4062Z" />
               </svg>
               <span>Cari</span>
             </Link>
-            <button
-              onClick={toggleLanguage}
-              className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-full text-sm font-semibold transition-all border border-white/20"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M2 12h20" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-              <span>{language === 'id' ? 'EN' : 'ID'}</span>
-            </button>
           </div>
         </div>
       </div>

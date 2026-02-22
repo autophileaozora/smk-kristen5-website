@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { MoreVertical, Edit3, Trash2, CheckCircle, XCircle, X, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
 
-const Fasilitas = ({ embedded = false }) => {
+const Fasilitas = ({ embedded = false, createTrigger = 0, externalSearch = '' }) => {
   const [fasilitass, setFasilitass] = useState([]);
   const [jurusans, setJurusans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,6 +14,12 @@ const Fasilitas = ({ embedded = false }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [fasilitasToDelete, setFasilitasToDelete] = useState(null);
   const [toast, setToast] = useState(null);
+  const [cardMenu, setCardMenu] = useState(null); // { item, top, right }
+
+  const openMenuFor = (e, item) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCardMenu(prev => prev?.item._id === item._id ? null : { item, top: rect.bottom + 4, right: window.innerWidth - rect.right });
+  };
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +41,14 @@ const Fasilitas = ({ embedded = false }) => {
     fetchFasilitass();
     fetchJurusans();
   }, []);
+
+  useEffect(() => {
+    if (createTrigger > 0) openCreateModal();
+  }, [createTrigger]);
+
+  useEffect(() => {
+    if (embedded) setSearchQuery(externalSearch);
+  }, [externalSearch, embedded]);
 
   // Debounce search input (wait 500ms after user stops typing)
   useEffect(() => {
@@ -148,6 +164,15 @@ const Fasilitas = ({ embedded = false }) => {
     }
   };
 
+  const handleToggleActive = async (fasilitas) => {
+    try {
+      await api.put(`/api/fasilitas/${fasilitas._id}`, { isActive: !fasilitas.isActive });
+      fetchFasilitass();
+    } catch (error) {
+      showToast('Gagal mengubah status fasilitas', 'error');
+    }
+  };
+
   const getCategoryLabel = (category) => {
     if (category === 'PUBLIC') return 'Publik (Semua Jurusan)';
     return category;
@@ -193,7 +218,8 @@ const Fasilitas = ({ embedded = false }) => {
       </div>
       )}
 
-      {/* Search Bar */}
+      {/* Search Bar — non-embedded only */}
+      {!embedded && (
       <div className="bg-white rounded-lg shadow p-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Cari Fasilitas
@@ -216,9 +242,10 @@ const Fasilitas = ({ embedded = false }) => {
           </div>
         )}
       </div>
+      )}
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
+      <div className={`bg-white rounded-lg shadow overflow-hidden overflow-x-auto${embedded ? ' m-4' : ''}`}>
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -299,16 +326,10 @@ const Fasilitas = ({ embedded = false }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
-                      onClick={() => openEditModal(fasilitas)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      onClick={(e) => openMenuFor(e, fasilitas)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => openDeleteModal(fasilitas)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Hapus
+                      <MoreVertical size={15} />
                     </button>
                   </td>
                 </tr>
@@ -318,62 +339,94 @@ const Fasilitas = ({ embedded = false }) => {
         )}
       </div>
 
+      {/* Card context menu — portal to body so it's never clipped */}
+      {cardMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setCardMenu(null)} />
+          <div
+            className="fixed z-50 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] py-1 min-w-[150px] overflow-hidden"
+            style={{ top: cardMenu.top, right: cardMenu.right }}
+          >
+            <button onClick={() => { openEditModal(cardMenu.item); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] transition-colors flex items-center gap-2">
+              <Edit3 size={13} /> Edit
+            </button>
+            <button onClick={() => { handleToggleActive(cardMenu.item); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] transition-colors flex items-center gap-2">
+              {cardMenu.item.isActive ? <XCircle size={13} /> : <CheckCircle size={13} />}
+              {cardMenu.item.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+            </button>
+            <div className="h-px bg-black/[0.06] my-1" />
+            <button onClick={() => { openDeleteModal(cardMenu.item); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+              <Trash2 size={13} /> Hapus
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
+              <h2 className="text-sm font-semibold text-gray-800">
                 {modalMode === 'create' ? 'Tambah Fasilitas' : 'Edit Fasilitas'}
               </h2>
+              <button onClick={closeModal} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors">
+                <X size={14} />
+              </button>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit}>
+              <div className="p-5 space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Nama Fasilitas *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     required
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Deskripsi *
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     required
                   />
                 </div>
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Kategori *
                   </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="PUBLIC">Publik (Semua Jurusan)</option>
-                    {jurusans.map((jurusan) => (
-                      <option key={jurusan._id} value={jurusan.code}>
-                        {jurusan.code} - {jurusan.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all appearance-none pr-8"
+                      required
+                    >
+                      <option value="PUBLIC">Publik (Semua Jurusan)</option>
+                      {jurusans.map((jurusan) => (
+                        <option key={jurusan._id} value={jurusan.code}>
+                          {jurusan.code} - {jurusan.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">
                     Pilih jurusan tertentu atau "Publik" untuk semua jurusan
                   </p>
@@ -382,19 +435,19 @@ const Fasilitas = ({ embedded = false }) => {
                 {/* Location & Capacity */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
                       Lokasi (Opsional)
                     </label>
                     <input
                       type="text"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                       placeholder="Contoh: Lantai 2, Gedung A"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
                       Kapasitas
                     </label>
                     <input
@@ -402,7 +455,7 @@ const Fasilitas = ({ embedded = false }) => {
                       min="0"
                       value={formData.capacity}
                       onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                       placeholder="Contoh: 30"
                     />
                   </div>
@@ -419,14 +472,14 @@ const Fasilitas = ({ embedded = false }) => {
 
                 {/* Display Order */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Urutan Tampilan
                   </label>
                   <input
                     type="number"
                     value={formData.displayOrder}
                     onChange={(e) => setFormData({ ...formData, displayOrder: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                   />
                 </div>
 
@@ -443,47 +496,54 @@ const Fasilitas = ({ embedded = false }) => {
                     Aktif
                   </label>
                 </div>
+              </div>
 
-                {/* Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    {modalMode === 'create' ? 'Buat' : 'Simpan'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              {/* Footer */}
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  {modalMode === 'create' ? 'Buat' : 'Simpan'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Konfirmasi Hapus</h2>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus fasilitas "{fasilitasToDelete?.name}"?
-            </p>
-            <div className="flex justify-end space-x-3">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h2 className="text-sm font-semibold text-gray-800">Konfirmasi Hapus</h2>
+              <button onClick={closeDeleteModal} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-gray-600">
+                Apakah Anda yakin ingin menghapus fasilitas "{fasilitasToDelete?.name}"?
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
               <button
                 onClick={closeDeleteModal}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
               >
                 Batal
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-4 py-2 text-xs bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
               >
                 Hapus
               </button>

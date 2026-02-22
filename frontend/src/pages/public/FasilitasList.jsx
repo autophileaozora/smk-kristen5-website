@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
-import { useLanguage } from '../../contexts/LanguageContext';
-import T from '../../components/T';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -10,8 +8,6 @@ const FasilitasList = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [categories, setCategories] = useState([]);
-  const { t } = useLanguage();
-
   // Navbar state
   const [navbarVisible, setNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -108,10 +104,10 @@ const FasilitasList = () => {
 
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-16 py-20 md:py-28 text-center text-white">
           <h1 className="russo text-3xl md:text-5xl lg:text-6xl mb-4 drop-shadow-lg">
-            {t('facility.title').toUpperCase()}
+            FASILITAS SEKOLAH
           </h1>
           <p className="text-base md:text-lg lg:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
-            {t('facility.subtitle')}
+            Menunjang kegiatan belajar mengajar dengan fasilitas modern dan lengkap untuk seluruh siswa
           </p>
         </div>
       </section>
@@ -128,7 +124,7 @@ const FasilitasList = () => {
                   : 'bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200'
               }`}
             >
-              {t('facility.allCategories')}
+              Semua
             </button>
             {categories.map((category) => (
               <button
@@ -190,13 +186,13 @@ const FasilitasList = () => {
                     )}
 
                     <h3 className="text-lg font-bold text-gray-900 mb-2 leading-snug group-hover:text-[#0d76be] transition-colors">
-                      <T>{item.name}</T>
+                      {item.name}
                     </h3>
 
                     {item.description && (
                       <p className="text-gray-500 text-sm mb-4 leading-relaxed"
                          style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        <T>{item.description}</T>
+                        {item.description}
                       </p>
                     )}
 
@@ -239,13 +235,13 @@ const FasilitasList = () => {
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                 />
               </svg>
-              <p className="text-gray-600 text-lg">{t('facility.noFacilities')}</p>
+              <p className="text-gray-600 text-lg">Tidak ada fasilitas yang ditemukan.</p>
               {selectedCategory !== 'Semua' && (
                 <button
                   onClick={() => setSelectedCategory('Semua')}
                   className="mt-4 px-6 py-2 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full transition-colors text-sm font-medium"
                 >
-                  {t('facility.viewAll')}
+                  Lihat Semua Fasilitas
                 </button>
               )}
             </div>

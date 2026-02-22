@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import { useLanguage } from '../../contexts/LanguageContext';
-import T from '../../components/T';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -10,7 +8,6 @@ const JurusanList = () => {
   const [jurusans, setJurusans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(null);
-  const { t } = useLanguage();
 
   useEffect(() => {
     fetchJurusans();
@@ -42,7 +39,7 @@ const JurusanList = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="inline-block w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600 text-lg">{t('common.loading')}</p>
+          <p className="text-gray-600 text-lg">Memuat...</p>
         </div>
       </div>
     );
@@ -187,12 +184,12 @@ const JurusanList = () => {
                 <div className="relative z-10">
                   {/* Title */}
                   <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight text-white drop-shadow-lg">
-                    <T>{jurusan.name}</T>
+                    {jurusan.name}
                   </h2>
 
                   {/* Description */}
                   <p className="text-white/90 text-sm lg:text-base mb-6 line-clamp-4 leading-relaxed max-w-lg drop-shadow">
-                    <T>{jurusan.shortDescription || jurusan.description?.replace(/<[^>]*>/g, '').slice(0, 250) + '...'}</T>
+                    {jurusan.shortDescription || jurusan.description?.replace(/<[^>]*>/g, '').slice(0, 250) + '...'}
                   </p>
 
                   {/* Button */}
@@ -203,7 +200,7 @@ const JurusanList = () => {
                       e.stopPropagation();
                     }}
                   >
-                    <span className="relative z-10">{t('home.viewProgramDetail')}</span>
+                    <span className="relative z-10">Lihat Detail Jurusan</span>
                     <div className="absolute inset-0 bg-gray-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                   </Link>
                 </div>

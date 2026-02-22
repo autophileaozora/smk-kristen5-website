@@ -1,32 +1,21 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const SiteSettings = ({ embedded = false }) => {
+const SiteSettings = ({ embedded = false, section = 'general', saveTrigger = 0 }) => {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState('general');
 
   const [formData, setFormData] = useState({
     siteName: '',
     siteTagline: '',
-    logo: '',
-    logoLight: '',
     favicon: '',
-    email: '',
-    phone: '',
-    whatsapp: '',
-    address: '',
-    googleMapsUrl: '',
-    googleMapsEmbed: '',
     metaTitle: '',
     metaDescription: '',
     metaKeywords: '',
     googleAnalyticsId: '',
-    footerText: '',
-    footerDescription: '',
     homepageSections: {
       whyTitle: '',
       whyHeading: '',
@@ -61,21 +50,11 @@ const SiteSettings = ({ embedded = false }) => {
       setFormData({
         siteName: data.siteName || '',
         siteTagline: data.siteTagline || '',
-        logo: data.logo || '',
-        logoLight: data.logoLight || '',
         favicon: data.favicon || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        whatsapp: data.whatsapp || '',
-        address: data.address || '',
-        googleMapsUrl: data.googleMapsUrl || '',
-        googleMapsEmbed: data.googleMapsEmbed || '',
         metaTitle: data.metaTitle || '',
         metaDescription: data.metaDescription || '',
         metaKeywords: data.metaKeywords || '',
         googleAnalyticsId: data.googleAnalyticsId || '',
-        footerText: data.footerText || '',
-        footerDescription: data.footerDescription || '',
         homepageSections: {
           whyTitle: data.homepageSections?.whyTitle || '',
           whyHeading: data.homepageSections?.whyHeading || '',
@@ -140,8 +119,7 @@ const SiteSettings = ({ embedded = false }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const doSave = async () => {
     try {
       setSaving(true);
       await api.put('/api/site-settings', formData);
@@ -154,11 +132,14 @@ const SiteSettings = ({ embedded = false }) => {
     }
   };
 
-  const tabs = [
-    { id: 'general', label: 'Umum', icon: '⚙️' },
-    { id: 'beranda', label: 'Beranda', icon: '🏠' },
-    { id: 'seo', label: 'SEO', icon: '🔍' },
-  ];
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await doSave();
+  };
+
+  useEffect(() => {
+    if (saveTrigger > 0) doSave();
+  }, [saveTrigger]);
 
   const updateHP = (field, value) => {
     setFormData(prev => ({
@@ -208,158 +189,9 @@ const SiteSettings = ({ embedded = false }) => {
       </div>
       )}
 
-      {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-md">
-        <div className="border-b">
-          <div className="flex">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-4 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-b-2 border-blue-600 text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6">
-          {/* General Tab */}
-          {activeTab === 'general' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nama Website
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.siteName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, siteName: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="SMK Kristen 5 Klaten"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tagline
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.siteTagline}
-                    onChange={(e) =>
-                      setFormData({ ...formData, siteTagline: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Sekolah Menengah Kejuruan"
-                  />
-                </div>
-              </div>
-
-              {/* Logo Upload */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Logo Utama
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                    {formData.logo ? (
-                      <div className="relative">
-                        <img
-                          src={formData.logo}
-                          alt="Logo"
-                          className="max-h-24 mx-auto"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, logo: '' })}
-                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer block text-center">
-                        <span className="text-gray-500">Klik untuk upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload(e, 'logo')}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Logo Light (untuk background gelap)
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-800">
-                    {formData.logoLight ? (
-                      <div className="relative">
-                        <img
-                          src={formData.logoLight}
-                          alt="Logo Light"
-                          className="max-h-24 mx-auto"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, logoLight: '' })}
-                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer block text-center">
-                        <span className="text-gray-400">Klik untuk upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload(e, 'logoLight')}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Favicon */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Favicon
-                </label>
-                <div className="flex items-center gap-4">
-                  {formData.favicon && (
-                    <img src={formData.favicon} alt="Favicon" className="w-8 h-8" />
-                  )}
-                  <label className="cursor-pointer px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                    <span>{formData.favicon ? 'Ganti' : 'Upload'} Favicon</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(e, 'favicon')}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-
+      <form onSubmit={handleSubmit} className="space-y-6">
           {/* Beranda Tab */}
-          {activeTab === 'beranda' && (
+          {section === 'beranda' && (
             <div className="space-y-4">
               <p className="text-sm text-gray-500 mb-4">
                 Kelola teks dan konten yang tampil di halaman beranda. Kosongkan field untuk menggunakan teks default.
@@ -500,99 +332,47 @@ const SiteSettings = ({ embedded = false }) => {
             </div>
           )}
 
-          {/* Contact Tab - removed, managed in Info Sekolah → Kontak */}
-
-          {activeTab === '_contact_removed' && (
+          {/* SEO Tab */}
+          {section === 'seo' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nama Website</label>
                   <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    type="text"
+                    value={formData.siteName}
+                    onChange={(e) => setFormData({ ...formData, siteName: e.target.value })}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="info@smkkrisma.sch.id"
+                    placeholder="SMK Kristen 5 Klaten"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Telepon
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
                   <input
                     type="text"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    value={formData.siteTagline}
+                    onChange={(e) => setFormData({ ...formData, siteTagline: e.target.value })}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="(0272) 123456"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    WhatsApp
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.whatsapp}
-                    onChange={(e) =>
-                      setFormData({ ...formData, whatsapp: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="6281234567890"
+                    placeholder="Sekolah Menengah Kejuruan"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Alamat
-                </label>
-                <textarea
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Jl. Contoh No. 123, Klaten, Jawa Tengah"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Favicon</label>
+                <div className="flex items-center gap-4">
+                  {formData.favicon && (
+                    <img src={formData.favicon} alt="Favicon" className="w-8 h-8" />
+                  )}
+                  <label className="cursor-pointer px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <span>{formData.favicon ? 'Ganti' : 'Upload'} Favicon</span>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'favicon')} className="hidden" />
+                  </label>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Google Maps URL
-                </label>
-                <input
-                  type="url"
-                  value={formData.googleMapsUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, googleMapsUrl: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://maps.google.com/..."
-                />
-              </div>
+              <hr className="border-gray-200" />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Google Maps Embed Code
-                </label>
-                <textarea
-                  value={formData.googleMapsEmbed}
-                  onChange={(e) =>
-                    setFormData({ ...formData, googleMapsEmbed: e.target.value })
-                  }
-                  rows={4}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                  placeholder='<iframe src="..."></iframe>'
-                />
-              </div>
-            </div>
-          )}
-
-          {/* SEO Tab */}
-          {activeTab === 'seo' && (
-            <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Meta Title
@@ -661,63 +441,8 @@ const SiteSettings = ({ embedded = false }) => {
             </div>
           )}
 
-          {/* Footer Tab - removed, managed in Pengaturan → Footer */}
-          {activeTab === '_footer_removed' && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Footer Text (Copyright)
-                </label>
-                <input
-                  type="text"
-                  value={formData.footerText}
-                  onChange={(e) =>
-                    setFormData({ ...formData, footerText: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="© 2024 SMK Kristen 5 Klaten. All rights reserved."
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Footer Description
-                </label>
-                <textarea
-                  value={formData.footerDescription}
-                  onChange={(e) =>
-                    setFormData({ ...formData, footerDescription: e.target.value })
-                  }
-                  rows={3}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Deskripsi singkat untuk footer..."
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <div className="mt-8 pt-6 border-t">
-            <button
-              type="submit"
-              disabled={saving || uploading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Menyimpan...</span>
-                </>
-              ) : (
-                <>
-                  <span>💾</span>
-                  <span>Simpan Pengaturan</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
   );
 };

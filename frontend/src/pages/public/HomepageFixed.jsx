@@ -7,13 +7,9 @@ import SEO from '../../components/SEO';
 import Mascot3D from '../../components/Mascot3D';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import T from '../../components/T';
-import { useLanguage } from '../../contexts/LanguageContext';
-
 const HomepageFixed = () => {
   const navigate = useNavigate();
   const { logo: schoolLogo } = useSchoolLogo();
-  const { t, language } = useLanguage();
 
   const [data, setData] = useState({
     jurusans: [],
@@ -471,7 +467,7 @@ const HomepageFixed = () => {
           <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-20">
             {/* Left Content - 50% */}
             <div className="w-full lg:w-1/2 lg:pr-10">
-              <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">{hp.whyTitle || t('home.whyTitle')}</h3>
+              <h3 className="text-xs lg:text-base font-extrabold text-gray-700 mb-2 tracking-wide">{hp.whyTitle || 'MENGAPA SEKOLAH DI KRISMA'}</h3>
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-tight text-[#0d76be] mb-3 lg:mb-4">
                 {hp.whyHeading || 'SEKOLAH BINAAN DAIHATSU DAN MATERI BERDASARKAN INDUSTRIAL'}
               </h2>
@@ -480,7 +476,7 @@ const HomepageFixed = () => {
               </p>
 
               <Link to={hp.whyButtonUrl || '/tentang'} className="inline-flex items-center justify-center px-5 lg:px-7 py-2.5 lg:py-3 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-lg mt-4 lg:mt-6 text-[11px] lg:text-xs font-semibold tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                {hp.whyButtonText || t('home.readProfile')}
+                {hp.whyButtonText || 'Baca Profil Sekolah'}
               </Link>
 
               {/* Alumni Companies */}
@@ -790,7 +786,7 @@ const HomepageFixed = () => {
                         <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
                       </div>
                     </div>
-                    <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
+                    <p className="text-right text-[11px] text-[#7a7a7a] font-medium mt-3 italic">-Lulusan {alumni.graduationYear}</p>
                   </div>
                 );
                 return (
@@ -817,10 +813,10 @@ const HomepageFixed = () => {
                         <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                         <div>
                           <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
-                          <span className="text-[10px] text-[#b8b8b8] block mt-0.5"><T>{alumni.currentOccupation}</T> - <T>{alumni.company}</T></span>
+                          <span className="text-[10px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
                         </div>
                       </div>
-                      <p className="text-right text-[10px] text-[#7a7a7a] font-medium mt-2 italic">-{t('home.graduationYear')} {alumni.graduationYear}</p>
+                      <p className="text-right text-[10px] text-[#7a7a7a] font-medium mt-2 italic">-Lulusan {alumni.graduationYear}</p>
                     </div>
                   ))}
                 </div>
@@ -849,16 +845,16 @@ const HomepageFixed = () => {
             {/* Right - Info */}
             <div className="w-full lg:w-[400px] flex-shrink-0 order-first lg:order-last">
               <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white">
-                <T>{hp.testimonialsTitle || 'Cerita pengalaman menarik dan berkesan oleh alumni kami'}</T>
+                {hp.testimonialsTitle || 'Cerita pengalaman menarik dan berkesan oleh alumni kami'}
               </h2>
               <p className="text-sm sm:text-base leading-relaxed text-white mt-3 lg:mt-5">
-                <T>{hp.testimonialsDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}</T>
+                {hp.testimonialsDescription || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
               </p>
               <button
                 onClick={() => setShowReviewModal(true)}
                 className="inline-flex items-center px-5 lg:px-7 py-3 lg:py-3.5 bg-transparent border-2 border-yellow-300 text-yellow-300 text-[11px] lg:text-xs font-semibold rounded-lg mt-5 lg:mt-8 hover:bg-yellow-300/10 hover:-translate-y-0.5 transition-all tracking-wide"
               >
-                {hp.testimonialsButtonText || t('home.shareStory')}
+                {hp.testimonialsButtonText || 'BAGIKAN CERITAMU'}
               </button>
             </div>
           </div>
@@ -885,13 +881,13 @@ const HomepageFixed = () => {
                   {/* Content on left */}
                   <div className="absolute inset-0 p-4 lg:p-6 flex flex-col justify-center max-w-full lg:max-w-[55%]">
                     <h2 className="text-base sm:text-xl lg:text-2xl font-bold text-white leading-tight mb-2 lg:mb-3 line-clamp-2 lg:line-clamp-none">
-                      <T>{data.articles[0].title}</T>
+                      {data.articles[0].title}
                     </h2>
                     <span className="text-yellow-400 text-[10px] lg:text-xs font-medium mb-2 lg:mb-3">
-                      <T>{data.articles[0].categoryJurusan?.name || data.articles[0].categoryTopik?.name || t('home.news')}</T>
+                      {data.articles[0].categoryJurusan?.name || data.articles[0].categoryTopik?.name || 'Berita'}
                     </span>
                     <p className="text-xs lg:text-sm text-gray-300 leading-relaxed line-clamp-2 lg:line-clamp-4 hidden sm:block">
-                      <T>{data.articles[0].excerpt || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}</T>
+                      {data.articles[0].excerpt || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
                     </p>
                   </div>
                 </div>
@@ -908,10 +904,10 @@ const HomepageFixed = () => {
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium leading-snug line-clamp-2 sm:line-clamp-3">
-                      <T>{article.title}</T>
+                      {article.title}
                     </p>
                     <span className="text-[10px] text-yellow-400 mt-2 block">
-                      <T>{article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}</T>
+                      {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
                     </span>
                   </div>
                   <div className="w-16 h-14 sm:w-20 sm:h-16 flex-shrink-0 rounded overflow-hidden">
@@ -930,7 +926,7 @@ const HomepageFixed = () => {
           <div className="w-full lg:w-[280px] flex-shrink-0 mt-6 lg:mt-0">
             <div className="flex items-center gap-2 mb-4 lg:mb-6">
               <div className="w-1 h-5 lg:h-6 bg-[#0d76be] rounded-full"></div>
-              <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsTopTitle || t('home.topNews')}</h3>
+              <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsTopTitle || 'TOP 5 BERITA'}</h3>
             </div>
 
             <div className="space-y-4 lg:space-y-5">
@@ -945,10 +941,10 @@ const HomepageFixed = () => {
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm lg:text-base font-medium text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2 lg:line-clamp-3">
-                      <T>{article.title}</T>
+                      {article.title}
                     </p>
                     <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 block">
-                      <T>{article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}</T>
+                      {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
                     </span>
                   </div>
                 </Link>
@@ -960,7 +956,7 @@ const HomepageFixed = () => {
         {/* BERITA UTAMA - Bottom section */}
         <div className="mt-8 lg:mt-12">
           <div className="mb-4 lg:mb-6">
-            <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsMainTitle || t('home.mainNews')}</h3>
+            <h3 className="text-base lg:text-lg font-bold text-gray-900">{hp.newsMainTitle || 'BERITA UTAMA'}</h3>
             <div className="w-10 lg:w-12 h-1 bg-[#0d76be] mt-2 rounded-full"></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-0">
@@ -971,10 +967,10 @@ const HomepageFixed = () => {
                 className={`group ${idx < 2 ? 'md:border-r md:border-gray-200 md:pr-6 md:mr-6' : ''}`}
               >
                 <h4 className="text-sm lg:text-base font-semibold text-gray-800 leading-snug group-hover:text-[#0d76be] transition-colors line-clamp-2">
-                  <T>{article.title}</T>
+                  {article.title}
                 </h4>
                 <span className="text-[10px] lg:text-xs text-[#0d76be] mt-1 lg:mt-2 block">
-                  <T>{article.categoryJurusan?.name || article.categoryTopik?.name || t('home.news')}</T>
+                  {article.categoryJurusan?.name || article.categoryTopik?.name || 'Berita'}
                 </span>
               </Link>
             ))}
@@ -986,18 +982,18 @@ const HomepageFixed = () => {
       <section className="py-12 lg:py-20 relative" style={{ background: 'linear-gradient(to bottom, transparent 50px, rgba(13,118,190,0.15) 50%, rgba(13,118,190,0.31) 100%)' }}>
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
         <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-base lg:text-lg font-bold text-black">{hp.eventsTitle || t('home.eventsTitle')}</h2>
+          <h2 className="text-base lg:text-lg font-bold text-black">{hp.eventsTitle || 'KEGIATAN SISWA DAN GURU'}</h2>
           <p className="text-sm lg:text-base leading-relaxed text-gray-600 font-medium max-w-3xl mx-auto mt-2 px-2">
-            {hp.eventsDescription || t('home.eventsSubtitle')}
+            {hp.eventsDescription || 'AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH'}
           </p>
         </div>
 
         {/* Tabs */}
         <div className="flex justify-center gap-1 lg:gap-2 mb-8 lg:mb-10 border border-[#62B4DD] rounded-full p-1 lg:p-1.5 w-fit mx-auto">
           {[
-            { key: 'semua', label: t('home.allCategories') },
-            { key: 'akademik', label: t('home.academic') },
-            { key: 'non akademik', label: t('home.nonAcademic') },
+            { key: 'semua', label: 'Semua' },
+            { key: 'akademik', label: 'Akademik' },
+            { key: 'non akademik', label: 'Non Akademik' },
           ].map((tab, idx) => (
             <div
               key={idx}
@@ -1053,9 +1049,9 @@ const HomepageFixed = () => {
                         <span className={`text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide ${
                           event.category === 'akademik' ? 'text-[#008fd7]' : 'text-purple-600'
                         }`}>
-                          {event.category === 'akademik' ? t('home.academic').toUpperCase() : t('home.nonAcademic').toUpperCase()}
+                          {event.category === 'akademik' ? 'AKADEMIK' : 'NON AKADEMIK'}
                         </span>
-                        <h4 className="text-sm lg:text-base font-semibold text-black mt-0.5 line-clamp-1"><T>{event.title}</T></h4>
+                        <h4 className="text-sm lg:text-base font-semibold text-black mt-0.5 line-clamp-1">{event.title}</h4>
                         <div className="flex flex-row flex-wrap gap-3 lg:gap-5 mt-2 lg:mt-3 text-xs lg:text-sm text-gray-700">
                           <div className="flex items-center gap-1.5">
                             <span>📅</span>
@@ -1068,7 +1064,7 @@ const HomepageFixed = () => {
                           {event.location && (
                             <div className="flex items-center gap-1.5">
                               <span>📍</span>
-                              <span><T>{event.location}</T></span>
+                              <span>{event.location}</span>
                             </div>
                           )}
                         </div>
@@ -1078,7 +1074,7 @@ const HomepageFixed = () => {
                 })
               ) : (
                 <div className="col-span-2 text-center py-8">
-                  <p className="text-gray-600">{language === 'en' ? 'No events available.' : 'Belum ada agenda yang tersedia.'}</p>
+                  <p className="text-gray-600">{'Belum ada agenda yang tersedia.'}</p>
                 </div>
               )}
             </div>
@@ -1087,7 +1083,7 @@ const HomepageFixed = () => {
 
 
         <button className="flex items-center justify-center px-5 lg:px-7 py-3 lg:py-3.5 bg-[#0d76be] hover:bg-[#0a5a91] text-white text-[11px] lg:text-xs font-semibold rounded-lg mx-auto shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all tracking-wide">
-          {hp.eventsButtonText || t('home.viewAllEvents')}
+          {hp.eventsButtonText || 'LIHAT SEMUA AGENDA'}
         </button>
         </div>
       </section>
@@ -1112,24 +1108,24 @@ const HomepageFixed = () => {
         <div className="relative z-40 flex items-center justify-center w-full min-h-[400px] lg:min-h-[550px] px-4 sm:px-6 lg:px-20 lg:pl-[50%] py-16 lg:py-0">
           <div className="max-w-[550px] text-center lg:text-left">
             <h2 className="russo text-xl sm:text-2xl lg:text-[28px] leading-snug text-white uppercase">
-              {data.cta?.title ? <T>{data.cta.title}</T> : t('home.ctaTitle')}
+              {data.cta?.title || 'MARI DISKUSIKAN BAKAT & MINAT KAMU, KAMI AKAN MEMBANTU MENEMUKAN SESUAI PASSION ANDA'}
             </h2>
             <p className="text-sm sm:text-base lg:text-lg leading-relaxed text-white/90 mt-3 lg:mt-4">
-              {data.cta?.description ? <T>{data.cta.description}</T> : t('home.ctaDescription')}
+              {data.cta?.description || 'SMK Kristen 5 Klaten telah memiliki sertifikat ISO 9008:2015 dan menggandeng mitra industri guna menjamin mutu pendidikan dan keselarasan dengan industri.'}
             </p>
             <div className="flex gap-3 lg:gap-4 mt-5 lg:mt-7 flex-wrap justify-center lg:justify-start">
               <Link
                 to={data.cta?.primaryButtonLink || '/pendaftaran'}
                 className="bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 lg:px-7 py-3 lg:py-3.5 rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
               >
-                {data.cta?.primaryButtonText ? <T>{data.cta.primaryButtonText}</T> : t('home.registerNow')}
+                {data.cta?.primaryButtonText || 'DAFTAR SEKARANG'}
               </Link>
               {(data.cta?.secondaryButtonText || !data.cta) && (
                 <Link
                   to={data.cta?.secondaryButtonLink || '/kontak'}
                   className="bg-transparent text-white px-5 lg:px-7 py-3 lg:py-3.5 border-2 border-white rounded-lg text-[11px] lg:text-xs font-semibold uppercase tracking-wide hover:bg-white/10 hover:-translate-y-0.5 transition-all"
                 >
-                  {data.cta?.secondaryButtonText ? <T>{data.cta.secondaryButtonText}</T> : t('home.infoService')}
+                  {data.cta?.secondaryButtonText || 'LAYANAN INFORMASI'}
                 </Link>
               )}
             </div>

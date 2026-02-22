@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { MoreVertical, Edit3, Trash2, CheckCircle, XCircle, X, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 
-const Events = ({ embedded = false }) => {
+const Events = ({ embedded = false, createTrigger = 0 }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -24,9 +26,24 @@ const Events = ({ embedded = false }) => {
     order: 0,
   });
 
+  const [eventMenu, setEventMenu] = useState(null);
+
+  const openMenuFor = (e, event) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setEventMenu(prev =>
+      prev?.event._id === event._id
+        ? null
+        : { event, top: rect.bottom + 4, right: window.innerWidth - rect.right }
+    );
+  };
+
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    if (createTrigger > 0) openCreateModal();
+  }, [createTrigger]);
 
   const fetchEvents = async () => {
     try {
@@ -161,7 +178,7 @@ const Events = ({ embedded = false }) => {
   };
 
   return (
-    <div className={embedded ? '' : 'p-6'}>
+    <div className={embedded ? 'p-4' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -172,7 +189,7 @@ const Events = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded ? (
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Agenda & Kegiatan</h1>
@@ -183,16 +200,6 @@ const Events = ({ embedded = false }) => {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <span className="text-xl">+</span>
-          <span>Tambah Event</span>
-        </button>
-      </div>
-      ) : (
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
-        >
-          <span className="text-lg">+</span>
           <span>Tambah Event</span>
         </button>
       </div>
@@ -262,16 +269,10 @@ const Events = ({ embedded = false }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
-                      onClick={() => openEditModal(event)}
-                      className="text-primary-600 hover:text-primary-900 mr-4"
+                      onClick={(e) => { e.stopPropagation(); openMenuFor(e, event); }}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => openDeleteModal(event)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Hapus
+                      <MoreVertical size={16} />
                     </button>
                   </td>
                 </tr>
@@ -296,38 +297,82 @@ const Events = ({ embedded = false }) => {
         </button>
       </div>
 
+      {/* Row action portal */}
+      {eventMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setEventMenu(null)} />
+          <div
+            className="fixed z-50 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] py-1 min-w-[160px]"
+            style={{ top: eventMenu.top, right: eventMenu.right }}
+          >
+            <button
+              onClick={() => { openEditModal(eventMenu.event); setEventMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-gray-700 hover:bg-black/[0.05] transition-colors"
+            >
+              <Edit3 size={13} className="text-gray-400" /> Edit
+            </button>
+            <button
+              onClick={() => { toggleActive(eventMenu.event._id, eventMenu.event.isActive); setEventMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-gray-700 hover:bg-black/[0.05] transition-colors"
+            >
+              {eventMenu.event.isActive
+                ? <XCircle size={13} className="text-gray-400" />
+                : <CheckCircle size={13} className="text-gray-400" />}
+              {eventMenu.event.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+            </button>
+            <div className="my-1 border-t border-black/[0.06]" />
+            <button
+              onClick={() => { openDeleteModal(eventMenu.event); setEventMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-red-600 hover:bg-red-50/60 transition-colors"
+            >
+              <Trash2 size={13} /> Hapus
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
+              <h2 className="text-sm font-semibold text-gray-800">
                 {modalMode === 'create' ? 'Tambah Event' : 'Edit Event'}
               </h2>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit}>
+              <div className="p-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Judul Event <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Contoh: Upacara Bendera"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Deskripsi (Opsional)
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     rows="2"
                     placeholder="Deskripsi singkat event..."
                   />
@@ -335,68 +380,71 @@ const Events = ({ embedded = false }) => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
                       Tanggal <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
                       value={formData.eventDate}
                       onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
                       Kategori
                     </label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                      <option value="akademik">Akademik</option>
-                      <option value="non-akademik">Non Akademik</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all appearance-none pr-8"
+                      >
+                        <option value="akademik">Akademik</option>
+                        <option value="non-akademik">Non Akademik</option>
+                      </select>
+                      <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
                       Jam Mulai
                     </label>
                     <input
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
                       Jam Selesai
                     </label>
                     <input
                       type="time"
                       value={formData.endTime}
                       onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Lokasi (Opsional)
                   </label>
                   <input
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Contoh: Aula Sekolah"
                   />
                 </div>
@@ -413,46 +461,57 @@ const Events = ({ embedded = false }) => {
                     Tampilkan di website
                   </label>
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    Simpan
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && eventToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Hapus</h2>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus event <strong>{eventToDelete.title}</strong>?
-            </p>
-            <div className="flex gap-3">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h2 className="text-sm font-semibold text-gray-800">Konfirmasi Hapus</h2>
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-gray-600">
+                Apakah Anda yakin ingin menghapus event <strong>{eventToDelete.title}</strong>?
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
               <button
                 onClick={closeDeleteModal}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
               >
                 Batal
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 text-xs bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
               >
                 Hapus
               </button>

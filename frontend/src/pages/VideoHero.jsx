@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { MoreVertical, X } from 'lucide-react';
 import api from '../services/api';
 
-const VideoHero = ({ embedded = false }) => {
+const VideoHero = ({ embedded = false, createTrigger = 0 }) => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -47,6 +49,10 @@ const VideoHero = ({ embedded = false }) => {
   useEffect(() => {
     fetchVideos();
   }, []);
+
+  useEffect(() => {
+    if (createTrigger > 0) openCreateModal();
+  }, [createTrigger]);
 
   // Show toast notification
   const showToast = (message, type = 'success') => {
@@ -153,6 +159,8 @@ const VideoHero = ({ embedded = false }) => {
     }
   };
 
+  const [cardMenu, setCardMenu] = useState(null);
+
   // Count active videos
   const activeCount = videos.filter(v => v.isActive).length;
 
@@ -168,7 +176,7 @@ const VideoHero = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded ? (
+      {!embedded && (
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Video Hero</h1>
@@ -182,16 +190,6 @@ const VideoHero = ({ embedded = false }) => {
         <button
           onClick={openCreateModal}
           className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2"
-        >
-          <span>➕</span>
-          Tambah Video Hero
-        </button>
-      </div>
-      ) : (
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openCreateModal}
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2 text-sm"
         >
           <span>➕</span>
           Tambah Video Hero
@@ -248,8 +246,8 @@ const VideoHero = ({ embedded = false }) => {
 
               {/* Content */}
               <div className="p-4">
-                {/* Status & Order */}
-                <div className="flex justify-between items-start mb-3">
+                {/* Status & Order & Menu */}
+                <div className="flex items-center gap-2 mb-3">
                   <button
                     onClick={() => handleToggleActive(video._id)}
                     className={`px-3 py-1 text-xs font-semibold rounded-full cursor-pointer ${
@@ -260,9 +258,20 @@ const VideoHero = ({ embedded = false }) => {
                   >
                     {video.isActive ? '✓ Aktif' : '✗ Nonaktif'}
                   </button>
-                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                    Order: {video.displayOrder}
+                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    #{video.displayOrder}
                   </span>
+                  <div className="ml-auto">
+                    <button
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setCardMenu({ video, top: r.bottom + 4, right: window.innerWidth - r.right });
+                      }}
+                      className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Title */}
@@ -278,25 +287,9 @@ const VideoHero = ({ embedded = false }) => {
                 )}
 
                 {/* YouTube ID */}
-                <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   <span>🎬</span>
                   <span className="font-mono">{video.youtubeId}</span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-4 border-t">
-                  <button
-                    onClick={() => openEditModal(video)}
-                    className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-100 transition text-sm font-medium"
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(video._id, video.title)}
-                    className="flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition text-sm font-medium"
-                  >
-                    🗑️ Hapus
-                  </button>
                 </div>
               </div>
             </div>
@@ -306,147 +299,149 @@ const VideoHero = ({ embedded = false }) => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-800">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
+              <h2 className="text-sm font-semibold text-gray-800">
                 {modalMode === 'create' ? 'Tambah Video Hero' : 'Edit Video Hero'}
               </h2>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* YouTube URL */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  YouTube URL *
-                </label>
-                <input
-                  type="url"
-                  name="youtubeUrl"
-                  value={formData.youtubeUrl}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="https://www.youtube.com/watch?v=..."
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Format: youtube.com/watch?v=xxx atau youtu.be/xxx
-                </p>
-              </div>
-
-              {/* Video Preview */}
-              {formData.youtubeUrl && extractYouTubeId(formData.youtubeUrl) && (
+            <form onSubmit={handleSubmit}>
+              <div className="p-5 space-y-4">
+                {/* YouTube URL */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preview
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    YouTube URL *
                   </label>
-                  <div className="relative pb-[56.25%] h-0 rounded-lg overflow-hidden">
-                    <iframe
-                      src={`https://www.youtube.com/embed/${extractYouTubeId(formData.youtubeUrl)}`}
-                      className="absolute top-0 left-0 w-full h-full"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Judul Video *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                  maxLength={150}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Judul yang menarik untuk video"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Deskripsi (Opsional)
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={3}
-                  maxLength={300}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  placeholder="Deskripsi singkat video..."
-                />
-              </div>
-
-              {/* Display Order */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Urutan Tampilan
-                </label>
-                <input
-                  type="number"
-                  name="displayOrder"
-                  value={formData.displayOrder}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  placeholder="0, 1, 2, dst. (lebih kecil = lebih awal)"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Semakin kecil angka, semakin awal ditampilkan
-                </p>
-              </div>
-
-              {/* Active Status */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <label className="ml-2 text-sm text-gray-700">
-                  Aktif (tampilkan di homepage)
-                </label>
-              </div>
-
-              {/* Warning if trying to activate when already 3 active */}
-              {formData.isActive && modalMode === 'create' && activeCount >= 3 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-sm text-yellow-800">
-                    ⚠️ Sudah ada 3 video aktif. Nonaktifkan video lain terlebih dahulu.
+                  <input
+                    type="url"
+                    name="youtubeUrl"
+                    value={formData.youtubeUrl}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Format: youtube.com/watch?v=xxx atau youtu.be/xxx
                   </p>
                 </div>
-              )}
+
+                {/* Video Preview */}
+                {formData.youtubeUrl && extractYouTubeId(formData.youtubeUrl) && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                      Preview
+                    </label>
+                    <div className="relative pb-[56.25%] h-0 rounded-lg overflow-hidden">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${extractYouTubeId(formData.youtubeUrl)}`}
+                        className="absolute top-0 left-0 w-full h-full"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Title */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Judul Video *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    required
+                    maxLength={150}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Judul yang menarik untuk video"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Deskripsi (Opsional)
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows={3}
+                    maxLength={300}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Deskripsi singkat video..."
+                  />
+                </div>
+
+                {/* Display Order */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Urutan Tampilan
+                  </label>
+                  <input
+                    type="number"
+                    name="displayOrder"
+                    value={formData.displayOrder}
+                    onChange={handleInputChange}
+                    min="0"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="0, 1, 2, dst. (lebih kecil = lebih awal)"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Semakin kecil angka, semakin awal ditampilkan
+                  </p>
+                </div>
+
+                {/* Active Status */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label className="ml-2 text-sm text-gray-700">
+                    Aktif (tampilkan di homepage)
+                  </label>
+                </div>
+
+                {/* Warning if trying to activate when already 3 active */}
+                {formData.isActive && modalMode === 'create' && activeCount >= 3 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">
+                      Sudah ada 3 video aktif. Nonaktifkan video lain terlebih dahulu.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* Submit Buttons */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   {modalMode === 'create' ? 'Tambah' : 'Update'}
                 </button>
@@ -454,6 +449,31 @@ const VideoHero = ({ embedded = false }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Context Menu Portal */}
+      {cardMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setCardMenu(null)} />
+          <div
+            className="fixed z-50 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] py-1 min-w-[150px] overflow-hidden"
+            style={{ top: cardMenu.top, right: cardMenu.right }}
+          >
+            <button
+              onClick={() => { openEditModal(cardMenu.video); setCardMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => { handleDelete(cardMenu.video._id, cardMenu.video.title); setCardMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Hapus
+            </button>
+          </div>
+        </>,
+        document.body
       )}
 
       {/* Empty State */}

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { MoreVertical, X, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 
-const RunningText = ({ embedded = false }) => {
+const RunningText = ({ embedded = false, createTrigger = 0 }) => {
   const [runningTexts, setRunningTexts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -10,6 +12,7 @@ const RunningText = ({ embedded = false }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [textToDelete, setTextToDelete] = useState(null);
   const [toast, setToast] = useState(null);
+  const [rowMenu, setRowMenu] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -22,6 +25,10 @@ const RunningText = ({ embedded = false }) => {
   useEffect(() => {
     fetchRunningTexts();
   }, []);
+
+  useEffect(() => {
+    if (createTrigger > 0) openCreateModal();
+  }, [createTrigger]);
 
   const fetchRunningTexts = async () => {
     try {
@@ -130,7 +137,7 @@ const RunningText = ({ embedded = false }) => {
       )}
 
       {/* Header */}
-      {!embedded ? (
+      {!embedded && (
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Running Text</h1>
@@ -141,16 +148,6 @@ const RunningText = ({ embedded = false }) => {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <span className="text-xl">➕</span>
-          <span>Tambah Running Text</span>
-        </button>
-      </div>
-      ) : (
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
-        >
-          <span>➕</span>
           <span>Tambah Running Text</span>
         </button>
       </div>
@@ -183,7 +180,7 @@ const RunningText = ({ embedded = false }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
@@ -227,18 +224,15 @@ const RunningText = ({ embedded = false }) => {
                       {text.isActive ? '✅ Aktif' : '❌ Nonaktif'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button
-                      onClick={() => openEditModal(text)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setRowMenu({ text, top: r.bottom + 4, right: window.innerWidth - r.right });
+                      }}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                     >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => openDeleteModal(text)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      🗑️ Hapus
+                      <MoreVertical size={15} />
                     </button>
                   </td>
                 </tr>
@@ -248,158 +242,179 @@ const RunningText = ({ embedded = false }) => {
         )}
       </div>
 
+      {/* Context Menu Portal */}
+      {rowMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setRowMenu(null)} />
+          <div
+            className="fixed z-50 bg-white/90 backdrop-blur-xl border border-white/70 rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12)] py-1 min-w-[130px]"
+            style={{ top: rowMenu.top, right: rowMenu.right }}
+          >
+            <button
+              onClick={() => { openEditModal(rowMenu.text); setRowMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => { openDeleteModal(rowMenu.text); setRowMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Hapus
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            {/* Background overlay */}
-            <div
-              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-              onClick={closeModal}
-            ></div>
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleSubmit}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
+                <h3 className="text-sm font-semibold text-gray-800">
+                  {modalMode === 'create' ? 'Tambah Running Text' : 'Edit Running Text'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
 
-            {/* Modal panel */}
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <form onSubmit={handleSubmit}>
-                {/* Header */}
-                <div className="bg-white px-6 py-4 border-b">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {modalMode === 'create' ? '➕ Tambah Running Text' : '✏️ Edit Running Text'}
-                  </h3>
+              {/* Body */}
+              <div className="p-5 space-y-4">
+                {/* Text */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Teks *
+                  </label>
+                  <textarea
+                    value={formData.text}
+                    onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Masukkan teks pengumuman..."
+                    required
+                  />
                 </div>
 
-                {/* Body */}
-                <div className="bg-white px-6 py-4 space-y-4">
-                  {/* Text */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Teks *
-                    </label>
-                    <textarea
-                      value={formData.text}
-                      onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Masukkan teks pengumuman..."
-                      required
-                    />
-                  </div>
-
-                  {/* Link */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Link (Opsional)
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.link}
-                      onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="https://example.com"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Jika diisi, teks akan menjadi link yang bisa diklik
-                    </p>
-                  </div>
-
-                  {/* Order */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Urutan Tampil *
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.order}
-                      onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                      min="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      required
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Running text dengan urutan lebih kecil ditampilkan lebih dulu
-                    </p>
-                  </div>
-
-                  {/* Active Status */}
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="isActive"
-                      checked={formData.isActive}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
-                      Aktifkan running text ini
-                    </label>
-                  </div>
+                {/* Link */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Link (Opsional)
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.link}
+                    onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="https://example.com"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Jika diisi, teks akan menjadi link yang bisa diklik
+                  </p>
                 </div>
 
-                {/* Footer */}
-                <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    {modalMode === 'create' ? '➕ Tambah' : '💾 Simpan'}
-                  </button>
+                {/* Order */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Urutan Tampil *
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
+                    min="1"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Running text dengan urutan lebih kecil ditampilkan lebih dulu
+                  </p>
                 </div>
-              </form>
-            </div>
+
+                {/* Active Status */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
+                    Aktifkan running text ini
+                  </label>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  {modalMode === 'create' ? 'Tambah' : 'Simpan'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && textToDelete && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            {/* Background overlay */}
-            <div
-              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-              onClick={closeDeleteModal}
-            ></div>
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h3 className="text-sm font-semibold text-gray-800">Hapus Running Text?</h3>
+              <button
+                onClick={closeDeleteModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
 
-            {/* Modal panel */}
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-6 py-4">
-                <div className="flex items-center mb-4">
-                  <span className="text-4xl mr-3">⚠️</span>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Hapus Running Text?
-                  </h3>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  Apakah Anda yakin ingin menghapus running text ini?
+            {/* Body */}
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-gray-600">
+                Apakah Anda yakin ingin menghapus running text ini?
+              </p>
+              <div className="bg-black/[0.04] p-3 rounded-xl">
+                <p className="text-sm text-gray-700 line-clamp-2">
+                  "{textToDelete.text}"
                 </p>
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700 line-clamp-2">
-                    "{textToDelete.text}"
-                  </p>
-                </div>
               </div>
+            </div>
 
-              <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
-                <button
-                  onClick={closeDeleteModal}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  🗑️ Hapus
-                </button>
-              </div>
+            {/* Footer */}
+            <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+              <button
+                onClick={closeDeleteModal}
+                className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-xs bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
+              >
+                Hapus
+              </button>
             </div>
           </div>
         </div>

@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
+import { MoreVertical, Edit3, Trash2, ToggleLeft, ToggleRight, X, ChevronDown } from 'lucide-react';
 
-const Ekskul = ({ embedded = false }) => {
+const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) => {
   const [ekskuls, setEkskuls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
   const [currentEkskul, setCurrentEkskul] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [cardMenu, setCardMenu] = useState(null); // { item, top, right }
+
+  const openMenuFor = (e, item) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCardMenu(prev => prev?.item._id === item._id ? null : { item, top: rect.bottom + 4, right: window.innerWidth - rect.right });
+  };
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +61,14 @@ const Ekskul = ({ embedded = false }) => {
   useEffect(() => {
     fetchEkskuls();
   }, []);
+
+  useEffect(() => {
+    if (createTrigger > 0) openCreateModal();
+  }, [createTrigger]);
+
+  useEffect(() => {
+    if (embedded) setSearchQuery(externalSearch);
+  }, [externalSearch, embedded]);
 
   // Debounce search input (wait 500ms after user stops typing)
   useEffect(() => {
@@ -224,19 +240,10 @@ const Ekskul = ({ embedded = false }) => {
           Tambah Ekstrakurikuler
         </button>
       </div>
-      ) : (
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openCreateModal}
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2 text-sm"
-        >
-          <span>➕</span>
-          Tambah Ekstrakurikuler
-        </button>
-      </div>
-      )}
+      ) : null}
 
-      {/* Search Bar */}
+      {/* Search Bar — non-embedded only */}
+      {!embedded && (
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Cari Ekstrakurikuler
@@ -259,6 +266,7 @@ const Ekskul = ({ embedded = false }) => {
           </div>
         )}
       </div>
+      )}
 
       {/* Loading State */}
       {loading ? (
@@ -267,7 +275,7 @@ const Ekskul = ({ embedded = false }) => {
         </div>
       ) : (
         /* Ekskul Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${embedded ? 'p-4' : 'gap-6'}`}>
           {filteredEkskuls.map((ekskul) => (
             <div key={ekskul._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
               {/* Image */}
@@ -286,21 +294,30 @@ const Ekskul = ({ embedded = false }) => {
 
               {/* Content */}
               <div className="p-4">
-                {/* Category & Status */}
-                <div className="flex justify-between items-start mb-2">
-                  <span className={getCategoryBadge(ekskul.category)}>
-                    {categories.find(c => c.value === ekskul.category)?.label}
-                  </span>
-                  <button
-                    onClick={() => handleToggleActive(ekskul._id)}
-                    className={`px-2 py-1 text-xs font-semibold rounded-full cursor-pointer ${
+                {/* Category + Aktif + ⋮ */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={getCategoryBadge(ekskul.category)}>
+                      {categories.find(c => c.value === ekskul.category)?.label}
+                    </span>
+                    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full ${
                       ekskul.isActive
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    {ekskul.isActive ? '✓ Aktif' : '✗ Nonaktif'}
-                  </button>
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {ekskul.isActive ? '✓ Aktif' : '✗ Nonaktif'}
+                    </span>
+                  </div>
+
+                  {/* ⋮ menu */}
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={(e) => openMenuFor(e, ekskul)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-black/[0.05] transition-colors"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Name */}
@@ -328,194 +345,207 @@ const Ekskul = ({ embedded = false }) => {
                     </div>
                   )}
                 </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 mt-4 pt-4 border-t">
-                  <button
-                    onClick={() => openEditModal(ekskul)}
-                    className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-100 transition text-sm font-medium"
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(ekskul._id, ekskul.name)}
-                    className="flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition text-sm font-medium"
-                  >
-                    🗑️ Hapus
-                  </button>
-                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Card context menu — portal to body so it's never clipped */}
+      {cardMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setCardMenu(null)} />
+          <div
+            className="fixed z-50 bg-white/90 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] overflow-hidden py-1 min-w-[150px]"
+            style={{ top: cardMenu.top, right: cardMenu.right }}
+          >
+            <button onClick={() => { openEditModal(cardMenu.item); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-gray-700 hover:bg-black/[0.05]">
+              <Edit3 size={13} className="text-blue-500" /> Edit
+            </button>
+            <button onClick={() => { handleToggleActive(cardMenu.item._id); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-gray-700 hover:bg-black/[0.05]">
+              {cardMenu.item.isActive ? <ToggleRight size={13} className="text-emerald-500" /> : <ToggleLeft size={13} className="text-gray-400" />}
+              {cardMenu.item.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+            </button>
+            <div className="h-px bg-gray-100 my-1" />
+            <button onClick={() => { handleDelete(cardMenu.item._id, cardMenu.item.name); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-red-500 hover:bg-red-50/60">
+              <Trash2 size={13} /> Hapus
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-800">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
+              <h2 className="text-sm font-semibold text-gray-800">
                 {modalMode === 'create' ? 'Tambah Ekstrakurikuler' : 'Edit Ekstrakurikuler'}
               </h2>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Image Upload */}
-              <ImageUpload
-                label="Gambar Ekstrakurikuler (Opsional)"
-                value={formData.image}
-                onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
-                folder="smk-kristen5/ekskul"
-                previewClassName="h-48 w-full object-cover"
-              />
-
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nama Ekstrakurikuler *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Contoh: Basket, Pramuka, Paduan Suara"
+            <form onSubmit={handleSubmit}>
+              <div className="p-5 space-y-4">
+                {/* Image Upload */}
+                <ImageUpload
+                  label="Gambar Ekstrakurikuler (Opsional)"
+                  value={formData.image}
+                  onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
+                  folder="smk-kristen5/ekskul"
+                  previewClassName="h-48 w-full object-cover"
                 />
+
+                {/* Name */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Nama Ekstrakurikuler *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Contoh: Basket, Pramuka, Paduan Suara"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Kategori *
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all appearance-none pr-8"
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Deskripsi *
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    required
+                    rows={4}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Deskripsi ekstrakurikuler..."
+                  />
+                </div>
+
+                {/* Coach */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Pembina/Pelatih *
+                  </label>
+                  <input
+                    type="text"
+                    name="coach"
+                    value={formData.coach}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Nama pembina/pelatih"
+                  />
+                </div>
+
+                {/* Schedule */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Jadwal *
+                  </label>
+                  <input
+                    type="text"
+                    name="schedule"
+                    value={formData.schedule}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Contoh: Senin & Rabu, 15:00-17:00"
+                  />
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Lokasi (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Contoh: Lapangan Basket, Aula"
+                  />
+                </div>
+
+                {/* Achievements */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Prestasi (Opsional)
+                  </label>
+                  <textarea
+                    name="achievements"
+                    value={formData.achievements}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Daftar prestasi yang pernah diraih..."
+                  />
+                </div>
+
+                {/* Active Status */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label className="ml-2 text-sm text-gray-700">
+                    Aktif (tampilkan di website)
+                  </label>
+                </div>
               </div>
 
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kategori *
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                >
-                  {categories.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Deskripsi *
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  placeholder="Deskripsi ekstrakurikuler..."
-                />
-              </div>
-
-              {/* Coach */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pembina/Pelatih *
-                </label>
-                <input
-                  type="text"
-                  name="coach"
-                  value={formData.coach}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  placeholder="Nama pembina/pelatih"
-                />
-              </div>
-
-              {/* Schedule */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Jadwal *
-                </label>
-                <input
-                  type="text"
-                  name="schedule"
-                  value={formData.schedule}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  placeholder="Contoh: Senin & Rabu, 15:00-17:00"
-                />
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Lokasi (Opsional)
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  placeholder="Contoh: Lapangan Basket, Aula"
-                />
-              </div>
-
-              {/* Achievements */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prestasi (Opsional)
-                </label>
-                <textarea
-                  name="achievements"
-                  value={formData.achievements}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  placeholder="Daftar prestasi yang pernah diraih..."
-                />
-              </div>
-
-              {/* Active Status */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <label className="ml-2 text-sm text-gray-700">
-                  Aktif (tampilkan di website)
-                </label>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex gap-3 pt-4">
+              {/* Footer */}
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   {modalMode === 'create' ? 'Tambah' : 'Update'}
                 </button>

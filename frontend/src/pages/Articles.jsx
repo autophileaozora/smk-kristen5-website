@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import api from '../utils/api';
 import useAuthStore from '../store/authStore';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-import Pagination from '../components/Pagination';
 import ImageUpload from '../components/ImageUpload';
+import {
+  Search, SlidersHorizontal, Plus, MoreVertical, MoreHorizontal, X,
+  Eye, Edit3, Trash2, Check, CheckSquare, FileText,
+  ThumbsUp, ThumbsDown, EyeOff, Send, ChevronLeft, ChevronRight,
+} from 'lucide-react';
 
-const Articles = ({ embedded = false }) => {
+const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginationChange }) => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'administrator';
 
@@ -18,23 +23,23 @@ const Articles = ({ embedded = false }) => {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 9,
     total: 0,
     pages: 1,
   });
+
+  const [activeViewTab, setActiveViewTab] = useState('articles');
 
   // Filters
   const [filters, setFilters] = useState({
     search: '',
     timeRange: '',
-    categoryJurusan: [], // Array for multiple selection
-    categoryTopik: [],   // Array for multiple selection
-    status: [],          // Array for multiple selection
+    categoryJurusan: [],
+    categoryTopik: [],
+    status: [],
   });
-  
+
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  
-  // Debounced search state
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Modals
@@ -57,84 +62,65 @@ const Articles = ({ embedded = false }) => {
   });
 
   const [toast, setToast] = useState(null);
-  const [openDropdown, setOpenDropdown] = useState(null); // Track which card's dropdown is open
+  const [articleMenu, setArticleMenu] = useState(null); // { article, top, right }
 
-  // Bulk delete states
+  const openMenuFor = (e, article) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setArticleMenu(prev => prev?.article._id === article._id ? null : { article, top: rect.bottom + 4, right: window.innerWidth - rect.right });
+  };
+  const [showSearch, setShowSearch] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+
+  // Bulk delete
   const [selectedArticles, setSelectedArticles] = useState([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
 
-  // Helper function to format date
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    
-    const dayName = days[date.getDay()];
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    
-    return `${dayName}, ${day} ${month} ${year}`;
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    });
   };
 
-  // Helper functions for checkbox filters
   const toggleArrayFilter = (filterKey, value) => {
     setFilters(prev => {
-      const currentArray = prev[filterKey];
-      const newArray = currentArray.includes(value)
-        ? currentArray.filter(v => v !== value)
-        : [...currentArray, value];
-      return { ...prev, [filterKey]: newArray };
+      const cur = prev[filterKey];
+      return {
+        ...prev,
+        [filterKey]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value],
+      };
     });
   };
 
   const getActiveFiltersCount = () => {
-    let count = 0;
-    if (filters.search) count++;
-    if (filters.timeRange) count++;
-    if (filters.categoryJurusan.length > 0) count += filters.categoryJurusan.length;
-    if (filters.categoryTopik.length > 0) count += filters.categoryTopik.length;
-    if (filters.status.length > 0) count += filters.status.length;
-    return count;
+    let c = 0;
+    if (filters.search) c++;
+    if (filters.timeRange) c++;
+    c += filters.categoryJurusan.length + filters.categoryTopik.length + filters.status.length;
+    return c;
   };
 
   const clearAllFilters = () => {
-    setFilters({
-      search: '',
-      timeRange: '',
-      categoryJurusan: [],
-      categoryTopik: [],
-      status: [],
-    });
-    setDebouncedSearch(''); // Also clear debounced search
+    setFilters({ search: '', timeRange: '', categoryJurusan: [], categoryTopik: [], status: [] });
+    setDebouncedSearch('');
   };
 
   useEffect(() => {
     fetchArticles();
     fetchCategories();
     fetchJurusans();
-  }, [pagination.page, debouncedSearch, filters.timeRange, filters.categoryJurusan, filters.categoryTopik, filters.status]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page, externalPage, debouncedSearch, filters.timeRange, filters.categoryJurusan, filters.categoryTopik, filters.status]);
 
-  // Debounce search input (wait 500ms after user stops typing)
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(filters.search);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedSearch(filters.search), 500);
+    return () => clearTimeout(handler);
   }, [filters.search]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      // Don't close if clicking inside the filter dropdown
-      if (e.target.closest('.filter-dropdown-container')) {
-        return;
-      }
-      setOpenDropdown(null);
+      if (e.target.closest('.filter-dropdown-container')) return;
+      setArticleMenu(null);
       setShowFilterDropdown(false);
     };
     document.addEventListener('click', handleClickOutside);
@@ -144,8 +130,9 @@ const Articles = ({ embedded = false }) => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
+      const currentPage = embedded ? externalPage : pagination.page;
       const params = {
-        page: pagination.page,
+        page: currentPage,
         limit: pagination.limit,
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(filters.categoryJurusan.length > 0 && { categoryJurusan: filters.categoryJurusan.join(',') }),
@@ -153,13 +140,17 @@ const Articles = ({ embedded = false }) => {
         ...(filters.timeRange && { timeRange: filters.timeRange }),
         ...(filters.status.length > 0 && { status: filters.status.join(',') }),
       };
-
       const response = await api.get('/api/articles', { params });
       setArticles(response.data.data.articles);
-      setPagination({
-        ...pagination,
-        ...response.data.data.pagination,
-      });
+      if (embedded) {
+        // Only emit to parent — don't update internal pagination.page to avoid re-fetch loop
+        if (onPaginationChange) {
+          const { pages, total } = response.data.data.pagination;
+          onPaginationChange({ pages, total });
+        }
+      } else {
+        setPagination(prev => ({ ...prev, ...response.data.data.pagination }));
+      }
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal memuat artikel', 'error');
     } finally {
@@ -188,8 +179,7 @@ const Articles = ({ embedded = false }) => {
   const handleCreateArticle = async (e) => {
     e.preventDefault();
     try {
-      // Prepare data - convert empty strings to null for optional fields
-      const createData = {
+      await api.post('/api/articles', {
         title: formData.title,
         content: formData.content,
         excerpt: formData.excerpt,
@@ -198,15 +188,12 @@ const Articles = ({ embedded = false }) => {
         featuredImage: formData.featuredImage || null,
         status: formData.status,
         metadata: formData.metadata,
-      };
-
-      await api.post('/api/articles', createData);
+      });
       showToast('Artikel berhasil dibuat', 'success');
       setShowCreateModal(false);
       resetForm();
       fetchArticles();
     } catch (error) {
-      console.error('Create error:', error.response || error);
       showToast(error.response?.data?.message || 'Gagal membuat artikel', 'error');
     }
   };
@@ -214,8 +201,7 @@ const Articles = ({ embedded = false }) => {
   const handleUpdateArticle = async (e) => {
     e.preventDefault();
     try {
-      // Prepare data - convert empty strings to null for optional fields
-      const updateData = {
+      await api.put(`/api/articles/${selectedArticle._id}`, {
         title: formData.title,
         content: formData.content,
         excerpt: formData.excerpt,
@@ -223,15 +209,12 @@ const Articles = ({ embedded = false }) => {
         categoryTopik: formData.categoryTopik || null,
         featuredImage: formData.featuredImage || null,
         metadata: formData.metadata,
-      };
-
-      await api.put(`/api/articles/${selectedArticle._id}`, updateData);
+      });
       showToast('Artikel berhasil diupdate', 'success');
       setShowEditModal(false);
       resetForm();
       fetchArticles();
     } catch (error) {
-      console.error('Update error:', error.response || error);
       showToast(error.response?.data?.message || 'Gagal update artikel', 'error');
     }
   };
@@ -248,28 +231,17 @@ const Articles = ({ embedded = false }) => {
     }
   };
 
-  // Bulk delete functions
-  const toggleSelectArticle = (articleId) => {
-    setSelectedArticles(prev =>
-      prev.includes(articleId)
-        ? prev.filter(id => id !== articleId)
-        : [...prev, articleId]
-    );
+  const toggleSelectArticle = (id) => {
+    setSelectedArticles(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   const toggleSelectAll = () => {
-    if (selectedArticles.length === articles.length) {
-      setSelectedArticles([]);
-    } else {
-      setSelectedArticles(articles.map(article => article._id));
-    }
+    setSelectedArticles(prev => prev.length === articles.length ? [] : articles.map(a => a._id));
   };
 
   const handleBulkDelete = async () => {
     try {
-      await Promise.all(
-        selectedArticles.map(id => api.delete(`/api/articles/${id}`))
-      );
+      await Promise.all(selectedArticles.map(id => api.delete(`/api/articles/${id}`)));
       showToast(`${selectedArticles.length} artikel berhasil dihapus`, 'success');
       setShowBulkDeleteModal(false);
       setSelectedArticles([]);
@@ -280,49 +252,26 @@ const Articles = ({ embedded = false }) => {
     }
   };
 
-  const cancelSelectMode = () => {
-    setIsSelectMode(false);
-    setSelectedArticles([]);
+  const cancelSelectMode = () => { setIsSelectMode(false); setSelectedArticles([]); };
+
+  const handleSubmitForApproval = async (id) => {
+    try { await api.patch(`/api/articles/${id}/submit`); showToast('Artikel diajukan untuk approval', 'success'); fetchArticles(); }
+    catch (error) { showToast(error.response?.data?.message || 'Gagal submit', 'error'); }
   };
 
-  const handleSubmitForApproval = async (articleId) => {
-    try {
-      await api.patch(`/api/articles/${articleId}/submit`);
-      showToast('Artikel berhasil diajukan untuk approval', 'success');
-      fetchArticles();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Gagal submit artikel', 'error');
-    }
+  const handleApproveArticle = async (id) => {
+    try { await api.patch(`/api/articles/${id}/approve`); showToast('Artikel disetujui', 'success'); fetchArticles(); }
+    catch (error) { showToast(error.response?.data?.message || 'Gagal approve', 'error'); }
   };
 
-  const handleApproveArticle = async (articleId) => {
-    try {
-      await api.patch(`/api/articles/${articleId}/approve`);
-      showToast('Artikel berhasil disetujui', 'success');
-      fetchArticles();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Gagal approve artikel', 'error');
-    }
+  const handleRejectArticle = async (id) => {
+    try { await api.patch(`/api/articles/${id}/reject`); showToast('Artikel ditolak', 'success'); fetchArticles(); }
+    catch (error) { showToast(error.response?.data?.message || 'Gagal reject', 'error'); }
   };
 
-  const handleRejectArticle = async (articleId) => {
-    try {
-      await api.patch(`/api/articles/${articleId}/reject`);
-      showToast('Artikel ditolak', 'success');
-      fetchArticles();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Gagal reject artikel', 'error');
-    }
-  };
-
-  const handleUnpublishArticle = async (articleId) => {
-    try {
-      await api.patch(`/api/articles/${articleId}/unpublish`);
-      showToast('Artikel berhasil di-unpublish', 'success');
-      fetchArticles();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Gagal unpublish artikel', 'error');
-    }
+  const handleUnpublishArticle = async (id) => {
+    try { await api.patch(`/api/articles/${id}/unpublish`); showToast('Artikel di-unpublish', 'success'); fetchArticles(); }
+    catch (error) { showToast(error.response?.data?.message || 'Gagal unpublish', 'error'); }
   };
 
   const openEditModal = (article) => {
@@ -344,49 +293,26 @@ const Articles = ({ embedded = false }) => {
     setShowEditModal(true);
   };
 
-  const openPreviewModal = (article) => {
-    setSelectedArticle(article);
-    setShowPreviewModal(true);
-  };
-
-  const openDeleteModal = (article) => {
-    setSelectedArticle(article);
-    setShowDeleteModal(true);
-  };
+  const openPreviewModal = (article) => { setSelectedArticle(article); setShowPreviewModal(true); };
+  const openDeleteModal = (article) => { setSelectedArticle(article); setShowDeleteModal(true); };
 
   const resetForm = () => {
-    setFormData({
-      title: '',
-      content: '',
-      excerpt: '',
-      categoryJurusan: '',
-      categoryTopik: '',
-      featuredImage: '',
-      status: 'draft',
-      metadata: { rank: '', level: '', studentName: '' },
-    });
+    setFormData({ title: '', content: '', excerpt: '', categoryJurusan: '', categoryTopik: '', featuredImage: '', status: 'draft', metadata: { rank: '', level: '', studentName: '' } });
     setSelectedArticle(null);
   };
 
-  const showToast = (message, type) => {
-    setToast({ message, type });
-  };
+  const showToast = (message, type) => setToast({ message, type });
 
   const getStatusBadge = (status) => {
-    const badges = {
-      draft: 'bg-gray-100 text-gray-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      published: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
+    const config = {
+      draft: 'bg-gray-400/12 text-gray-600 border border-gray-400/18 backdrop-blur-sm',
+      pending: 'bg-amber-400/12 text-amber-700 border border-amber-400/22 backdrop-blur-sm',
+      published: 'bg-emerald-400/12 text-emerald-700 border border-emerald-400/22 backdrop-blur-sm',
+      rejected: 'bg-red-400/12 text-red-600 border border-red-400/18 backdrop-blur-sm',
     };
-    const labels = {
-      draft: 'Draft',
-      pending: 'Pending',
-      published: 'Published',
-      rejected: 'Rejected',
-    };
+    const labels = { draft: 'Draft', pending: 'Pending', published: 'Published', rejected: 'Rejected' };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badges[status]}`}>
+      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${config[status]}`}>
         {labels[status]}
       </span>
     );
@@ -404,7 +330,6 @@ const Articles = ({ embedded = false }) => {
     return article.status !== 'published';
   };
 
-  // Quill modules configuration
   const quillModules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -416,266 +341,647 @@ const Articles = ({ embedded = false }) => {
     ],
   };
 
-  return (
-    <div className={embedded ? '' : 'space-y-6'}>
-      {/* Header */}
-      {!embedded ? (
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {isAdmin ? 'Manajemen Artikel' : 'Artikel Saya'}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            {isAdmin ? 'Kelola semua artikel' : 'Kelola artikel yang Anda buat'}
-          </p>
+  // ── Article card ─────────────────────────────────────────────────────────
+  const ArticleCard = ({ article }) => {
+    const selected = selectedArticles.includes(article._id);
+    return (
+      <div
+        className={`group relative bg-white/70 backdrop-blur-sm rounded-xl overflow-hidden transition-all duration-200 shadow-[0_1px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85)] ${
+          isSelectMode
+            ? `cursor-pointer border ${selected ? 'border-blue-400/60 ring-2 ring-blue-400/20 shadow-[0_2px_16px_rgba(59,130,246,0.12),inset_0_1px_0_rgba(255,255,255,0.85)]' : 'border-white/70 hover:border-white/90'}`
+            : 'border border-white/70 hover:border-white/95 hover:shadow-[0_4px_20px_rgba(0,0,0,0.09),inset_0_1px_0_rgba(255,255,255,0.9)]'
+        }`}
+        onClick={() => isSelectMode && toggleSelectArticle(article._id)}
+      >
+        {/* Select checkbox */}
+        {isSelectMode && (
+          <div className="absolute top-3 left-3 z-10">
+            <div className={`w-5 h-5 rounded-md flex items-center justify-center border-2 backdrop-blur-sm shadow-sm ${selected ? 'bg-blue-500 border-blue-500' : 'bg-white/70 border-white/80'}`}>
+              {selected && <Check size={11} className="text-white" strokeWidth={3} />}
+            </div>
+          </div>
+        )}
+
+        {/* Image */}
+        {article.featuredImage ? (
+          <div className="h-40 overflow-hidden bg-gray-100">
+            <img
+              src={typeof article.featuredImage === 'string' ? article.featuredImage : article.featuredImage.url}
+              alt={article.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+        ) : (
+          <div className="h-40 bg-black/[0.03] flex items-center justify-center">
+            <FileText size={36} className="text-gray-300/60" />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-2">
+            {getStatusBadge(article.status)}
+
+            {!isSelectMode && (
+              <button
+                onClick={(e) => { e.stopPropagation(); openMenuFor(e, article); }}
+                className="p-1 hover:bg-black/[0.06] rounded-lg transition-colors"
+              >
+                <MoreVertical size={15} className="text-gray-400/70" />
+              </button>
+            )}
+          </div>
+
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1 leading-snug">
+            {article.title}
+          </h3>
+
+          {article.excerpt && (
+            <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
+              {article.excerpt}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between text-[11px] text-gray-400/80 pt-2 border-t border-black/[0.05]">
+            <span className="truncate max-w-[120px]">{article.author?.name}</span>
+            <span className="flex-shrink-0">{formatDate(article.createdAt)}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {!isSelectMode ? (
-            <>
-              <button
-                onClick={() => setIsSelectMode(true)}
-                className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <span>Pilih Multiple</span>
-              </button>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
-              >
-                <span className="text-xl">+</span>
-                <span>Buat Artikel</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="text-sm text-gray-600 font-medium">
-                {selectedArticles.length} artikel dipilih
-              </span>
-              <button
-                onClick={toggleSelectAll}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                {selectedArticles.length === articles.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
-              </button>
-              {selectedArticles.length > 0 && (
-                <button
-                  onClick={() => setShowBulkDeleteModal(true)}
-                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  <span>Hapus ({selectedArticles.length})</span>
-                </button>
-              )}
-              <button
-                onClick={cancelSelectMode}
-                className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-              >
-                Batal
-              </button>
-            </>
+      </div>
+    );
+  };
+
+  // ── EMBEDDED mode (inside ArtikelPage white panel with overflow-y-auto) ──
+  if (embedded) {
+    const filterCount = getActiveFiltersCount();
+
+    // Shared filter dropdown content (reused inside glass pill)
+    const FilterDropdown = () => (
+      <div
+        className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto filter-dropdown-container"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b sticky top-0 bg-white z-10">
+            <h3 className="font-semibold text-gray-900 text-sm">Filter Artikel</h3>
+            <button onClick={() => setShowFilterDropdown(false)} className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">Terapkan</button>
+          </div>
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Berdasarkan Waktu</h4>
+            <div className="space-y-1">
+              {[{ value: '', label: 'Semua Waktu' }, { value: 'today', label: 'Hari Ini' }, { value: 'week', label: 'Minggu Ini' }, { value: 'month', label: 'Bulan Ini' }, { value: 'year', label: 'Tahun Ini' }].map(opt => (
+                <label key={opt.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                  <input type="radio" name="timeRange" checked={filters.timeRange === opt.value} onChange={() => setFilters(f => ({ ...f, timeRange: opt.value }))} className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-sm text-gray-700">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Jurusan {filters.categoryJurusan.length > 0 && <span className="text-blue-600">({filters.categoryJurusan.length})</span>}</h4>
+            <div className="space-y-1 max-h-28 overflow-y-auto">
+              {jurusans.length > 0 ? jurusans.map(j => (
+                <label key={j._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                  <input type="checkbox" checked={filters.categoryJurusan.includes(j._id)} onChange={() => toggleArrayFilter('categoryJurusan', j._id)} className="w-3.5 h-3.5 text-blue-600 rounded" />
+                  <span className="text-sm text-gray-700">{j.code} - {j.name}</span>
+                </label>
+              )) : <p className="text-xs text-gray-400 italic px-2">Belum ada jurusan</p>}
+            </div>
+          </div>
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Topik {filters.categoryTopik.length > 0 && <span className="text-blue-600">({filters.categoryTopik.length})</span>}</h4>
+            <div className="space-y-1 max-h-28 overflow-y-auto">
+              {categories.filter(c => c.type === 'topik').length > 0 ? categories.filter(c => c.type === 'topik').map(cat => (
+                <label key={cat._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                  <input type="checkbox" checked={filters.categoryTopik.includes(cat._id)} onChange={() => toggleArrayFilter('categoryTopik', cat._id)} className="w-3.5 h-3.5 text-blue-600 rounded" />
+                  <span className="text-sm text-gray-700">{cat.name}</span>
+                </label>
+              )) : <p className="text-xs text-gray-400 italic px-2">Belum ada topik</p>}
+            </div>
+          </div>
+          <div className="mb-2">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status {filters.status.length > 0 && <span className="text-blue-600">({filters.status.length})</span>}</h4>
+            <div className="space-y-1">
+              {['draft', 'pending', 'published', 'rejected'].map(s => (
+                <label key={s} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                  <input type="checkbox" checked={filters.status.includes(s)} onChange={() => toggleArrayFilter('status', s)} className="w-3.5 h-3.5 text-blue-600 rounded" />
+                  <span className="text-sm text-gray-700 capitalize">{s}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          {filterCount > 0 && (
+            <div className="mt-3 pt-3 border-t sticky bottom-0 bg-white">
+              <button onClick={clearAllFilters} className="w-full py-1.5 text-sm text-red-500 hover:bg-red-50 rounded-lg font-medium">Hapus Semua Filter</button>
+            </div>
           )}
         </div>
       </div>
-      ) : (
-      <div className="flex items-center justify-end gap-2 mb-4">
-        {!isSelectMode ? (
-          <>
-            <button
-              onClick={() => setIsSelectMode(true)}
-              className="flex items-center gap-2 bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <span>Pilih</span>
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-primary-600 text-white px-3 py-2 rounded-lg hover:bg-primary-700 text-sm"
-            >
-              <span>+</span>
-              <span>Buat Artikel</span>
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="text-sm text-gray-600 font-medium">{selectedArticles.length} dipilih</span>
-            <button onClick={toggleSelectAll} className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm">
+    );
+
+    return (
+      <>
+        {/* ── Select mode bar (full-width sticky, only when active) ──────── */}
+        {isSelectMode && (
+          <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 py-2 flex items-center gap-2">
+            <span className="text-xs text-gray-500 whitespace-nowrap">{selectedArticles.length} dipilih</span>
+            <button onClick={toggleSelectAll} className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-lg font-medium">
               {selectedArticles.length === articles.length ? 'Batal Semua' : 'Pilih Semua'}
             </button>
             {selectedArticles.length > 0 && (
-              <button onClick={() => setShowBulkDeleteModal(true)} className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm">
+              <button onClick={() => setShowBulkDeleteModal(true)} className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded-lg font-medium">
                 Hapus ({selectedArticles.length})
               </button>
             )}
-            <button onClick={cancelSelectMode} className="flex items-center gap-2 bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600 text-sm">
-              Batal
-            </button>
-          </>
+            <button onClick={cancelSelectMode} className="text-xs px-2 py-1 border border-gray-200 text-gray-500 rounded-lg ml-auto">Batal</button>
+          </div>
         )}
-      </div>
-      )}
 
-      {/* Search + Filter */}
-      <div className="bg-white rounded-lg shadow p-6">
-        {/* Search Bar + Filter Button */}
-        <div className="flex gap-3">
-          {/* Search - Full Width */}
-          <input
-            type="text"
-            placeholder="🔍 Cari judul artikel..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
-          />
+        {/* ── Floating glass action pill (h-0 sticky so it overlays cards) ── */}
+        <div className="sticky top-3 z-10 h-0 overflow-visible flex justify-end pr-3 pointer-events-none">
+          <div className="pointer-events-auto">
+            {!showActions ? (
+              /* Collapsed — vertical dots, blue glass so it's clearly a button */
+              <button
+                onClick={() => setShowActions(true)}
+                className="bg-gradient-to-br from-blue-500 to-blue-600 backdrop-blur-xl border border-blue-400/40 shadow-[0_4px_18px_rgba(59,130,246,0.45),inset_0_1px_0_rgba(255,255,255,0.25)] rounded-2xl p-2.5 text-white transition-all duration-200 hover:shadow-[0_6px_24px_rgba(59,130,246,0.55)] hover:scale-105 active:scale-95"
+                title="Aksi"
+              >
+                <MoreVertical size={18} />
+              </button>
+            ) : (
+              /* Expanded — liquid Apple glass pill */
+              <div className="bg-gradient-to-b from-white/55 to-white/35 backdrop-blur-2xl border border-white/70 shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(0,0,0,0.04)] rounded-2xl px-2.5 py-2 flex items-center gap-1.5">
 
-          {/* Filter Button */}
+                {/* Search input — inline, only when toggled */}
+                {showSearch && (
+                  <div className="relative">
+                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400/70 pointer-events-none" />
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="cari judul artikel..."
+                      value={filters.search}
+                      onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+                      className="w-52 pl-7 pr-3 py-1.5 text-sm bg-black/[0.06] border border-black/10 rounded-xl focus:outline-none focus:border-blue-400/50 focus:bg-black/[0.04] placeholder-gray-400/60 text-gray-700"
+                    />
+                  </div>
+                )}
+
+                <div className="w-px h-4 bg-black/10" />
+
+                {/* Search toggle */}
+                <button
+                  onClick={() => { setShowSearch(v => !v); if (showSearch) setFilters(f => ({ ...f, search: '' })); }}
+                  className={`p-1.5 rounded-xl transition-all duration-150 ${showSearch || filters.search ? 'bg-blue-500/15 text-blue-600 shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]' : 'text-gray-500/80 hover:bg-black/[0.06] hover:text-gray-700'}`}
+                  title="Cari"
+                >
+                  <Search size={16} />
+                </button>
+
+                {/* Filter */}
+                <div className="relative filter-dropdown-container">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowFilterDropdown(v => !v); }}
+                    className={`relative p-1.5 rounded-xl transition-all duration-150 ${showFilterDropdown || filterCount > 0 ? 'bg-blue-500/15 text-blue-600 shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]' : 'text-gray-500/80 hover:bg-black/[0.06] hover:text-gray-700'}`}
+                    title="Filter"
+                  >
+                    <SlidersHorizontal size={16} />
+                    {filterCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-blue-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-[0_1px_4px_rgba(59,130,246,0.5)]">
+                        {filterCount}
+                      </span>
+                    )}
+                  </button>
+                  {showFilterDropdown && <FilterDropdown />}
+                </div>
+
+                {/* Add article */}
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="p-1.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-500/90 hover:to-blue-700 text-white transition-all shadow-[0_2px_8px_rgba(59,130,246,0.40),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_3px_12px_rgba(59,130,246,0.50)]"
+                  title="Buat Artikel"
+                >
+                  <Plus size={16} />
+                </button>
+
+                {/* Select mode */}
+                {!isSelectMode && (
+                  <button
+                    onClick={() => setIsSelectMode(true)}
+                    className="p-1.5 rounded-xl text-gray-500/80 hover:bg-black/[0.06] hover:text-gray-700 transition-all duration-150"
+                    title="Pilih Multiple"
+                  >
+                    <CheckSquare size={16} />
+                  </button>
+                )}
+
+                {/* Divider + Close */}
+                <div className="w-px h-4 bg-black/10 mx-0.5" />
+                <button
+                  onClick={() => { setShowActions(false); setShowSearch(false); setFilters(f => ({ ...f, search: '' })); }}
+                  className="p-1.5 rounded-xl text-gray-400/70 hover:bg-black/[0.06] hover:text-gray-600 transition-all duration-150"
+                  title="Tutup"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Active filter pills */}
+        {filterCount > 0 && (
+          <div className="px-4 pt-3 pb-2 pr-14 flex flex-wrap gap-1.5 items-center">
+            {filters.search && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                "{filters.search}"<button onClick={() => setFilters(f => ({ ...f, search: '' }))} className="ml-0.5 hover:text-blue-900">×</button>
+              </span>
+            )}
+            {filters.timeRange && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
+                {filters.timeRange === 'today' ? 'Hari Ini' : filters.timeRange === 'week' ? 'Minggu Ini' : filters.timeRange === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
+                <button onClick={() => setFilters(f => ({ ...f, timeRange: '' }))} className="ml-0.5">×</button>
+              </span>
+            )}
+            {filters.categoryJurusan.map(id => { const j = jurusans.find(x => x._id === id); return j ? <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-50 text-violet-700 rounded-full text-xs font-medium">{j.code}<button onClick={() => toggleArrayFilter('categoryJurusan', id)} className="ml-0.5">×</button></span> : null; })}
+            {filters.categoryTopik.map(id => { const c = categories.find(x => x._id === id); return c ? <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{c.name}<button onClick={() => toggleArrayFilter('categoryTopik', id)} className="ml-0.5">×</button></span> : null; })}
+            {filters.status.map(s => (
+              <span key={s} className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium capitalize">
+                {s}<button onClick={() => toggleArrayFilter('status', s)} className="ml-0.5">×</button>
+              </span>
+            ))}
+            <button onClick={clearAllFilters} className="text-xs text-red-500 hover:text-red-700 font-medium">Hapus semua</button>
+          </div>
+        )}
+
+        {/* ── Article cards ────────────────────────────────────────────── */}
+        <div className="p-4 pb-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-gray-100 rounded-xl h-[230px] animate-pulse" />
+            ))
+          ) : articles.length === 0 ? (
+            <div className="col-span-3 py-16 text-center">
+              <FileText size={40} className="mx-auto text-gray-200 mb-3" />
+              <p className="text-sm text-gray-400">Belum ada artikel</p>
+              <button onClick={() => setShowCreateModal(true)} className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                Buat Artikel Pertama
+              </button>
+            </div>
+          ) : (
+            articles.map(a => <ArticleCard key={a._id} article={a} />)
+          )}
+        </div>
+
+        {/* Article context menu — portal to body so it's never clipped */}
+        {articleMenu && createPortal(
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setArticleMenu(null)} />
+            <div
+              className="fixed z-50 w-44 bg-white/80 backdrop-blur-2xl rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] border border-white/70 overflow-hidden py-1"
+              style={{ top: articleMenu.top, right: articleMenu.right }}
+            >
+              <button onClick={() => { openPreviewModal(articleMenu.article); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] flex items-center gap-2.5 transition-colors">
+                <Eye size={14} className="text-gray-400/70" /><span>Preview</span>
+              </button>
+              {canEdit(articleMenu.article) && (
+                <button onClick={() => { openEditModal(articleMenu.article); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] flex items-center gap-2.5 transition-colors">
+                  <Edit3 size={14} className="text-gray-400/70" /><span>Edit</span>
+                </button>
+              )}
+              {!isAdmin && articleMenu.article.status === 'draft' && articleMenu.article.author._id === user.id && (
+                <button onClick={() => { handleSubmitForApproval(articleMenu.article._id); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-400/10 flex items-center gap-2.5 transition-colors">
+                  <Send size={14} /><span>Submit for Approval</span>
+                </button>
+              )}
+              {isAdmin && articleMenu.article.status === 'draft' && (
+                <button onClick={() => { handleApproveArticle(articleMenu.article._id); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-400/10 flex items-center gap-2.5 transition-colors">
+                  <ThumbsUp size={14} /><span>Publish</span>
+                </button>
+              )}
+              {isAdmin && articleMenu.article.status === 'pending' && (
+                <>
+                  <button onClick={() => { handleApproveArticle(articleMenu.article._id); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-400/10 flex items-center gap-2.5 transition-colors">
+                    <ThumbsUp size={14} /><span>Approve & Publish</span>
+                  </button>
+                  <button onClick={() => { handleRejectArticle(articleMenu.article._id); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-400/10 flex items-center gap-2.5 transition-colors">
+                    <ThumbsDown size={14} /><span>Reject</span>
+                  </button>
+                </>
+              )}
+              {isAdmin && articleMenu.article.status === 'published' && (
+                <button onClick={() => { handleUnpublishArticle(articleMenu.article._id); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-amber-700 hover:bg-amber-400/10 flex items-center gap-2.5 transition-colors">
+                  <EyeOff size={14} /><span>Unpublish</span>
+                </button>
+              )}
+              {canDelete(articleMenu.article) && (
+                <>
+                  <div className="border-t border-black/[0.06] my-1" />
+                  <button onClick={() => { openDeleteModal(articleMenu.article); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-400/10 flex items-center gap-2.5 transition-colors">
+                    <Trash2 size={14} /><span>Hapus</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </>,
+          document.body
+        )}
+
+        {/* Modals */}
+        <Modal
+          isOpen={showCreateModal || showEditModal}
+          onClose={() => { showCreateModal ? setShowCreateModal(false) : setShowEditModal(false); resetForm(); }}
+          title={showCreateModal ? 'Buat Artikel Baru' : 'Edit Artikel'}
+          size="xl"
+        >
+          <form onSubmit={showCreateModal ? handleCreateArticle : handleUpdateArticle} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Judul Artikel *</label>
+              <input type="text" value={formData.title} onChange={(e) => setFormData(f => ({ ...f, title: e.target.value }))} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan judul artikel..." />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Jurusan (Opsional)</label>
+              <select value={formData.categoryJurusan} onChange={(e) => setFormData(f => ({ ...f, categoryJurusan: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">Pilih Jurusan (Opsional)</option>
+                {jurusans.map(j => <option key={j._id} value={j._id}>{j.code} - {j.name}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Topik (Opsional)</label>
+              <select value={formData.categoryTopik} onChange={(e) => setFormData(f => ({ ...f, categoryTopik: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">Pilih Topik (Opsional)</option>
+                {categories.filter(c => c.type === 'topik').map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+              </select>
+            </div>
+
+            {(() => {
+              const selectedTopik = categories.find(c => c._id === formData.categoryTopik);
+              if (selectedTopik?.slug?.toLowerCase() !== 'prestasi') return null;
+              return (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                  <p className="text-sm font-semibold text-amber-800">Informasi Prestasi</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-amber-700 mb-1">Peringkat</label>
+                      <select value={formData.metadata.rank} onChange={(e) => setFormData(f => ({ ...f, metadata: { ...f.metadata, rank: e.target.value } }))} className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm bg-white">
+                        <option value="">Pilih peringkat...</option>
+                        {['Juara I','Juara II','Juara III','Harapan I','Harapan II','Medali Emas','Medali Perak','Medali Perunggu','Finalis'].map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-amber-700 mb-1">Tingkat</label>
+                      <select value={formData.metadata.level} onChange={(e) => setFormData(f => ({ ...f, metadata: { ...f.metadata, level: e.target.value } }))} className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm bg-white">
+                        <option value="">Pilih tingkat...</option>
+                        {['Kabupaten/Kota','Provinsi','Nasional','Internasional'].map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-amber-700 mb-1">Nama Siswa / Tim</label>
+                    <input type="text" value={formData.metadata.studentName} onChange={(e) => setFormData(f => ({ ...f, metadata: { ...f.metadata, studentName: e.target.value } }))} className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm bg-white" placeholder="Contoh: Imanuel Damanik / Tim A" />
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ringkasan (Excerpt)</label>
+              <textarea value={formData.excerpt} onChange={(e) => setFormData(f => ({ ...f, excerpt: e.target.value }))} rows={3} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ringkasan singkat artikel..." />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Konten Artikel *</label>
+              <ReactQuill theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
+            </div>
+
+            <ImageUpload label="Gambar Unggulan" value={formData.featuredImage} onChange={(url) => setFormData(f => ({ ...f, featuredImage: url }))} folder="smk-kristen5/articles" previewClassName="h-48 w-full object-cover" />
+
+            <div className="flex gap-3 pt-4">
+              <button type="button" onClick={() => { showCreateModal ? setShowCreateModal(false) : setShowEditModal(false); resetForm(); }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">Batal</button>
+              <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">{showCreateModal ? 'Buat Artikel' : 'Update Artikel'}</button>
+            </div>
+          </form>
+        </Modal>
+
+        <Modal isOpen={showPreviewModal} onClose={() => { setShowPreviewModal(false); setSelectedArticle(null); }} title="Preview Artikel" size="xl">
+          {selectedArticle && (
+            <div className="prose max-w-none">
+              {selectedArticle.featuredImage && (
+                <img src={typeof selectedArticle.featuredImage === 'string' ? selectedArticle.featuredImage : selectedArticle.featuredImage.url} alt={selectedArticle.title} className="w-full h-64 object-cover rounded-lg mb-4" />
+              )}
+              <h1>{selectedArticle.title}</h1>
+              <div className="text-sm text-gray-500 mb-4 flex gap-2 flex-wrap">
+                {selectedArticle.categoryJurusan && <span>{selectedArticle.categoryJurusan.name}</span>}
+                {selectedArticle.categoryTopik && <span>{selectedArticle.categoryTopik.name}</span>}
+                <span>{selectedArticle.author?.name}</span>
+              </div>
+              <div dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
+            </div>
+          )}
+        </Modal>
+
+        <Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setSelectedArticle(null); }} title="Konfirmasi Hapus" size="sm">
+          <div className="space-y-4">
+            <p className="text-gray-600">Hapus artikel <span className="font-semibold">"{selectedArticle?.title}"</span>?</p>
+            <p className="text-sm text-red-600">Aksi ini tidak dapat dibatalkan.</p>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => { setShowDeleteModal(false); setSelectedArticle(null); }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Batal</button>
+              <button onClick={handleDeleteArticle} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">Hapus</button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal isOpen={showBulkDeleteModal} onClose={() => setShowBulkDeleteModal(false)} title="Konfirmasi Hapus Multiple" size="sm">
+          <div className="space-y-4">
+            <p className="text-gray-600">Hapus <span className="font-semibold text-red-600">{selectedArticles.length} artikel</span>?</p>
+            <p className="text-sm text-red-600 font-semibold">Aksi ini tidak dapat dibatalkan!</p>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setShowBulkDeleteModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Batal</button>
+              <button onClick={handleBulkDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-semibold">Hapus {selectedArticles.length} Artikel</button>
+            </div>
+          </div>
+        </Modal>
+
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      </>
+    );
+  }
+
+  // ── FULL PAGE mode ─────────────────────────────────────────────────────────
+  const filterCount = getActiveFiltersCount();
+
+  return (
+    <div className="-mx-4 -my-6 lg:-mx-8">
+
+      {/* ── Combined sticky header ─────────────────────────────────────── */}
+      <div className="sticky top-0 z-20 shadow-sm">
+        {/* Blue page header */}
+        <div className="bg-blue-600 text-white px-6 lg:px-8 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold leading-tight">
+              {isAdmin ? 'Artikel' : 'Artikel Saya'}
+            </h1>
+            <p className="text-sm text-blue-200 leading-tight">
+              {isAdmin ? 'Kelola artikel dan kategori konten' : 'Artikel yang Anda buat'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveViewTab('articles')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeViewTab === 'articles' ? 'border border-white text-white' : 'text-white/60 hover:text-white border border-transparent'
+              }`}
+            >
+              Semua Artikel
+            </button>
+            <button
+              onClick={() => setActiveViewTab('categories')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeViewTab === 'categories' ? 'border border-white text-white' : 'text-white/60 hover:text-white border border-transparent'
+              }`}
+            >
+              Kategori
+            </button>
+          </div>
+        </div>
+
+        {/* Search + action toolbar */}
+        <div className="bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-2.5">
+          {/* Select mode info */}
+          {isSelectMode && (
+            <div className="flex items-center gap-2 mr-1">
+              <span className="text-xs text-gray-500 whitespace-nowrap">{selectedArticles.length} dipilih</span>
+              <button onClick={toggleSelectAll} className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-lg font-medium">
+                {selectedArticles.length === articles.length ? 'Batal Semua' : 'Pilih Semua'}
+              </button>
+              {selectedArticles.length > 0 && (
+                <button onClick={() => setShowBulkDeleteModal(true)} className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded-lg font-medium">
+                  Hapus ({selectedArticles.length})
+                </button>
+              )}
+              <button onClick={cancelSelectMode} className="text-xs px-2 py-1 border border-gray-200 text-gray-500 rounded-lg">Batal</button>
+              <div className="w-px h-5 bg-gray-200 mx-1" />
+            </div>
+          )}
+
+          {/* Search input */}
+          <div className="flex-1 relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="cari judul artikel..."
+              value={filters.search}
+              onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+              className="w-full pl-8 pr-4 py-2 text-sm bg-amber-50/70 border border-amber-100 rounded-lg focus:outline-none focus:border-amber-300 placeholder-gray-400"
+            />
+          </div>
+
+          {/* Filter button */}
           <div className="relative filter-dropdown-container">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowFilterDropdown(!showFilterDropdown);
-              }}
-              className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              onClick={(e) => { e.stopPropagation(); setShowFilterDropdown(v => !v); }}
+              className={`relative p-2 rounded-lg border transition-colors ${
+                showFilterDropdown || filterCount > 0
+                  ? 'border-blue-200 bg-blue-50 text-blue-600'
+                  : 'border-gray-200 hover:bg-gray-50 text-gray-500'
+              }`}
             >
-              <span className="text-lg">🎯</span>
-              <span className="font-medium">Filter</span>
-              {getActiveFiltersCount() > 0 && (
-                <span className="ml-1 px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full">
-                  {getActiveFiltersCount()}
+              <SlidersHorizontal size={16} />
+              {filterCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {filterCount}
                 </span>
               )}
             </button>
 
-            {/* Filter Dropdown */}
+            {/* Filter dropdown */}
             {showFilterDropdown && (
-              <div 
-                className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-20 max-h-96 overflow-y-auto"
-                onClick={(e) => e.stopPropagation()} // Prevent dropdown from closing when clicking inside
+              <div
+                className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-30 max-h-96 overflow-y-auto filter-dropdown-container"
+                onClick={e => e.stopPropagation()}
               >
                 <div className="p-4">
-                  {/* Header */}
                   <div className="flex items-center justify-between mb-4 pb-3 border-b sticky top-0 bg-white z-10">
-                    <h3 className="font-semibold text-gray-900">Filter Artikel</h3>
+                    <h3 className="font-semibold text-gray-900 text-sm">Filter Artikel</h3>
                     <button
                       onClick={() => setShowFilterDropdown(false)}
-                      className="px-4 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
                     >
-                      Apply
+                      Terapkan
                     </button>
                   </div>
 
-                  {/* Time Range Section */}
-                  <div className="mb-5">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">📅 Berdasarkan Waktu</h4>
-                    <div className="space-y-2">
+                  {/* Time range */}
+                  <div className="mb-4">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Berdasarkan Waktu</h4>
+                    <div className="space-y-1">
                       {[
                         { value: '', label: 'Semua Waktu' },
                         { value: 'today', label: 'Hari Ini' },
                         { value: 'week', label: 'Minggu Ini' },
                         { value: 'month', label: 'Bulan Ini' },
                         { value: 'year', label: 'Tahun Ini' },
-                      ].map((option) => (
-                        <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                          <input
-                            type="radio"
-                            name="timeRange"
-                            checked={filters.timeRange === option.value}
-                            onChange={() => setFilters({ ...filters, timeRange: option.value })}
-                            className="w-4 h-4 text-primary-600"
-                          />
-                          <span className="text-sm text-gray-700">{option.label}</span>
+                      ].map((opt) => (
+                        <label key={opt.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                          <input type="radio" name="timeRange" checked={filters.timeRange === opt.value} onChange={() => setFilters(f => ({ ...f, timeRange: opt.value }))} className="w-3.5 h-3.5 text-blue-600" />
+                          <span className="text-sm text-gray-700">{opt.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
-                  {/* Jurusan Section */}
-                  <div className="mb-5">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      📁 Jurusan {filters.categoryJurusan.length > 0 && `(${filters.categoryJurusan.length} dipilih)`}
+                  {/* Jurusan */}
+                  <div className="mb-4">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Jurusan {filters.categoryJurusan.length > 0 && <span className="text-blue-600">({filters.categoryJurusan.length})</span>}
                     </h4>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {jurusans.length > 0 ? (
-                        jurusans.map((jurusan) => (
-                          <label key={jurusan._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                            <input
-                              type="checkbox"
-                              checked={filters.categoryJurusan.includes(jurusan._id)}
-                              onChange={() => toggleArrayFilter('categoryJurusan', jurusan._id)}
-                              className="w-4 h-4 text-primary-600 rounded"
-                            />
-                            <span className="text-sm text-gray-700">{jurusan.code} - {jurusan.name}</span>
-                          </label>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">Belum ada jurusan</p>
-                      )}
+                    <div className="space-y-1 max-h-28 overflow-y-auto">
+                      {jurusans.length > 0 ? jurusans.map(j => (
+                        <label key={j._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                          <input type="checkbox" checked={filters.categoryJurusan.includes(j._id)} onChange={() => toggleArrayFilter('categoryJurusan', j._id)} className="w-3.5 h-3.5 text-blue-600 rounded" />
+                          <span className="text-sm text-gray-700">{j.code} - {j.name}</span>
+                        </label>
+                      )) : <p className="text-xs text-gray-400 italic px-2">Belum ada jurusan</p>}
                     </div>
                   </div>
 
-                  {/* Topik Section */}
-                  <div className="mb-5">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      🏷️ Topik {filters.categoryTopik.length > 0 && `(${filters.categoryTopik.length} dipilih)`}
+                  {/* Topik */}
+                  <div className="mb-4">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Topik {filters.categoryTopik.length > 0 && <span className="text-blue-600">({filters.categoryTopik.length})</span>}
                     </h4>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {categories.filter(cat => cat.type === 'topik').length > 0 ? (
-                        categories.filter(cat => cat.type === 'topik').map((cat) => (
-                          <label key={cat._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                            <input
-                              type="checkbox"
-                              checked={filters.categoryTopik.includes(cat._id)}
-                              onChange={() => toggleArrayFilter('categoryTopik', cat._id)}
-                              className="w-4 h-4 text-primary-600 rounded"
-                            />
-                            <span className="text-sm text-gray-700">{cat.name}</span>
-                          </label>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">Belum ada kategori topik</p>
-                      )}
+                    <div className="space-y-1 max-h-28 overflow-y-auto">
+                      {categories.filter(c => c.type === 'topik').length > 0 ? categories.filter(c => c.type === 'topik').map(cat => (
+                        <label key={cat._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                          <input type="checkbox" checked={filters.categoryTopik.includes(cat._id)} onChange={() => toggleArrayFilter('categoryTopik', cat._id)} className="w-3.5 h-3.5 text-blue-600 rounded" />
+                          <span className="text-sm text-gray-700">{cat.name}</span>
+                        </label>
+                      )) : <p className="text-xs text-gray-400 italic px-2">Belum ada topik</p>}
                     </div>
                   </div>
 
-                  {/* Status Section */}
-                  <div className="mb-3">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      📊 Status {filters.status.length > 0 && `(${filters.status.length} dipilih)`}
+                  {/* Status */}
+                  <div className="mb-2">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Status {filters.status.length > 0 && <span className="text-blue-600">({filters.status.length})</span>}
                     </h4>
-                    <div className="space-y-2">
-                      {[
-                        { value: 'draft', label: 'Draft' },
-                        { value: 'pending', label: 'Pending' },
-                        { value: 'published', label: 'Published' },
-                        { value: 'rejected', label: 'Rejected' },
-                      ].map((option) => (
-                        <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                          <input
-                            type="checkbox"
-                            checked={filters.status.includes(option.value)}
-                            onChange={() => toggleArrayFilter('status', option.value)}
-                            className="w-4 h-4 text-primary-600 rounded"
-                          />
-                          <span className="text-sm text-gray-700">{option.label}</span>
+                    <div className="space-y-1">
+                      {['draft', 'pending', 'published', 'rejected'].map(s => (
+                        <label key={s} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                          <input type="checkbox" checked={filters.status.includes(s)} onChange={() => toggleArrayFilter('status', s)} className="w-3.5 h-3.5 text-blue-600 rounded" />
+                          <span className="text-sm text-gray-700 capitalize">{s}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
-                  {/* Clear All Button at Bottom */}
-                  {getActiveFiltersCount() > 0 && (
-                    <div className="mt-4 pt-3 border-t sticky bottom-0 bg-white">
-                      <button
-                        onClick={clearAllFilters}
-                        className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
-                      >
-                        Clear All Filters
+                  {filterCount > 0 && (
+                    <div className="mt-3 pt-3 border-t sticky bottom-0 bg-white">
+                      <button onClick={clearAllFilters} className="w-full py-1.5 text-sm text-red-500 hover:bg-red-50 rounded-lg font-medium">
+                        Hapus Semua Filter
                       </button>
                     </div>
                   )}
@@ -683,639 +989,290 @@ const Articles = ({ embedded = false }) => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Active Filters Display */}
-        {getActiveFiltersCount() > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="text-sm text-gray-600">Filter aktif:</span>
-            
-            {filters.search && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                🔍 "{filters.search}"
-                <button
-                  onClick={() => setFilters({ ...filters, search: '' })}
-                  className="hover:text-blue-900 font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            
-            {filters.timeRange && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                📅 {filters.timeRange === 'today' ? 'Hari Ini' : filters.timeRange === 'week' ? 'Minggu Ini' : filters.timeRange === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
-                <button
-                  onClick={() => setFilters({ ...filters, timeRange: '' })}
-                  className="hover:text-green-900 font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            
-            {filters.categoryJurusan.map(jurusanId => {
-              const jurusan = jurusans.find(j => j._id === jurusanId);
-              return jurusan ? (
-                <span key={jurusanId} className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                  📁 {jurusan.code} - {jurusan.name}
-                  <button
-                    onClick={() => toggleArrayFilter('categoryJurusan', jurusanId)}
-                    className="hover:text-purple-900 font-bold"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ) : null;
-            })}
-            
-            {filters.categoryTopik.map(catId => {
-              const cat = categories.find(c => c._id === catId);
-              return cat ? (
-                <span key={catId} className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">
-                  🏷️ {cat.name}
-                  <button
-                    onClick={() => toggleArrayFilter('categoryTopik', catId)}
-                    className="hover:text-indigo-900 font-bold"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ) : null;
-            })}
-            
-            {filters.status.map(status => (
-              <span key={status} className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
-                📊 {status === 'draft' ? 'Draft' : status === 'pending' ? 'Pending' : status === 'published' ? 'Published' : 'Rejected'}
-                <button
-                  onClick={() => toggleArrayFilter('status', status)}
-                  className="hover:text-orange-900 font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
-            
+          {/* Add article */}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+            title="Buat Artikel"
+          >
+            <Plus size={16} />
+          </button>
+
+          {/* Select mode toggle */}
+          {!isSelectMode && (
             <button
-              onClick={clearAllFilters}
-              className="text-sm text-red-600 hover:text-red-800 font-medium"
+              onClick={() => setIsSelectMode(true)}
+              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+              title="Pilih Multiple"
             >
-              Clear All
+              <CheckSquare size={16} />
             </button>
-          </div>
-        )}
-      </div>
-
-      {/* Articles Grid */}
-      {!loading && (
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600">
-            Menampilkan {articles.length} dari {pagination.total} artikel
-          </p>
-          {pagination.pages > 1 && (
-            <p className="text-sm text-gray-600">
-              Halaman {pagination.page} dari {pagination.pages}
-            </p>
           )}
         </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <div className="col-span-3 p-8 text-center text-gray-500">Loading...</div>
-        ) : articles.length === 0 ? (
-          <div className="col-span-3 p-8 text-center text-gray-500">
-            Belum ada artikel
-          </div>
-        ) : (
-          articles.map((article) => (
-            <div
-              key={article._id}
-              onClick={() => isSelectMode && toggleSelectArticle(article._id)}
-              className={`bg-white rounded-lg shadow hover:shadow-lg transition-all relative ${
-                isSelectMode ? 'cursor-pointer' : ''
-              } ${
-                isSelectMode && selectedArticles.includes(article._id) ? 'ring-2 ring-blue-500' : ''
-              }`}
-            >
-              {/* Select Mode Checkbox Overlay */}
-              {isSelectMode && (
-                <div className="absolute top-2 left-2 z-10 pointer-events-none">
-                  <input
-                    type="checkbox"
-                    checked={selectedArticles.includes(article._id)}
-                    onChange={() => {}}
-                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                </div>
-              )}
-
-              {/* Featured Image */}
-              {article.featuredImage && (
-                <div className="relative overflow-hidden rounded-t-lg">
-                  <img
-                    src={typeof article.featuredImage === 'string' ? article.featuredImage : article.featuredImage.url}
-                    alt={article.title}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="p-4">
-                {/* Header: Status Badge + Dropdown Menu */}
-                <div className="flex items-start justify-between mb-2">
-                  {getStatusBadge(article.status)}
-                  
-                  {/* 3-Dot Dropdown Menu */}
-                  {!isSelectMode && (
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenDropdown(openDropdown === article._id ? null : article._id);
-                        }}
-                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        <span className="text-xl text-gray-600">⋮</span>
-                      </button>
-
-                    {/* Dropdown Menu */}
-                    {openDropdown === article._id && (
-                      <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                        <div className="py-1">
-                          {/* Preview */}
-                          <button
-                            onClick={() => {
-                              openPreviewModal(article);
-                              setOpenDropdown(null);
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <span>👁️</span>
-                            <span>Preview</span>
-                          </button>
-
-                          {/* Edit */}
-                          {canEdit(article) && (
-                            <button
-                              onClick={() => {
-                                openEditModal(article);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                            >
-                              <span>✏️</span>
-                              <span>Edit</span>
-                            </button>
-                          )}
-
-                          {/* Submit for Approval (Siswa) */}
-                          {!isAdmin && article.status === 'draft' && article.author._id === user.id && (
-                            <button
-                              onClick={() => {
-                                handleSubmitForApproval(article._id);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-green-50 flex items-center gap-2"
-                            >
-                              <span>📤</span>
-                              <span>Submit for Approval</span>
-                            </button>
-                          )}
-
-                          {/* Publish (Admin untuk draft) */}
-                          {isAdmin && article.status === 'draft' && (
-                            <button
-                              onClick={() => {
-                                handleApproveArticle(article._id);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-green-50 flex items-center gap-2"
-                            >
-                              <span>✓</span>
-                              <span>Publish</span>
-                            </button>
-                          )}
-
-                          {/* Approve (Admin untuk pending) */}
-                          {isAdmin && article.status === 'pending' && (
-                            <button
-                              onClick={() => {
-                                handleApproveArticle(article._id);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-green-50 flex items-center gap-2"
-                            >
-                              <span>✓</span>
-                              <span>Approve & Publish</span>
-                            </button>
-                          )}
-
-                          {/* Reject (Admin untuk draft dan pending) */}
-                          {isAdmin && (article.status === 'pending' || article.status === 'draft') && (
-                            <button
-                              onClick={() => {
-                                handleRejectArticle(article._id);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-red-50 flex items-center gap-2"
-                            >
-                              <span>✕</span>
-                              <span>Reject</span>
-                            </button>
-                          )}
-
-                          {/* Unpublish (Admin) */}
-                          {isAdmin && article.status === 'published' && (
-                            <button
-                              onClick={() => {
-                                handleUnpublishArticle(article._id);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-orange-700 hover:bg-orange-50 flex items-center gap-2"
-                            >
-                              <span>⏸️</span>
-                              <span>Unpublish</span>
-                            </button>
-                          )}
-
-                          {/* Divider */}
-                          {canDelete(article) && (
-                            <div className="border-t border-gray-200 my-1"></div>
-                          )}
-
-                          {/* Delete */}
-                          {canDelete(article) && (
-                            <button
-                              onClick={() => {
-                                openDeleteModal(article);
-                                setOpenDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-red-50 flex items-center gap-2"
-                            >
-                              <span>🗑️</span>
-                              <span>Hapus</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Title */}
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                  {article.title}
-                </h3>
-
-                {/* Excerpt */}
-                <p className="text-sm text-gray-600 mb-3 line-clamp-3">
-                  {article.excerpt}
-                </p>
-
-                {/* Date */}
-                <div className="text-xs text-gray-500 mb-3">
-                  📅 {formatDate(article.createdAt)}
-                </div>
-
-                {/* Meta: Categories + Author */}
-                <div className="flex items-center text-xs text-gray-500">
-                  {article.categoryJurusan && (
-                    <>
-                      <span>📁 {article.categoryJurusan.name}</span>
-                      <span className="mx-2">•</span>
-                    </>
-                  )}
-                  {article.categoryTopik && (
-                    <>
-                      <span>🏷️ {article.categoryTopik.name}</span>
-                      <span className="mx-2">•</span>
-                    </>
-                  )}
-                  <span>✍️ {article.author?.name}</span>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
       </div>
 
-      {/* Pagination */}
-      {!loading && articles.length > 0 && (
-        <Pagination
-          currentPage={pagination.page}
-          totalPages={pagination.pages}
-          onPageChange={(page) => setPagination({ ...pagination, page })}
-        />
-      )}
+      {/* ── Main content panel ─────────────────────────────────────────── */}
+      <div className="p-4">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
 
-      {/* Create/Edit Modal */}
+          {/* Active filter pills */}
+          {filterCount > 0 && (
+            <div className="px-5 py-2.5 border-b border-gray-100 flex flex-wrap gap-1.5 items-center">
+              {filters.search && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                  "{filters.search}"
+                  <button onClick={() => setFilters(f => ({ ...f, search: '' }))} className="ml-0.5 hover:text-blue-900">×</button>
+                </span>
+              )}
+              {filters.timeRange && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
+                  {filters.timeRange === 'today' ? 'Hari Ini' : filters.timeRange === 'week' ? 'Minggu Ini' : filters.timeRange === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
+                  <button onClick={() => setFilters(f => ({ ...f, timeRange: '' }))} className="ml-0.5">×</button>
+                </span>
+              )}
+              {filters.categoryJurusan.map(id => {
+                const j = jurusans.find(x => x._id === id);
+                return j ? (
+                  <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-50 text-violet-700 rounded-full text-xs font-medium">
+                    {j.code}<button onClick={() => toggleArrayFilter('categoryJurusan', id)} className="ml-0.5">×</button>
+                  </span>
+                ) : null;
+              })}
+              {filters.categoryTopik.map(id => {
+                const c = categories.find(x => x._id === id);
+                return c ? (
+                  <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+                    {c.name}<button onClick={() => toggleArrayFilter('categoryTopik', id)} className="ml-0.5">×</button>
+                  </span>
+                ) : null;
+              })}
+              {filters.status.map(s => (
+                <span key={s} className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium capitalize">
+                  {s}<button onClick={() => toggleArrayFilter('status', s)} className="ml-0.5">×</button>
+                </span>
+              ))}
+              <button onClick={clearAllFilters} className="ml-auto text-xs text-red-500 hover:text-red-700 font-medium">Hapus semua</button>
+            </div>
+          )}
+
+          {/* ── Articles view ─────────────────────────────────── */}
+          {activeViewTab === 'articles' && (
+            <div className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-gray-100 rounded-xl h-[230px] animate-pulse" />
+                  ))
+                ) : articles.length === 0 ? (
+                  <div className="col-span-3 py-16 text-center">
+                    <FileText size={40} className="mx-auto text-gray-200 mb-3" />
+                    <p className="text-sm text-gray-400">Belum ada artikel</p>
+                    <button onClick={() => setShowCreateModal(true)} className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                      Buat Artikel Pertama
+                    </button>
+                  </div>
+                ) : (
+                  articles.map(article => <ArticleCard key={article._id} article={article} />)
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Categories view ───────────────────────────────── */}
+          {activeViewTab === 'categories' && (
+            <div className="p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {categories.length === 0 ? (
+                  <div className="col-span-3 py-16 text-center">
+                    <p className="text-sm text-gray-400">Belum ada kategori</p>
+                  </div>
+                ) : (
+                  categories.map(cat => (
+                    <div key={cat._id} className="flex items-center gap-3 p-4 border border-gray-100 rounded-xl">
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${cat.type === 'topik' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                        <FileText size={16} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{cat.name}</p>
+                        <p className="text-xs text-gray-400 capitalize">{cat.type}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Sticky bottom bar (pagination) ───────────────── */}
+          {activeViewTab === 'articles' && !loading && articles.length > 0 && (
+            <div className="sticky bottom-0 z-10 bg-white border-t border-gray-100 px-5 py-3 flex items-center justify-between rounded-b-2xl">
+              <p className="text-sm text-gray-500">
+                Halaman <span className="font-semibold text-gray-800">{pagination.page}</span> dari <span className="font-semibold text-gray-800">{pagination.pages}</span>
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                  disabled={pagination.page <= 1}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 text-gray-600 transition-colors"
+                >
+                  <ChevronLeft size={13} /> Prev
+                </button>
+
+                {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === pagination.pages || Math.abs(p - pagination.page) <= 1)
+                  .reduce((acc, p, idx, arr) => {
+                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === '...' ? (
+                      <span key={`dots-${i}`} className="w-8 h-8 text-xs text-gray-400 flex items-center justify-center">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setPagination(prev => ({ ...prev, page: p }))}
+                        className={`w-8 h-8 text-xs font-medium rounded-lg transition-colors ${
+                          pagination.page === p ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
+                <button
+                  onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                  disabled={pagination.page >= pagination.pages}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 text-gray-600 transition-colors"
+                >
+                  Next <ChevronRight size={13} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Modals ────────────────────────────────────────────────────────── */}
       <Modal
         isOpen={showCreateModal || showEditModal}
-        onClose={() => {
-          showCreateModal ? setShowCreateModal(false) : setShowEditModal(false);
-          resetForm();
-        }}
+        onClose={() => { showCreateModal ? setShowCreateModal(false) : setShowEditModal(false); resetForm(); }}
         title={showCreateModal ? 'Buat Artikel Baru' : 'Edit Artikel'}
         size="xl"
       >
-        <form
-          onSubmit={showCreateModal ? handleCreateArticle : handleUpdateArticle}
-          className="space-y-4"
-        >
-          {/* Title */}
+        <form onSubmit={showCreateModal ? handleCreateArticle : handleUpdateArticle} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Judul Artikel *
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              placeholder="Masukkan judul artikel..."
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Judul Artikel *</label>
+            <input type="text" value={formData.title} onChange={(e) => setFormData(f => ({ ...f, title: e.target.value }))} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan judul artikel..." />
           </div>
 
-          {/* Category Jurusan (Optional) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Kategori Jurusan (Opsional)
-            </label>
-            <select
-              value={formData.categoryJurusan}
-              onChange={(e) => setFormData({ ...formData, categoryJurusan: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Jurusan (Opsional)</label>
+            <select value={formData.categoryJurusan} onChange={(e) => setFormData(f => ({ ...f, categoryJurusan: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
               <option value="">Pilih Jurusan (Opsional)</option>
-              {jurusans.map((jurusan) => (
-                <option key={jurusan._id} value={jurusan._id}>
-                  {jurusan.code} - {jurusan.name}
-                </option>
-              ))}
+              {jurusans.map(j => <option key={j._id} value={j._id}>{j.code} - {j.name}</option>)}
             </select>
           </div>
 
-          {/* Category Topik (Optional) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Kategori Topik (Opsional)
-            </label>
-            <select
-              value={formData.categoryTopik}
-              onChange={(e) => setFormData({ ...formData, categoryTopik: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Topik (Opsional)</label>
+            <select value={formData.categoryTopik} onChange={(e) => setFormData(f => ({ ...f, categoryTopik: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
               <option value="">Pilih Topik (Opsional)</option>
-              {categories.filter(cat => cat.type === 'topik').map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
+              {categories.filter(c => c.type === 'topik').map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
           </div>
 
-          {/* Prestasi Metadata — conditional on topik slug */}
           {(() => {
             const selectedTopik = categories.find(c => c._id === formData.categoryTopik);
             if (selectedTopik?.slug?.toLowerCase() !== 'prestasi') return null;
             return (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">🏆</span>
-                  <span className="text-sm font-semibold text-amber-800">Informasi Prestasi</span>
-                </div>
+                <p className="text-sm font-semibold text-amber-800">Informasi Prestasi</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-amber-700 mb-1">Peringkat</label>
-                    <select
-                      value={formData.metadata.rank}
-                      onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, rank: e.target.value } })}
-                      className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 bg-white"
-                    >
+                    <select value={formData.metadata.rank} onChange={(e) => setFormData(f => ({ ...f, metadata: { ...f.metadata, rank: e.target.value } }))} className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm bg-white">
                       <option value="">Pilih peringkat...</option>
-                      <option value="Juara I">Juara I</option>
-                      <option value="Juara II">Juara II</option>
-                      <option value="Juara III">Juara III</option>
-                      <option value="Harapan I">Harapan I</option>
-                      <option value="Harapan II">Harapan II</option>
-                      <option value="Medali Emas">Medali Emas</option>
-                      <option value="Medali Perak">Medali Perak</option>
-                      <option value="Medali Perunggu">Medali Perunggu</option>
-                      <option value="Finalis">Finalis</option>
+                      {['Juara I','Juara II','Juara III','Harapan I','Harapan II','Medali Emas','Medali Perak','Medali Perunggu','Finalis'].map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-amber-700 mb-1">Tingkat</label>
-                    <select
-                      value={formData.metadata.level}
-                      onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, level: e.target.value } })}
-                      className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 bg-white"
-                    >
+                    <select value={formData.metadata.level} onChange={(e) => setFormData(f => ({ ...f, metadata: { ...f.metadata, level: e.target.value } }))} className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm bg-white">
                       <option value="">Pilih tingkat...</option>
-                      <option value="Kabupaten/Kota">Kabupaten/Kota</option>
-                      <option value="Provinsi">Provinsi</option>
-                      <option value="Nasional">Nasional</option>
-                      <option value="Internasional">Internasional</option>
+                      {['Kabupaten/Kota','Provinsi','Nasional','Internasional'].map(l => <option key={l} value={l}>{l}</option>)}
                     </select>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-amber-700 mb-1">Nama Siswa / Tim</label>
-                  <input
-                    type="text"
-                    value={formData.metadata.studentName}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, studentName: e.target.value } })}
-                    className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 bg-white"
-                    placeholder="Contoh: Imanuel Damanik / Tim A"
-                  />
+                  <input type="text" value={formData.metadata.studentName} onChange={(e) => setFormData(f => ({ ...f, metadata: { ...f.metadata, studentName: e.target.value } }))} className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm bg-white" placeholder="Contoh: Imanuel Damanik / Tim A" />
                 </div>
               </div>
             );
           })()}
 
-          {/* Excerpt */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ringkasan (Excerpt)
-            </label>
-            <textarea
-              value={formData.excerpt}
-              onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              placeholder="Ringkasan singkat artikel..."
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ringkasan (Excerpt)</label>
+            <textarea value={formData.excerpt} onChange={(e) => setFormData(f => ({ ...f, excerpt: e.target.value }))} rows={3} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ringkasan singkat artikel..." />
           </div>
 
-          {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Konten Artikel *
-            </label>
-            <ReactQuill
-              theme="snow"
-              value={formData.content}
-              onChange={(content) => setFormData({ ...formData, content })}
-              modules={quillModules}
-              className="bg-white"
-              style={{ height: '300px', marginBottom: '50px' }}
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Konten Artikel *</label>
+            <ReactQuill theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
           </div>
 
-          {/* Featured Image */}
-          <ImageUpload
-            label="Gambar Unggulan"
-            value={formData.featuredImage}
-            onChange={(url) => setFormData({ ...formData, featuredImage: url })}
-            folder="smk-kristen5/articles"
-            previewClassName="h-48 w-full object-cover"
-          />
+          <ImageUpload label="Gambar Unggulan" value={formData.featuredImage} onChange={(url) => setFormData(f => ({ ...f, featuredImage: url }))} folder="smk-kristen5/articles" previewClassName="h-48 w-full object-cover" />
 
-          {/* Buttons */}
           <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                showCreateModal ? setShowCreateModal(false) : setShowEditModal(false);
-                resetForm();
-              }}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              {showCreateModal ? 'Buat Artikel' : 'Update Artikel'}
-            </button>
+            <button type="button" onClick={() => { showCreateModal ? setShowCreateModal(false) : setShowEditModal(false); resetForm(); }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">Batal</button>
+            <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">{showCreateModal ? 'Buat Artikel' : 'Update Artikel'}</button>
           </div>
         </form>
       </Modal>
 
-      {/* Preview Modal */}
-      <Modal
-        isOpen={showPreviewModal}
-        onClose={() => {
-          setShowPreviewModal(false);
-          setSelectedArticle(null);
-        }}
-        title="Preview Artikel"
-        size="xl"
-      >
+      <Modal isOpen={showPreviewModal} onClose={() => { setShowPreviewModal(false); setSelectedArticle(null); }} title="Preview Artikel" size="xl">
         {selectedArticle && (
           <div className="prose max-w-none">
             {selectedArticle.featuredImage && (
-              <img
-                src={typeof selectedArticle.featuredImage === 'string' ? selectedArticle.featuredImage : selectedArticle.featuredImage.url}
-                alt={selectedArticle.title}
-                className="w-full h-64 object-cover rounded-lg mb-4"
-              />
+              <img src={typeof selectedArticle.featuredImage === 'string' ? selectedArticle.featuredImage : selectedArticle.featuredImage.url} alt={selectedArticle.title} className="w-full h-64 object-cover rounded-lg mb-4" />
             )}
             <h1>{selectedArticle.title}</h1>
-            <div className="text-sm text-gray-600 mb-4">
-              {selectedArticle.categoryJurusan && (
-                <>
-                  📁 {selectedArticle.categoryJurusan.name}
-                  {' • '}
-                </>
-              )}
-              {selectedArticle.categoryTopik && (
-                <>
-                  🏷️ {selectedArticle.categoryTopik.name}
-                  {' • '}
-                </>
-              )}
-              ✍️ {selectedArticle.author?.name}
+            <div className="text-sm text-gray-500 mb-4 flex gap-2 flex-wrap">
+              {selectedArticle.categoryJurusan && <span>{selectedArticle.categoryJurusan.name}</span>}
+              {selectedArticle.categoryTopik && <span>{selectedArticle.categoryTopik.name}</span>}
+              <span>{selectedArticle.author?.name}</span>
             </div>
             <div dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
           </div>
         )}
       </Modal>
 
-      {/* Delete Modal */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setSelectedArticle(null);
-        }}
-        title="Konfirmasi Hapus"
-        size="sm"
-      >
+      <Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setSelectedArticle(null); }} title="Konfirmasi Hapus" size="sm">
         <div className="space-y-4">
-          <p className="text-gray-600">
-            Apakah Anda yakin ingin menghapus artikel{' '}
-            <span className="font-semibold">"{selectedArticle?.title}"</span>?
-          </p>
+          <p className="text-gray-600">Hapus artikel <span className="font-semibold">"{selectedArticle?.title}"</span>?</p>
           <p className="text-sm text-red-600">Aksi ini tidak dapat dibatalkan.</p>
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => {
-                setShowDeleteModal(false);
-                setSelectedArticle(null);
-              }}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleDeleteArticle}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              Hapus
-            </button>
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => { setShowDeleteModal(false); setSelectedArticle(null); }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Batal</button>
+            <button onClick={handleDeleteArticle} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">Hapus</button>
           </div>
         </div>
       </Modal>
 
-      {/* Bulk Delete Modal */}
-      <Modal
-        isOpen={showBulkDeleteModal}
-        onClose={() => setShowBulkDeleteModal(false)}
-        title="Konfirmasi Hapus Multiple"
-        size="sm"
-      >
+      <Modal isOpen={showBulkDeleteModal} onClose={() => setShowBulkDeleteModal(false)} title="Konfirmasi Hapus Multiple" size="sm">
         <div className="space-y-4">
-          <p className="text-gray-600">
-            Apakah Anda yakin ingin menghapus{' '}
-            <span className="font-semibold text-red-600">{selectedArticles.length} artikel</span>?
-          </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-sm text-yellow-800">
-              ⚠️ <strong>Perhatian:</strong> Semua artikel yang dipilih akan dihapus secara permanen dan tidak dapat dikembalikan.
-            </p>
-          </div>
+          <p className="text-gray-600">Hapus <span className="font-semibold text-red-600">{selectedArticles.length} artikel</span>?</p>
           <p className="text-sm text-red-600 font-semibold">Aksi ini tidak dapat dibatalkan!</p>
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => setShowBulkDeleteModal(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleBulkDelete}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
-            >
-              Hapus {selectedArticles.length} Artikel
-            </button>
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => setShowBulkDeleteModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Batal</button>
+            <button onClick={handleBulkDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-semibold">Hapus {selectedArticles.length} Artikel</button>
           </div>
         </div>
       </Modal>
 
-      {/* Toast */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 };

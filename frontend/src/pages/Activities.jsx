@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { MoreVertical, Settings, Edit3, Trash2, ChevronDown, Check, Plus, X } from 'lucide-react';
 import api from '../services/api';
 
-const Activities = ({ embedded = false }) => {
+const Activities = ({ embedded = false, createTrigger = 0 }) => {
   const [tabs, setTabs] = useState([]);
   const [settings, setSettings] = useState({
     globalLink: '/kegiatan',
@@ -51,9 +53,29 @@ const Activities = ({ embedded = false }) => {
     slideDuration: 4000,
   });
 
+  // Tab select dropdown
+  const [showTabSelect, setShowTabSelect] = useState(false);
+
+  // Item portal menu
+  const [itemMenu, setItemMenu] = useState(null);
+
+  const openItemMenuFor = (e, item) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setItemMenu(prev =>
+      prev?.item._id === item._id
+        ? null
+        : { item, top: rect.bottom + 4, right: window.innerWidth - rect.right }
+    );
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (createTrigger > 0) openCreateItemModal();
+  }, [createTrigger]);
 
   const fetchData = async () => {
     try {
@@ -329,7 +351,7 @@ const Activities = ({ embedded = false }) => {
   const activeTab = tabs.find(t => t._id === activeTabId);
 
   return (
-    <div className={embedded ? '' : 'p-6'}>
+    <div className={embedded ? 'p-4' : 'p-6'}>
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -371,95 +393,108 @@ const Activities = ({ embedded = false }) => {
         </div>
       ) : (
         <>
-          {/* Tabs Navigation */}
-          <div className="bg-white rounded-lg shadow mb-6">
-            <div className="flex flex-wrap items-center gap-2 p-4 border-b">
-              {tabs.length === 0 ? (
-                <p className="text-gray-500">Belum ada tab. Klik "Tambah Tab" untuk mulai.</p>
-              ) : (
-                tabs.map((tab) => (
-                  <div key={tab._id} className="flex items-center">
-                    <button
-                      onClick={() => setActiveTabId(tab._id)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                        activeTabId === tab._id
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {tab.name}
-                      {!tab.isActive && (
-                        <span className="ml-2 text-xs opacity-70">(Nonaktif)</span>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => openEditTabModal(tab)}
-                      className="ml-1 p-1 text-gray-500 hover:text-primary-600"
-                      title="Edit Tab"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => openDeleteModal(tab, 'tab')}
-                      className="p-1 text-gray-500 hover:text-red-600"
-                      title="Hapus Tab"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+          {/* Tab select — inline */}
+          <div className="mb-4">
+            {tabs.length === 0 ? (
+              <p className="text-sm text-gray-500">Belum ada tab. Tambah tab baru lewat tombol +</p>
+            ) : (
+              <div className="relative">
+                  <button
+                    onClick={() => setShowTabSelect(v => !v)}
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/[0.04] border border-black/[0.08] text-gray-700 text-sm font-medium hover:bg-black/[0.07] transition-all"
+                  >
+                    <span>{activeTab?.name || 'Pilih Tab'}</span>
+                    {activeTab && !activeTab.isActive && (
+                      <span className="text-xs text-gray-400 font-normal">(Nonaktif)</span>
+                    )}
+                    <ChevronDown size={13} className={`transition-transform duration-200 ${showTabSelect ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showTabSelect && (
+                    <>
+                      <div className="fixed inset-0 z-20" onClick={() => setShowTabSelect(false)} />
+                      <div className="absolute left-0 mt-2 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] overflow-hidden py-1 min-w-[220px] z-30">
+                        {tabs.map(tab => (
+                          <div
+                            key={tab._id}
+                            className={`flex items-center gap-1 pr-2 text-sm transition-colors ${
+                              activeTabId === tab._id ? 'bg-blue-400/10' : 'hover:bg-black/[0.03]'
+                            }`}
+                          >
+                            <button
+                              onClick={() => { setActiveTabId(tab._id); setShowTabSelect(false); }}
+                              className={`flex-1 px-4 py-2 text-left flex items-center gap-2.5 ${
+                                activeTabId === tab._id ? 'text-blue-600' : 'text-gray-700'
+                              }`}
+                            >
+                              {activeTabId === tab._id
+                                ? <Check size={13} className="text-blue-600 flex-shrink-0" />
+                                : <span className="w-[13px] flex-shrink-0" />
+                              }
+                              <span className="flex-1">{tab.name}</span>
+                              {!tab.isActive && <span className="text-xs text-gray-400">(Nonaktif)</span>}
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openSettingsModal(); setShowTabSelect(false); }}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-black/[0.05] transition-colors"
+                              title="Pengaturan Halaman"
+                            >
+                              <Settings size={13} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openEditTabModal(tab); setShowTabSelect(false); }}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Edit Tab"
+                            >
+                              <Edit3 size={13} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openDeleteModal(tab, 'tab'); setShowTabSelect(false); }}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Hapus Tab"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        ))}
+                        <div className="my-1 border-t border-black/[0.06]" />
+                        <button
+                          onClick={() => { openCreateTabModal(); setShowTabSelect(false); }}
+                          className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-blue-600 hover:bg-blue-50/60 transition-colors"
+                        >
+                          <Plus size={13} /> Tambah Tab
+                        </button>
+                      </div>
+                    </>
+                  )}
+              </div>
+            )}
           </div>
 
           {/* Active Tab Content */}
           {activeTab && (
             <div className="bg-white rounded-lg shadow">
-              <div className="flex items-center justify-between p-4 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Item dalam Tab: {activeTab.name}
-                </h2>
-                <button
-                  onClick={openCreateItemModal}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <span className="text-xl">+</span>
-                  <span>Tambah Item</span>
-                </button>
-              </div>
-
               {activeTab.items && activeTab.items.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                   {activeTab.items.sort((a, b) => a.order - b.order).map((item) => (
-                    <div key={item._id} className="border rounded-lg overflow-hidden group">
+                    <div
+                      key={item._id}
+                      onClick={() => openEditItemModal(item)}
+                      className="border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all"
+                    >
                       <div className="relative aspect-video">
                         <img
                           src={item.image}
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                          <button
-                            onClick={() => openEditItemModal(item)}
-                            className="p-2 bg-white rounded-full text-primary-600 hover:bg-primary-100"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(item, 'item')}
-                            className="p-2 bg-white rounded-full text-red-600 hover:bg-red-100"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
+                        {/* MoreVertical action button */}
+                        <button
+                          onClick={(e) => openItemMenuFor(e, item)}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md hover:bg-blue-700 transition-colors z-10"
+                        >
+                          <MoreVertical size={13} />
+                        </button>
                       </div>
                       <div className="p-3">
                         <h3 className="font-medium text-gray-900">{item.title}</h3>
@@ -481,39 +516,73 @@ const Activities = ({ embedded = false }) => {
         </>
       )}
 
+      {/* Item action portal */}
+      {itemMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setItemMenu(null)} />
+          <div
+            className="fixed z-50 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_28px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] py-1 min-w-[190px]"
+            style={{ top: itemMenu.top, right: itemMenu.right }}
+          >
+            <button
+              onClick={() => { openEditItemModal(itemMenu.item); setItemMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-gray-700 hover:bg-black/[0.05] transition-colors"
+            >
+              <Edit3 size={13} className="text-gray-400" /> Edit Item
+            </button>
+            <button
+              onClick={() => { openDeleteModal(itemMenu.item, 'item'); setItemMenu(null); }}
+              className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-red-600 hover:bg-red-50/60 transition-colors"
+            >
+              <Trash2 size={13} /> Hapus Item
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
       {/* Tab Modal */}
       {showTabModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h2 className="text-sm font-semibold text-gray-800">
                 {tabModalMode === 'create' ? 'Tambah Tab' : 'Edit Tab'}
               </h2>
+              <button
+                type="button"
+                onClick={closeTabModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
 
-              <form onSubmit={handleTabSubmit} className="space-y-4">
+            <form onSubmit={handleTabSubmit}>
+              <div className="p-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Nama Tab <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={tabFormData.name}
                     onChange={(e) => setTabFormData({ ...tabFormData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Contoh: BELAJAR"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Urutan
                   </label>
                   <input
                     type="number"
                     value={tabFormData.order}
                     onChange={(e) => setTabFormData({ ...tabFormData, order: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     min="0"
                   />
                 </div>
@@ -530,40 +599,49 @@ const Activities = ({ embedded = false }) => {
                     Tampilkan di website
                   </label>
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeTabModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    Simpan
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={closeTabModal}
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* Item Modal */}
       {showItemModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
+              <h2 className="text-sm font-semibold text-gray-800">
                 {itemModalMode === 'create' ? 'Tambah Item' : 'Edit Item'}
               </h2>
+              <button
+                type="button"
+                onClick={closeItemModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
 
-              <form onSubmit={handleItemSubmit} className="space-y-4">
+            <form onSubmit={handleItemSubmit}>
+              <div className="p-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Gambar <span className="text-red-500">*</span>
                   </label>
                   <div className="space-y-2">
@@ -578,7 +656,7 @@ const Activities = ({ embedded = false }) => {
                       type="file"
                       accept="image/*"
                       onChange={handleImageUpload}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all"
                     />
                     {uploading && (
                       <p className="text-sm text-gray-600">Mengupload...</p>
@@ -588,132 +666,141 @@ const Activities = ({ embedded = false }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Judul <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={itemFormData.title}
                     onChange={(e) => setItemFormData({ ...itemFormData, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Contoh: Praktek Laboratorium"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Deskripsi (Opsional)
                   </label>
                   <textarea
                     value={itemFormData.description}
                     onChange={(e) => setItemFormData({ ...itemFormData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     rows="3"
                     placeholder="Deskripsi singkat kegiatan..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Urutan
                   </label>
                   <input
                     type="number"
                     value={itemFormData.order}
                     onChange={(e) => setItemFormData({ ...itemFormData, order: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     min="0"
                   />
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeItemModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                    disabled={uploading}
-                  >
-                    {uploading ? 'Mengupload...' : 'Simpan'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={closeItemModal}
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  disabled={uploading}
+                >
+                  {uploading ? 'Mengupload...' : 'Simpan'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* Settings Modal */}
       {showSettingsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h2 className="text-sm font-semibold text-gray-800">
                 Pengaturan Section
               </h2>
+              <button
+                type="button"
+                onClick={closeSettingsModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
 
-              <form onSubmit={handleSettingsSubmit} className="space-y-4">
+            <form onSubmit={handleSettingsSubmit}>
+              <div className="p-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Judul Section
                   </label>
                   <input
                     type="text"
                     value={settingsFormData.sectionTitle}
                     onChange={(e) => setSettingsFormData({ ...settingsFormData, sectionTitle: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Pembelajaran & Kegiatan"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Subtitle Section
                   </label>
                   <input
                     type="text"
                     value={settingsFormData.sectionSubtitle}
                     onChange={(e) => setSettingsFormData({ ...settingsFormData, sectionSubtitle: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Berbagai aktivitas pembelajaran dan kegiatan siswa"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Teks Tombol
                   </label>
                   <input
                     type="text"
                     value={settingsFormData.globalButtonText}
                     onChange={(e) => setSettingsFormData({ ...settingsFormData, globalButtonText: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="Explore Kegiatan Siswa"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Link Tombol
                   </label>
                   <input
                     type="text"
                     value={settingsFormData.globalLink}
                     onChange={(e) => setSettingsFormData({ ...settingsFormData, globalLink: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                     placeholder="/kegiatan"
                   />
                   <p className="text-xs text-gray-500 mt-1">Contoh: /kegiatan atau https://example.com</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Durasi Slide Carousel (detik)
                   </label>
                   <input
@@ -722,56 +809,67 @@ const Activities = ({ embedded = false }) => {
                     max="30"
                     value={Math.round((settingsFormData.slideDuration || 4000) / 1000)}
                     onChange={(e) => setSettingsFormData({ ...settingsFormData, slideDuration: Number(e.target.value) * 1000 })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
                   />
                   <p className="text-xs text-gray-500 mt-1">Carousel akan berganti slide setiap N detik secara otomatis. Default: 4 detik.</p>
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeSettingsModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    Simpan
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={closeSettingsModal}
+                  className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && deleteTarget && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Hapus</h2>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus{' '}
-              <strong>{deleteType === 'tab' ? `tab "${deleteTarget.name}"` : `item "${deleteTarget.title}"`}</strong>?
-              {deleteType === 'tab' && (
-                <span className="block mt-2 text-sm text-red-600">
-                  Semua item dalam tab ini juga akan terhapus!
-                </span>
-              )}
-            </p>
-            <div className="flex gap-3">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h2 className="text-sm font-semibold text-gray-800">Konfirmasi Hapus</h2>
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-gray-600">
+                Apakah Anda yakin ingin menghapus{' '}
+                <strong>{deleteType === 'tab' ? `tab "${deleteTarget.name}"` : `item "${deleteTarget.title}"`}</strong>?
+                {deleteType === 'tab' && (
+                  <span className="block mt-2 text-sm text-red-600">
+                    Semua item dalam tab ini juga akan terhapus!
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
               <button
                 onClick={closeDeleteModal}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors"
               >
                 Batal
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 text-xs bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
               >
                 Hapus
               </button>

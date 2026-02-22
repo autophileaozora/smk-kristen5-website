@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-import { CheckCircle, XCircle, Trash2, Clock, ExternalLink, ChevronDown } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Clock, ExternalLink, ChevronDown, Check } from 'lucide-react';
 
 const STATUS_LABELS = {
   pending: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-700' },
@@ -13,6 +13,7 @@ const AlumniSubmissions = ({ embedded = false, onCountChange }) => {
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
   const [activeFilter, setActiveFilter] = useState('pending');
   const [loading, setLoading] = useState(true);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null); // { id, reason }
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -105,52 +106,85 @@ const AlumniSubmissions = ({ embedded = false, onCountChange }) => {
         </div>
       )}
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 flex-wrap mb-6">
-        {filterTabs.map((tab) => (
+      {/* Header row — filter pill right-aligned, mirrors the tab select in the blue navbar */}
+      <div className="flex items-center justify-end px-5 py-3 border-b border-black/[0.04]">
+        <div className="relative">
           <button
-            key={tab.id}
-            onClick={() => setActiveFilter(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeFilter === tab.id
-                ? 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
+            onClick={() => setShowFilterDropdown(v => !v)}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/[0.04] border border-black/[0.08] text-gray-700 text-sm font-medium hover:bg-black/[0.07] transition-all"
           >
-            {tab.label}
-            <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-[11px] font-bold rounded-full ${
-              activeFilter === tab.id ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600'
-            }`}>
-              {tab.count}
-            </span>
+            <span>{filterTabs.find(t => t.id === activeFilter)?.label}</span>
+            {filterTabs.find(t => t.id === activeFilter)?.count > 0 && (
+              <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full ${
+                activeFilter === 'pending' ? 'bg-amber-500/15 text-amber-700' :
+                activeFilter === 'approved' ? 'bg-green-500/15 text-green-700' :
+                activeFilter === 'rejected' ? 'bg-red-500/15 text-red-600' :
+                'bg-gray-900/[0.06] text-gray-500'
+              }`}>
+                {filterTabs.find(t => t.id === activeFilter)?.count}
+              </span>
+            )}
+            <ChevronDown size={13} className={`text-gray-400 transition-transform duration-200 ${showFilterDropdown ? 'rotate-180' : ''}`} />
           </button>
-        ))}
+
+          {showFilterDropdown && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowFilterDropdown(false)} />
+              <div className="absolute right-0 mt-2 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] overflow-hidden py-1 min-w-[180px] z-30">
+                {filterTabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => { setActiveFilter(tab.id); setShowFilterDropdown(false); }}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 transition-colors ${
+                      activeFilter === tab.id ? 'text-blue-600 bg-blue-400/10' : 'text-gray-700 hover:bg-black/[0.05]'
+                    }`}
+                  >
+                    {activeFilter === tab.id
+                      ? <Check size={13} className="text-blue-600 flex-shrink-0" />
+                      : <span className="w-[13px] flex-shrink-0" />
+                    }
+                    <span className="flex-1">{tab.label}</span>
+                    <span className={`inline-flex items-center justify-center min-w-[20px] h-[18px] px-1.5 text-[10px] font-semibold rounded-full ${
+                      activeFilter === tab.id ? 'bg-blue-500/15 text-blue-600' :
+                      tab.id === 'pending' && tab.count > 0 ? 'bg-amber-500/12 text-amber-700' :
+                      'bg-gray-900/[0.06] text-gray-500'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Content */}
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : submissions.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl border border-gray-100">
-          <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Tidak ada review di sini</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {submissions.map((s) => (
-            <SubmissionCard
-              key={s._id}
-              submission={s}
-              actionLoading={actionLoading}
-              onApprove={handleApprove}
-              onReject={(id) => setRejectTarget({ id, reason: '' })}
-              onDelete={(id) => setDeleteTarget(id)}
-            />
-          ))}
-        </div>
-      )}
+      <div className="p-5">
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : submissions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Clock className="w-10 h-10 text-gray-300 mb-3" />
+            <p className="text-sm text-gray-400">Tidak ada review di sini</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {submissions.map((s) => (
+              <SubmissionCard
+                key={s._id}
+                submission={s}
+                actionLoading={actionLoading}
+                onApprove={handleApprove}
+                onReject={(id) => setRejectTarget({ id, reason: '' })}
+                onDelete={(id) => setDeleteTarget(id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Reject Dialog */}
       {rejectTarget && (

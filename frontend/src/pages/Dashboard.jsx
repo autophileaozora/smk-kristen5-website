@@ -4,33 +4,8 @@ import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import {
   Users, FileText, Trophy, GraduationCap, Dribbble, Video, Megaphone,
-  Plus, ArrowUpRight, RefreshCw, Clock, FilePlus, ExternalLink,
-  TrendingUp, BookOpen, Building2,
+  Plus, RefreshCw, Clock, FilePlus, ExternalLink, BookOpen,
 } from 'lucide-react';
-
-// SVG gradients for stat cards
-const StatGradients = () => (
-  <svg width="0" height="0" className="absolute">
-    <defs>
-      <linearGradient id="stat-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#3B82F6" />
-        <stop offset="100%" stopColor="#8B5CF6" />
-      </linearGradient>
-      <linearGradient id="stat-green" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#10B981" />
-        <stop offset="100%" stopColor="#06B6D4" />
-      </linearGradient>
-      <linearGradient id="stat-orange" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#F59E0B" />
-        <stop offset="100%" stopColor="#EF4444" />
-      </linearGradient>
-      <linearGradient id="stat-purple" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#8B5CF6" />
-        <stop offset="100%" stopColor="#EC4899" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -67,8 +42,8 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon, gradient, subtitle }) => (
-    <div className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-shadow group">
+  const StatCard = ({ title, value, icon: Icon, iconClass, bgClass, subtitle }) => (
+    <div className="bg-white rounded-xl border border-gray-100 p-5 hover:border-gray-200 transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-500">{title}</p>
@@ -83,8 +58,8 @@ const Dashboard = () => {
             <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
           )}
         </div>
-        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-          <Icon size={22} stroke={`url(#${gradient})`} strokeWidth={1.8} />
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${bgClass}`}>
+          <Icon size={20} strokeWidth={1.8} className={iconClass} />
         </div>
       </div>
     </div>
@@ -112,46 +87,47 @@ const Dashboard = () => {
   };
 
   const quickActions = [
-    { name: 'Buat Artikel', desc: 'Tulis artikel baru', icon: Plus, path: '/admin/articles', gradient: 'from-blue-500 to-purple-500' },
-    { name: 'Buat Halaman', desc: 'Halaman kustom baru', icon: FilePlus, path: '/admin/custom-pages/create', gradient: 'from-emerald-500 to-cyan-500' },
-    { name: 'Lihat Website', desc: 'Buka tab baru', icon: ExternalLink, external: true, path: '/', gradient: 'from-orange-500 to-pink-500' },
+    { name: 'Buat Artikel', icon: Plus, path: '/admin/articles' },
+    { name: 'Buat Halaman', icon: FilePlus, path: '/admin/custom-pages/create' },
+    { name: 'Lihat Website', icon: ExternalLink, external: true, path: '/' },
+  ];
+
+  const secondaryStats = [
+    { title: 'Jurusan', value: stats?.jurusan?.total || 0, icon: BookOpen, iconClass: 'text-blue-500', bgClass: 'bg-blue-50' },
+    { title: 'Ekskul', value: stats?.ekskul?.total || 0, icon: Dribbble, iconClass: 'text-emerald-500', bgClass: 'bg-emerald-50', sub: `${stats?.ekskul?.active || 0} aktif` },
+    { title: 'Video Hero', value: stats?.videoHero?.total || 0, icon: Video, iconClass: 'text-amber-500', bgClass: 'bg-amber-50', sub: `${stats?.videoHero?.active || 0}/3 aktif` },
+    { title: 'Running Text', value: stats?.runningText?.total || 0, icon: Megaphone, iconClass: 'text-violet-500', bgClass: 'bg-violet-50', sub: `${stats?.runningText?.active || 0} aktif` },
   ];
 
   return (
     <div className="space-y-6 max-w-7xl">
-      <StatGradients />
-
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 rounded-2xl p-6 lg:p-8 text-white relative overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-1/2 w-40 h-40 bg-white/5 rounded-full translate-y-1/2" />
-
-        <div className="relative">
-          <p className="text-blue-200 text-sm font-medium">{getGreeting()},</p>
-          <h1 className="text-2xl lg:text-3xl font-bold mt-1">{user?.name}</h1>
-          <p className="text-blue-200 text-sm mt-2 max-w-xl">
+      <div className="bg-white rounded-xl border border-gray-100 p-6 lg:p-8">
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{getGreeting()}</p>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">{user?.name}</h1>
+          <p className="text-sm text-gray-500 mt-1.5 max-w-xl">
             {user?.role === 'administrator'
               ? 'Kelola seluruh konten dan pengguna website SMK Kristen 5 Klaten dari sini.'
               : 'Kelola konten artikel dan informasi sekolah.'}
           </p>
+        </div>
 
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-3 mt-5">
-            {quickActions.map((action) => (
-              <button
-                key={action.name}
-                onClick={() => {
-                  if (action.external) window.open(action.path, '_blank');
-                  else navigate(action.path);
-                }}
-                className="flex items-center space-x-2 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-lg transition-colors text-sm font-medium"
-              >
-                <action.icon size={16} />
-                <span>{action.name}</span>
-              </button>
-            ))}
-          </div>
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t border-gray-100">
+          {quickActions.map((action) => (
+            <button
+              key={action.name}
+              onClick={() => {
+                if (action.external) window.open(action.path, '_blank');
+                else navigate(action.path);
+              }}
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-800 transition-colors"
+            >
+              <action.icon size={14} className="text-gray-500" />
+              <span>{action.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -162,7 +138,8 @@ const Dashboard = () => {
             title="Total Pengguna"
             value={stats.users.total}
             icon={Users}
-            gradient="stat-blue"
+            iconClass="text-blue-500"
+            bgClass="bg-blue-50"
             subtitle="Semua pengguna sistem"
           />
         )}
@@ -170,37 +147,35 @@ const Dashboard = () => {
           title="Artikel"
           value={stats?.articles?.total || 0}
           icon={FileText}
-          gradient="stat-green"
+          iconClass="text-emerald-500"
+          bgClass="bg-emerald-50"
           subtitle={`${stats?.articles?.published || 0} published, ${stats?.articles?.draft || 0} draft`}
         />
         <StatCard
           title="Prestasi"
           value={stats?.prestasi?.total || 0}
           icon={Trophy}
-          gradient="stat-orange"
+          iconClass="text-amber-500"
+          bgClass="bg-amber-50"
           subtitle={`${stats?.prestasi?.active || 0} aktif`}
         />
         <StatCard
           title="Alumni"
           value={stats?.alumni?.total || 0}
           icon={GraduationCap}
-          gradient="stat-purple"
+          iconClass="text-violet-500"
+          bgClass="bg-violet-50"
           subtitle={`${stats?.alumni?.published || 0} published`}
         />
       </div>
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { title: 'Jurusan', value: stats?.jurusan?.total || 0, icon: BookOpen, gradient: 'stat-blue' },
-          { title: 'Ekskul', value: stats?.ekskul?.total || 0, icon: Dribbble, gradient: 'stat-green', sub: `${stats?.ekskul?.active || 0} aktif` },
-          { title: 'Video Hero', value: stats?.videoHero?.total || 0, icon: Video, gradient: 'stat-orange', sub: `${stats?.videoHero?.active || 0}/3 aktif` },
-          { title: 'Running Text', value: stats?.runningText?.total || 0, icon: Megaphone, gradient: 'stat-purple', sub: `${stats?.runningText?.active || 0} aktif` },
-        ].map((item) => (
+        {secondaryStats.map((item) => (
           <div key={item.title} className="bg-white rounded-xl border border-gray-100 p-4">
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center">
-                <item.icon size={18} stroke={`url(#${item.gradient})`} strokeWidth={1.8} />
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.bgClass}`}>
+                <item.icon size={18} strokeWidth={1.8} className={item.iconClass} />
               </div>
               <div>
                 <p className="text-xl font-bold text-gray-900">
