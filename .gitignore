@@ -40,8 +40,9 @@ coverage/
 temp/
 tmp/
 
-# Claude settings
-.claude/settings.local.json
+# Claude settings & worktrees
+.claude/
+.clone/
 
 # Frontend specific
 frontend/dist/
