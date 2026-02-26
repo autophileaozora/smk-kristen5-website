@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { useSchoolLogo } from './hooks/useContact';
-import { fetchAndSetFavicon, setDynamicFavicon } from './utils/faviconUtils';
 
 // Lazy load all components for better performance
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -49,15 +48,20 @@ const LoadingFallback = () => (
 function App() {
   const { logo } = useSchoolLogo();
 
-  // Load favicon on app startup
-  useEffect(() => {
-    fetchAndSetFavicon();
-  }, []);
-
-  // Update favicon dynamically when logo changes
+  // Update favicon dynamically
   useEffect(() => {
     if (logo && logo !== '/logo.svg') {
-      setDynamicFavicon(logo);
+      const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+      link.type = 'image/png';
+      link.rel = 'icon';
+      link.href = logo;
+      document.getElementsByTagName('head')[0].appendChild(link);
+
+      // Also update apple-touch-icon
+      const appleTouchIcon = document.querySelector("link[rel~='apple-touch-icon']") || document.createElement('link');
+      appleTouchIcon.rel = 'apple-touch-icon';
+      appleTouchIcon.href = logo;
+      document.getElementsByTagName('head')[0].appendChild(appleTouchIcon);
     }
   }, [logo]);
 

@@ -221,32 +221,4 @@ router.put('/seo', protect, isAdministrator, async (req, res) => {
   }
 });
 
-// @route   GET /api/site-settings/logo
-// @desc    Get logo URL for favicon/dynamic usage
-// @access  Public
-router.get('/logo', async (req, res) => {
-  try {
-    const settings = await SiteSettings.getSettings();
-    
-    if (!settings.logo) {
-      // Return default favicon SVG if no logo set
-      return res.redirect('/favicon.svg');
-    }
-    
-    // Return logo URL (Cloudinary or local)
-    res.status(200).json({
-      success: true,
-      data: { 
-        logo: settings.logo,
-        logoLight: settings.logoLight || settings.logo
-      },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
 export default router;
