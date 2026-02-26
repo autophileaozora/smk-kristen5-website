@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import api from '../../services/api';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -19,6 +20,7 @@ export default function JurusanDetail() {
   const [loading, setLoading] = useState(true);
   const [navbarVisible, setNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [lightbox, setLightbox] = useState(null); // { url, caption, index }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,6 +48,24 @@ export default function JurusanDetail() {
   useEffect(() => {
     fetchJurusanDetail();
   }, [slug]);
+
+  // Lightbox keyboard navigation
+  useEffect(() => {
+    if (!lightbox || !jurusan?.gallery?.length) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setLightbox(null);
+      if (e.key === 'ArrowRight') {
+        const next = (lightbox.index + 1) % jurusan.gallery.length;
+        setLightbox({ url: jurusan.gallery[next].url, caption: jurusan.gallery[next].caption, index: next });
+      }
+      if (e.key === 'ArrowLeft') {
+        const prev = (lightbox.index - 1 + jurusan.gallery.length) % jurusan.gallery.length;
+        setLightbox({ url: jurusan.gallery[prev].url, caption: jurusan.gallery[prev].caption, index: prev });
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [lightbox, jurusan]);
 
   const fetchJurusanDetail = async () => {
     try {
@@ -176,8 +196,113 @@ export default function JurusanDetail() {
     { id: 'galeri', label: 'GALERI' }
   ];
 
+  const baseUrl = import.meta.env.VITE_SITE_URL || 'https://smkkrisma.sch.id';
+  const canonicalUrl = `${baseUrl}/jurusan/${jurusan.slug}`;
+
+  // Use shortDescription first (plain text), fallback to stripped description
+  const metaDesc = jurusan.shortDescription
+    || (jurusan.description
+      ? jurusan.description.replace(/<[^>]*>/g, '').substring(0, 160).trim()
+      : `Program keahlian ${jurusan.name} di SMK Kristen 5 Klaten. Pelajari kurikulum, fasilitas, dan prospek karir.`);
+
+  // Best image: logo → backgroundImage → first gallery photo
+  const schemaImage = jurusan.logo || jurusan.backgroundImage || jurusan.gallery?.[0]?.url || null;
+
+  const courseSchema = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": jurusan.name,
+    "description": metaDesc,
+    "url": canonicalUrl,
+    "courseCode": jurusan.code,
+    "educationalLevel": "Sekolah Menengah Kejuruan (SMK)",
+    "inLanguage": "id",
+    ...(schemaImage && { "image": schemaImage }),
+    "provider": {
+      "@type": "EducationalOrganization",
+      "name": "SMK Kristen 5 Klaten",
+      "alternateName": "SMK Krisma",
+      "url": baseUrl,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Klaten",
+        "addressRegion": "Jawa Tengah",
+        "addressCountry": "ID"
+      }
+    },
+    // Subjects → syllabus summary
+    ...(jurusan.subjects?.length > 0 && {
+      "syllabusSections": jurusan.subjects.map(s => ({
+        "@type": "Syllabus",
+        "name": s.name,
+        ...(s.description && { "description": s.description }),
+        ...(s.semester && { "timeRequired": `Semester ${s.semester}` })
+      }))
+    }),
+    // Competencies → what students will learn
+    ...(jurusan.competencies?.length > 0 && {
+      "teaches": jurusan.competencies.join(', ')
+    }),
+    // Career prospects
+    ...(jurusan.careerProspects?.length > 0 && {
+      "occupationalCategory": jurusan.careerProspects
+    }),
+    // Course instance with instructor
+    "hasCourseInstance": {
+      "@type": "CourseInstance",
+      "courseMode": "onsite",
+      "courseSchedule": {
+        "@type": "Schedule",
+        "repeatFrequency": "P1Y",
+        "scheduleTimezone": "Asia/Jakarta"
+      },
+      ...(jurusan.headOfDepartment && {
+        "instructor": {
+          "@type": "Person",
+          "name": jurusan.headOfDepartment,
+          "jobTitle": `Kepala Program Keahlian ${jurusan.name}`,
+          "worksFor": {
+            "@type": "EducationalOrganization",
+            "name": "SMK Kristen 5 Klaten"
+          }
+        }
+      })
+    }
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Beranda", "item": baseUrl },
+      { "@type": "ListItem", "position": 2, "name": "Jurusan", "item": `${baseUrl}/jurusan` },
+      { "@type": "ListItem", "position": 3, "name": jurusan.name, "item": canonicalUrl }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-white font-poppins overflow-x-hidden">
+      <Helmet>
+        <title>{jurusan.name} | SMK Kristen 5 Klaten</title>
+        <meta name="description" content={metaDesc} />
+        <meta name="keywords" content={[
+          jurusan.name,
+          `${jurusan.name} SMK Klaten`,
+          `jurusan ${jurusan.name}`,
+          jurusan.code,
+          'SMK Krisma',
+          'SMK Kristen 5 Klaten',
+          ...(jurusan.careerProspects || [])
+        ].filter(Boolean).join(', ')} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={`${jurusan.name} | SMK Kristen 5 Klaten`} />
+        <meta property="og:description" content={metaDesc} />
+        {schemaImage && <meta property="og:image" content={schemaImage} />}
+        <script type="application/ld+json">{JSON.stringify(courseSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+      </Helmet>
       <Navbar activePage="jurusan" visible={navbarVisible} />
 
       {/* Hero Section with Breadcrumb */}
@@ -210,10 +335,18 @@ export default function JurusanDetail() {
 
           {/* Title */}
           <div className="flex items-start gap-4">
-            <div className="bg-white p-4 rounded-xl shadow-lg">
-              <svg className="w-8 h-8 md:w-12 md:h-12 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-              </svg>
+            <div className="bg-white p-3 md:p-4 rounded-xl shadow-lg flex-shrink-0">
+              {jurusan.logo ? (
+                <img
+                  src={jurusan.logo}
+                  alt={jurusan.name}
+                  className="w-8 h-8 md:w-12 md:h-12 object-contain"
+                />
+              ) : (
+                <svg className="w-8 h-8 md:w-12 md:h-12 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                </svg>
+              )}
             </div>
             <div>
               <h1 className="text-3xl md:text-5xl font-bold text-white mb-2" style={{ fontFamily: 'Russo One, sans-serif' }}>
@@ -506,12 +639,21 @@ export default function JurusanDetail() {
                     {jurusan.gallery && jurusan.gallery.length > 0 ? (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {jurusan.gallery.map((item, index) => (
-                          <div key={index} className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                          <div
+                            key={index}
+                            className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer"
+                            onClick={() => setLightbox({ url: item.url, caption: item.caption, index })}
+                          >
                             <img
                               src={item.url}
                               alt={item.caption || `Gallery ${index + 1}`}
-                              className="w-full h-48 md:h-64 object-cover"
+                              className="w-full h-48 md:h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                             />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <svg className="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                              </svg>
+                            </div>
                             {item.caption && (
                               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-3">
                                 <p className="text-sm md:text-base font-medium">{item.caption}</p>
@@ -627,6 +769,72 @@ export default function JurusanDetail() {
       </section>
 
       <Footer />
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+            onClick={() => setLightbox(null)}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Prev button */}
+          {jurusan.gallery.length > 1 && (
+            <button
+              className="absolute left-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                const prev = (lightbox.index - 1 + jurusan.gallery.length) % jurusan.gallery.length;
+                setLightbox({ url: jurusan.gallery[prev].url, caption: jurusan.gallery[prev].caption, index: prev });
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Image */}
+          <img
+            src={lightbox.url}
+            alt={lightbox.caption || 'Galeri'}
+            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Next button */}
+          {jurusan.gallery.length > 1 && (
+            <button
+              className="absolute right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                const next = (lightbox.index + 1) % jurusan.gallery.length;
+                setLightbox({ url: jurusan.gallery[next].url, caption: jurusan.gallery[next].caption, index: next });
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Caption + counter */}
+          <div className="absolute bottom-4 left-0 right-0 text-center">
+            {lightbox.caption && (
+              <p className="text-white text-sm mb-1">{lightbox.caption}</p>
+            )}
+            <p className="text-white/50 text-xs">{lightbox.index + 1} / {jurusan.gallery.length}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

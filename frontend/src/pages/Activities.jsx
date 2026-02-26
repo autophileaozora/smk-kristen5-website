@@ -476,7 +476,7 @@ const Activities = ({ embedded = false, createTrigger = 0 }) => {
             <div className="bg-white rounded-lg shadow">
               {activeTab.items && activeTab.items.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-                  {activeTab.items.sort((a, b) => a.order - b.order).map((item) => (
+                  {[...activeTab.items].sort((a, b) => a.order - b.order).map((item) => (
                     <div
                       key={item._id}
                       onClick={() => openEditItemModal(item)}
@@ -542,7 +542,7 @@ const Activities = ({ embedded = false, createTrigger = 0 }) => {
       )}
 
       {/* Tab Modal */}
-      {showTabModal && (
+      {showTabModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
@@ -619,10 +619,10 @@ const Activities = ({ embedded = false, createTrigger = 0 }) => {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Item Modal */}
-      {showItemModal && (
+      {showItemModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
@@ -725,10 +725,10 @@ const Activities = ({ embedded = false, createTrigger = 0 }) => {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Settings Modal */}
-      {showSettingsModal && (
+      {showSettingsModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
@@ -833,10 +833,10 @@ const Activities = ({ embedded = false, createTrigger = 0 }) => {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && deleteTarget && (
+      {showDeleteModal && deleteTarget && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
@@ -876,7 +876,7 @@ const Activities = ({ embedded = false, createTrigger = 0 }) => {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 };

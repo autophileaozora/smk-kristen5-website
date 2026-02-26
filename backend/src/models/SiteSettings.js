@@ -24,6 +24,14 @@ const homepageSectionsSchema = new mongoose.Schema(
     eventsTitle: { type: String, default: 'KEGIATAN SISWA DAN GURU', trim: true },
     eventsDescription: { type: String, default: 'AGENDA YANG AKAN HADIR DI SMK KRISTEN 5 KLATEN, BAIK ACARA DI SEKOLAH ATAUPUN LUAR SEKOLAH', trim: true },
     eventsButtonText: { type: String, default: 'LIHAT SEMUA AGENDA', trim: true },
+    // Ekskul page hero
+    ekskulHeroTitle: { type: String, default: 'EKSTRAKULIKULER', trim: true },
+    ekskulHeroSubtitle: { type: String, default: 'Kembangkan potensi dan bakatmu bersama ekstrakulikuler pilihan di SMK Kristen 5 Klaten', trim: true },
+    ekskulHeroBackground: { type: String, default: '', trim: true }, // Cloudinary URL
+    // Fasilitas page hero
+    fasilitasHeroTitle: { type: String, default: 'FASILITAS SEKOLAH', trim: true },
+    fasilitasHeroSubtitle: { type: String, default: 'Menunjang kegiatan belajar mengajar dengan fasilitas modern dan lengkap untuk seluruh siswa', trim: true },
+    fasilitasHeroBackground: { type: String, default: '', trim: true }, // Cloudinary URL
   },
   { _id: false }
 );
@@ -126,6 +134,16 @@ const siteSettingsSchema = new mongoose.Schema(
     homepageSections: {
       type: homepageSectionsSchema,
       default: () => ({}),
+    },
+
+    // Running Text Display Settings
+    runningTextSettings: {
+      type: new mongoose.Schema({
+        backgroundColor: { type: String, default: '#facc15' },
+        textColor: { type: String, default: '#111827' },
+        speed: { type: Number, default: 30, min: 5, max: 120 },
+      }, { _id: false }),
+      default: () => ({ backgroundColor: '#facc15', textColor: '#111827', speed: 30 }),
     },
   },
   {

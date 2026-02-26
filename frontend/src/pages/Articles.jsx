@@ -47,13 +47,22 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showInternalLinkModal, setShowInternalLinkModal] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
+
+  // Internal linking
+  const [internalLinkSearch, setInternalLinkSearch] = useState('');
+  const [internalLinkSuggestions, setInternalLinkSuggestions] = useState([]);
 
   // Form data
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     excerpt: '',
+    metaDescription: '',
+    keywords: [],
+    altText: '',
+    faqs: [],
     categoryJurusan: '',
     categoryTopik: '',
     featuredImage: '',
@@ -116,6 +125,11 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     const handler = setTimeout(() => setDebouncedSearch(filters.search), 500);
     return () => clearTimeout(handler);
   }, [filters.search]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => searchInternalLinks(internalLinkSearch), 300);
+    return () => clearTimeout(handler);
+  }, [internalLinkSearch]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -183,6 +197,10 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
         title: formData.title,
         content: formData.content,
         excerpt: formData.excerpt,
+        metaDescription: formData.metaDescription,
+        keywords: formData.keywords,
+        altText: formData.altText,
+        faqs: formData.faqs.filter(f => f.question && f.answer),
         categoryJurusan: formData.categoryJurusan || null,
         categoryTopik: formData.categoryTopik || null,
         featuredImage: formData.featuredImage || null,
@@ -205,6 +223,10 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
         title: formData.title,
         content: formData.content,
         excerpt: formData.excerpt,
+        metaDescription: formData.metaDescription,
+        keywords: formData.keywords,
+        altText: formData.altText,
+        faqs: formData.faqs.filter(f => f.question && f.answer),
         categoryJurusan: formData.categoryJurusan || null,
         categoryTopik: formData.categoryTopik || null,
         featuredImage: formData.featuredImage || null,
@@ -274,12 +296,44 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     catch (error) { showToast(error.response?.data?.message || 'Gagal unpublish', 'error'); }
   };
 
+  const searchInternalLinks = async (query) => {
+    if (query.length < 2) {
+      setInternalLinkSuggestions([]);
+      return;
+    }
+    try {
+      const response = await api.get(`/api/articles/search/keywords?q=${encodeURIComponent(query)}`);
+      setInternalLinkSuggestions(response.data.data.articles || []);
+    } catch (error) {
+      console.error('Error searching internal links:', error);
+    }
+  };
+
+  const insertInternalLink = (article) => {
+    const linkText = article.title;
+    const linkUrl = `/artikel/${article.slug}`;
+    const linkHTML = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" style="color: #0d76be; text-decoration: underline;">${linkText}</a>`;
+    
+    // Insert link into editor at cursor position
+    const currentContent = formData.content;
+    const newContent = currentContent + ' ' + linkHTML;
+    setFormData(f => ({ ...f, content: newContent }));
+    
+    showToast(`Link ke "${linkText}" berhasil ditambahkan`, 'success');
+    setInternalLinkSearch('');
+    setInternalLinkSuggestions([]);
+  };
+
   const openEditModal = (article) => {
     setSelectedArticle(article);
     setFormData({
       title: article.title,
       content: article.content,
       excerpt: article.excerpt,
+      metaDescription: article.metaDescription || '',
+      keywords: article.keywords || [],
+      altText: article.altText || '',
+      faqs: article.faqs || [],
       categoryJurusan: article.categoryJurusan?._id || '',
       categoryTopik: article.categoryTopik?._id || '',
       featuredImage: article.featuredImage?.url || '',
@@ -297,7 +351,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
   const openDeleteModal = (article) => { setSelectedArticle(article); setShowDeleteModal(true); };
 
   const resetForm = () => {
-    setFormData({ title: '', content: '', excerpt: '', categoryJurusan: '', categoryTopik: '', featuredImage: '', status: 'draft', metadata: { rank: '', level: '', studentName: '' } });
+    setFormData({ title: '', content: '', excerpt: '', metaDescription: '', keywords: [], altText: '', faqs: [], categoryJurusan: '', categoryTopik: '', featuredImage: '', status: 'draft', metadata: { rank: '', level: '', studentName: '' } });
     setSelectedArticle(null);
   };
 
@@ -689,7 +743,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
         )}
 
         {/* Modals */}
-        <Modal
+        {createPortal(<Modal
           isOpen={showCreateModal || showEditModal}
           onClose={() => { showCreateModal ? setShowCreateModal(false) : setShowEditModal(false); resetForm(); }}
           title={showCreateModal ? 'Buat Artikel Baru' : 'Edit Artikel'}
@@ -752,6 +806,110 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
               <textarea value={formData.excerpt} onChange={(e) => setFormData(f => ({ ...f, excerpt: e.target.value }))} rows={3} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ringkasan singkat artikel..." />
             </div>
 
+            {/* SEO Fields */}
+            <div className="border-t pt-4 mt-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <span>🔍 SEO Settings</span>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Penting</span>
+              </h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+                <textarea 
+                  value={formData.metaDescription} 
+                  onChange={(e) => setFormData(f => ({ ...f, metaDescription: e.target.value.substring(0, 160) }))} 
+                  rows={2} 
+                  maxLength="160"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" 
+                  placeholder="Deskripsi singkat untuk search engine (max 160 karakter)..." 
+                />
+                <p className="text-xs text-gray-500 mt-1">{formData.metaDescription.length}/160 karakter</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 mt-3">Keywords (Tags)</label>
+                <input 
+                  type="text"
+                  value={formData.keywords.join(', ')}
+                  onChange={(e) => setFormData(f => ({ ...f, keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k) }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Pisahkan dengan koma: SEO, artikel, SMK, jurusan..."
+                />
+                <p className="text-xs text-gray-500 mt-1">Masukkan kata kunci yang relevan, pisahkan dengan koma</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 mt-3">Alt Text untuk Gambar</label>
+                <input 
+                  type="text"
+                  value={formData.altText}
+                  onChange={(e) => setFormData(f => ({ ...f, altText: e.target.value.substring(0, 125) }))}
+                  maxLength="125"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Deskripsi gambar untuk SEO dan aksesibilitas (max 125 karakter)..."
+                />
+                <p className="text-xs text-gray-500 mt-1">{formData.altText.length}/125 karakter</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowInternalLinkModal(true)}
+                className="w-full mt-3 px-4 py-2 border-2 border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <span>🔗</span>
+                Tambah Internal Link
+              </button>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <span>❓ FAQ</span>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Featured Snippet</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setFormData(f => ({ ...f, faqs: [...f.faqs, { question: '', answer: '' }] }))}
+                  className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  + Tambah FAQ
+                </button>
+              </div>
+              {formData.faqs.length === 0 ? (
+                <p className="text-xs text-gray-400 italic">FAQ membantu artikel muncul di Featured Snippet Google.</p>
+              ) : (
+                <div className="space-y-3">
+                  {formData.faqs.map((faq, idx) => (
+                    <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-medium text-gray-500">FAQ #{idx + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(f => ({ ...f, faqs: f.faqs.filter((_, i) => i !== idx) }))}
+                          className="text-xs text-red-400 hover:text-red-600"
+                        >Hapus</button>
+                      </div>
+                      <input
+                        type="text"
+                        value={faq.question}
+                        onChange={(e) => setFormData(f => { const u = [...f.faqs]; u[idx] = { ...u[idx], question: e.target.value }; return { ...f, faqs: u }; })}
+                        className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-2 focus:ring-green-400"
+                        placeholder="Pertanyaan..."
+                      />
+                      <textarea
+                        value={faq.answer}
+                        onChange={(e) => setFormData(f => { const u = [...f.faqs]; u[idx] = { ...u[idx], answer: e.target.value }; return { ...f, faqs: u }; })}
+                        rows={2}
+                        className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-400"
+                        placeholder="Jawaban..."
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Konten Artikel *</label>
               <ReactQuill theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
@@ -764,9 +922,9 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
               <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">{showCreateModal ? 'Buat Artikel' : 'Update Artikel'}</button>
             </div>
           </form>
-        </Modal>
+        </Modal>, document.body)}
 
-        <Modal isOpen={showPreviewModal} onClose={() => { setShowPreviewModal(false); setSelectedArticle(null); }} title="Preview Artikel" size="xl">
+        {createPortal(<Modal isOpen={showPreviewModal} onClose={() => { setShowPreviewModal(false); setSelectedArticle(null); }} title="Preview Artikel" size="xl">
           {selectedArticle && (
             <div className="prose max-w-none">
               {selectedArticle.featuredImage && (
@@ -781,9 +939,9 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
               <div dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
             </div>
           )}
-        </Modal>
+        </Modal>, document.body)}
 
-        <Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setSelectedArticle(null); }} title="Konfirmasi Hapus" size="sm">
+        {createPortal(<Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setSelectedArticle(null); }} title="Konfirmasi Hapus" size="sm">
           <div className="space-y-4">
             <p className="text-gray-600">Hapus artikel <span className="font-semibold">"{selectedArticle?.title}"</span>?</p>
             <p className="text-sm text-red-600">Aksi ini tidak dapat dibatalkan.</p>
@@ -792,9 +950,9 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
               <button onClick={handleDeleteArticle} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">Hapus</button>
             </div>
           </div>
-        </Modal>
+        </Modal>, document.body)}
 
-        <Modal isOpen={showBulkDeleteModal} onClose={() => setShowBulkDeleteModal(false)} title="Konfirmasi Hapus Multiple" size="sm">
+        {createPortal(<Modal isOpen={showBulkDeleteModal} onClose={() => setShowBulkDeleteModal(false)} title="Konfirmasi Hapus Multiple" size="sm">
           <div className="space-y-4">
             <p className="text-gray-600">Hapus <span className="font-semibold text-red-600">{selectedArticles.length} artikel</span>?</p>
             <p className="text-sm text-red-600 font-semibold">Aksi ini tidak dapat dibatalkan!</p>
@@ -803,7 +961,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
               <button onClick={handleBulkDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-semibold">Hapus {selectedArticles.length} Artikel</button>
             </div>
           </div>
-        </Modal>
+        </Modal>, document.body)}
 
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       </>
@@ -1156,7 +1314,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
       </div>
 
       {/* ── Modals ────────────────────────────────────────────────────────── */}
-      <Modal
+      {createPortal(<Modal
         isOpen={showCreateModal || showEditModal}
         onClose={() => { showCreateModal ? setShowCreateModal(false) : setShowEditModal(false); resetForm(); }}
         title={showCreateModal ? 'Buat Artikel Baru' : 'Edit Artikel'}
@@ -1219,6 +1377,55 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
             <textarea value={formData.excerpt} onChange={(e) => setFormData(f => ({ ...f, excerpt: e.target.value }))} rows={3} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ringkasan singkat artikel..." />
           </div>
 
+          {/* FAQ Section */}
+          <div className="border-t pt-4 mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span>❓ FAQ</span>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Featured Snippet</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setFormData(f => ({ ...f, faqs: [...f.faqs, { question: '', answer: '' }] }))}
+                className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                + Tambah FAQ
+              </button>
+            </div>
+            {formData.faqs.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">FAQ membantu artikel muncul di Featured Snippet Google.</p>
+            ) : (
+              <div className="space-y-3">
+                {formData.faqs.map((faq, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-medium text-gray-500">FAQ #{idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(f => ({ ...f, faqs: f.faqs.filter((_, i) => i !== idx) }))}
+                        className="text-xs text-red-400 hover:text-red-600"
+                      >Hapus</button>
+                    </div>
+                    <input
+                      type="text"
+                      value={faq.question}
+                      onChange={(e) => setFormData(f => { const u = [...f.faqs]; u[idx] = { ...u[idx], question: e.target.value }; return { ...f, faqs: u }; })}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm mb-2 focus:ring-2 focus:ring-green-400"
+                      placeholder="Pertanyaan..."
+                    />
+                    <textarea
+                      value={faq.answer}
+                      onChange={(e) => setFormData(f => { const u = [...f.faqs]; u[idx] = { ...u[idx], answer: e.target.value }; return { ...f, faqs: u }; })}
+                      rows={2}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-green-400"
+                      placeholder="Jawaban..."
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Konten Artikel *</label>
             <ReactQuill theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
@@ -1231,9 +1438,9 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
             <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">{showCreateModal ? 'Buat Artikel' : 'Update Artikel'}</button>
           </div>
         </form>
-      </Modal>
+      </Modal>, document.body)}
 
-      <Modal isOpen={showPreviewModal} onClose={() => { setShowPreviewModal(false); setSelectedArticle(null); }} title="Preview Artikel" size="xl">
+      {createPortal(<Modal isOpen={showPreviewModal} onClose={() => { setShowPreviewModal(false); setSelectedArticle(null); }} title="Preview Artikel" size="xl">
         {selectedArticle && (
           <div className="prose max-w-none">
             {selectedArticle.featuredImage && (
@@ -1248,9 +1455,9 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
             <div dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
           </div>
         )}
-      </Modal>
+      </Modal>, document.body)}
 
-      <Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setSelectedArticle(null); }} title="Konfirmasi Hapus" size="sm">
+      {createPortal(<Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setSelectedArticle(null); }} title="Konfirmasi Hapus" size="sm">
         <div className="space-y-4">
           <p className="text-gray-600">Hapus artikel <span className="font-semibold">"{selectedArticle?.title}"</span>?</p>
           <p className="text-sm text-red-600">Aksi ini tidak dapat dibatalkan.</p>
@@ -1259,9 +1466,9 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
             <button onClick={handleDeleteArticle} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">Hapus</button>
           </div>
         </div>
-      </Modal>
+      </Modal>, document.body)}
 
-      <Modal isOpen={showBulkDeleteModal} onClose={() => setShowBulkDeleteModal(false)} title="Konfirmasi Hapus Multiple" size="sm">
+      {createPortal(<Modal isOpen={showBulkDeleteModal} onClose={() => setShowBulkDeleteModal(false)} title="Konfirmasi Hapus Multiple" size="sm">
         <div className="space-y-4">
           <p className="text-gray-600">Hapus <span className="font-semibold text-red-600">{selectedArticles.length} artikel</span>?</p>
           <p className="text-sm text-red-600 font-semibold">Aksi ini tidak dapat dibatalkan!</p>
@@ -1270,7 +1477,61 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
             <button onClick={handleBulkDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-semibold">Hapus {selectedArticles.length} Artikel</button>
           </div>
         </div>
-      </Modal>
+      </Modal>, document.body)}
+
+      {createPortal(<Modal isOpen={showInternalLinkModal} onClose={() => { setShowInternalLinkModal(false); setInternalLinkSearch(''); setInternalLinkSuggestions([]); }} title="🔗 Tambah Internal Link" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Cari Artikel untuk di-Link</label>
+            <input
+              type="text"
+              placeholder="Ketik judul atau keyword artikel..."
+              value={internalLinkSearch}
+              onChange={(e) => setInternalLinkSearch(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {internalLinkSearch.length >= 2 && (
+            <div className="border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
+              {internalLinkSuggestions.length > 0 ? (
+                internalLinkSuggestions.map(article => (
+                  <button
+                    key={article._id}
+                    onClick={() => insertInternalLink(article)}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b last:border-b-0 transition-colors"
+                  >
+                    <p className="font-medium text-gray-900 truncate">{article.title}</p>
+                    <p className="text-xs text-gray-500 truncate">{article.excerpt?.substring(0, 80)}...</p>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                  Tidak ada artikel yang ditemukan
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+            <p className="font-semibold mb-1">💡 Tips:</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li>Internal link membantu SEO website</li>
+              <li>Link akan ditambahkan di akhir konten artikel</li>
+              <li>Gunakan untuk menghubungkan artikel terkait</li>
+            </ul>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setShowInternalLinkModal(false); setInternalLinkSearch(''); setInternalLinkSuggestions([]); }}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </Modal>, document.body)}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>

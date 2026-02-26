@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import {
   ChevronDown, Check, ChevronLeft, ChevronRight,
@@ -195,12 +196,13 @@ const SistemPage = () => {
         )}
 
         {/* ── Backdrop (closes everything) ──────────────────────────────── */}
-        {(pillOpen || panelOpen) && (
-          <div className="fixed inset-0 z-30" onClick={() => { setPillOpen(false); setPanelOpen(null); }} />
+        {(pillOpen || panelOpen) && createPortal(
+          <div className="fixed inset-0 z-30" onClick={() => { setPillOpen(false); setPanelOpen(null); }} />,
+          document.body
         )}
 
         {/* ── Panel — fixed above pill row ──────────────────────────────── */}
-        {pillOpen && panelOpen && (
+        {pillOpen && panelOpen && createPortal(
           <div className="fixed bottom-[5.5rem] right-8 z-40 w-72 bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] p-4 space-y-2">
 
             {/* Search panel — users only */}
@@ -220,18 +222,26 @@ const SistemPage = () => {
 
             {/* Filter panel — users */}
             {activeTab === 'users' && panelOpen === 'filter' && (
-              <div className="grid grid-cols-2 gap-2">
-                <Sel value={usersFilters.role} onChange={e => handleUsersFilter('role', e.target.value)}>
-                  <option value="">Semua Role</option>
-                  <option value="administrator">Administrator</option>
-                  <option value="admin_siswa">Admin Siswa</option>
-                </Sel>
-                <Sel value={usersFilters.isActive} onChange={e => handleUsersFilter('isActive', e.target.value)}>
-                  <option value="">Semua Status</option>
-                  <option value="true">Aktif</option>
-                  <option value="false">Nonaktif</option>
-                </Sel>
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <Sel value={usersFilters.role} onChange={e => handleUsersFilter('role', e.target.value)}>
+                    <option value="">Semua Role</option>
+                    <option value="administrator">Administrator</option>
+                    <option value="admin_siswa">Admin Siswa</option>
+                  </Sel>
+                  <Sel value={usersFilters.isActive} onChange={e => handleUsersFilter('isActive', e.target.value)}>
+                    <option value="">Semua Status</option>
+                    <option value="true">Aktif</option>
+                    <option value="false">Nonaktif</option>
+                  </Sel>
+                </div>
+                <button
+                  onClick={() => { setUsersFilters({ search: '', role: '', isActive: '' }); setPage(1); }}
+                  className="w-full mt-1 px-3 py-2 text-xs text-gray-500 hover:text-gray-700 hover:bg-black/[0.04] rounded-xl transition-colors text-center"
+                >
+                  Reset semua filter
+                </button>
+              </>
             )}
 
             {/* Filter panel — audit log */}
@@ -276,9 +286,16 @@ const SistemPage = () => {
                     onChange={e => handleAuditFilter('endDate', e.target.value)}
                     className={inputCls} />
                 </div>
+                <button
+                  onClick={() => { setAuditFilters({ action: '', resource: '', status: '', startDate: '', endDate: '' }); setPage(1); }}
+                  className="w-full mt-1 px-3 py-2 text-xs text-gray-500 hover:text-gray-700 hover:bg-black/[0.04] rounded-xl transition-colors text-center"
+                >
+                  Reset semua filter
+                </button>
               </>
             )}
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* ── Floating pill — fixed so it never scrolls ─────────────────── */}

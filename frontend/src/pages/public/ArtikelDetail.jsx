@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
 import Navbar from '../../components/Navbar';
@@ -107,22 +108,27 @@ const ArtikelDetail = () => {
     try {
       if (!article) return;
 
-      const response = await api.get(`/api/articles/public?limit=10`);
-      const allArticles = response.data.data.articles || [];
-
-      // Filter articles with same categoryTopik, exclude current article
-      const related = allArticles.filter(art => {
-        if (art.slug === slug) return false;
-        // Match by categoryTopik
-        if (article.categoryTopik && art.categoryTopik) {
-          return art.categoryTopik._id === article.categoryTopik._id;
-        }
-        return false;
-      });
-
-      setRelatedArticles(related.slice(0, 3));
+      // Use smart related articles endpoint
+      const response = await api.get(`/api/articles/${article._id}/related`);
+      const relatedArticles = response.data.data.articles || [];
+      setRelatedArticles(relatedArticles.slice(0, 3));
     } catch (error) {
       console.error('Error fetching related articles:', error);
+      // Fallback: try to fetch from public endpoint
+      try {
+        const response = await api.get(`/api/articles/public?limit=10`);
+        const allArticles = response.data.data.articles || [];
+        const related = allArticles.filter(art => {
+          if (art.slug === slug) return false;
+          if (article.categoryTopik && art.categoryTopik) {
+            return art.categoryTopik._id === article.categoryTopik._id;
+          }
+          return false;
+        });
+        setRelatedArticles(related.slice(0, 3));
+      } catch (fallbackError) {
+        console.error('Fallback error fetching related articles:', fallbackError);
+      }
     }
   };
 
@@ -156,8 +162,105 @@ const ArtikelDetail = () => {
     );
   }
 
+  // Generate structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": article.title,
+    "image": article.featuredImage?.url,
+    "datePublished": article.publishedAt,
+    "dateModified": article.updatedAt || article.publishedAt,
+    "author": {
+      "@type": "Person",
+      "name": article.author?.name || "Admin"
+    },
+    "description": article.metaDescription || article.excerpt,
+    "articleBody": article.content?.replace(/<[^>]*>/g, '') || "",
+    "publisher": {
+      "@type": "Organization",
+      "name": "SMK Kristen 5 Klaten",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "/logo.svg"
+      }
+    },
+    "keywords": article.keywords?.join(", ") || ""
+  };
+
+  const baseUrl = import.meta.env.VITE_SITE_URL || 'https://smkkrisma.sch.id';
+  const canonicalUrl = `${baseUrl}/artikel/${article.slug}`;
+  const metaDescription = article.metaDescription || article.excerpt || "Baca artikel terbaru dari SMK Kristen 5 Klaten";
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Beranda", "item": baseUrl },
+      { "@type": "ListItem", "position": 2, "name": "Artikel", "item": `${baseUrl}/artikel` },
+      ...(article.categoryTopik ? [
+        { "@type": "ListItem", "position": 3, "name": article.categoryTopik.name, "item": `${baseUrl}/artikel?topik=${article.categoryTopik.slug}` },
+        { "@type": "ListItem", "position": 4, "name": article.title, "item": canonicalUrl }
+      ] : [
+        { "@type": "ListItem", "position": 3, "name": article.title, "item": canonicalUrl }
+      ])
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>{article.title} | SMK Kristen 5 Klaten</title>
+        <meta name="title" content={`${article.title} | SMK Kristen 5 Klaten`} />
+        <meta name="description" content={metaDescription} />
+        <meta name="keywords" content={article.keywords?.join(", ") || "artikel, SMK Kristen 5 Klaten"} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={canonicalUrl} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={metaDescription} />
+        {article.featuredImage?.url && <meta property="og:image" content={article.featuredImage.url} />}
+        <meta property="article:published_time" content={article.publishedAt} />
+        <meta property="article:modified_time" content={article.updatedAt || article.publishedAt} />
+        <meta property="article:author" content={article.author?.name || "Admin"} />
+        {article.keywords && article.keywords.map((keyword, idx) => (
+          <meta key={idx} property="article:tag" content={keyword} />
+        ))}
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={canonicalUrl} />
+        <meta property="twitter:title" content={article.title} />
+        <meta property="twitter:description" content={metaDescription} />
+        {article.featuredImage?.url && <meta property="twitter:image" content={article.featuredImage.url} />}
+        
+        {/* Structured Data: BlogPosting */}
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+        {/* Structured Data: BreadcrumbList */}
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema)}
+        </script>
+        {/* Structured Data: FAQPage */}
+        {article.faqs && article.faqs.length > 0 && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": article.faqs.map(faq => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": { "@type": "Answer", "text": faq.answer }
+              }))
+            })}
+          </script>
+        )}
+      </Helmet>
       {/* Navbar */}
       <Navbar activePage="artikel" visible={navbarVisible} />
 
@@ -237,8 +340,10 @@ const ArtikelDetail = () => {
                   <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                     <img
                       src={article.featuredImage.url}
-                      alt={article.title}
+                      alt={article.altText || article.title}
+                      title={article.altText || article.title}
                       className="absolute top-0 left-0 w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                 </div>
@@ -253,6 +358,26 @@ const ArtikelDetail = () => {
                   lineHeight: '1.8'
                 }}
               />
+
+              {/* FAQ Section */}
+              {article.faqs && article.faqs.length > 0 && (
+                <div className="border-t pt-6 mb-8">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Pertanyaan yang Sering Diajukan</h2>
+                  <div className="space-y-3">
+                    {article.faqs.map((faq, idx) => (
+                      <details key={idx} className="group border border-gray-200 rounded-lg overflow-hidden">
+                        <summary className="flex items-center justify-between px-4 py-3 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors list-none">
+                          <span className="font-medium text-gray-800 pr-4">{faq.question}</span>
+                          <span className="text-gray-400 group-open:rotate-180 transition-transform shrink-0">▼</span>
+                        </summary>
+                        <div className="px-4 py-3 text-gray-700 leading-relaxed text-sm">
+                          {faq.answer}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Social Sharing */}
               <div className="border-t pt-6">

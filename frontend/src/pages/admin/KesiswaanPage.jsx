@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronDown, Check, Plus, Search, X, MoreVertical } from 'lucide-react';
+import { ChevronDown, Check, Plus, Search, X, MoreVertical, SlidersHorizontal, Pencil, ImagePlus, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 
 const Ekskul = lazy(() => import('../Ekskul'));
@@ -32,6 +32,82 @@ const KesiswaanPage = () => {
 
   // Trigger create modal in child component
   const [createTrigger, setCreateTrigger] = useState(0);
+
+  // Alumni filter visibility
+  const [showAlumniFilter, setShowAlumniFilter] = useState(true);
+
+  // Hero edit panel
+  const [showHeroEdit, setShowHeroEdit] = useState(false);
+  const [heroForm, setHeroForm] = useState({ title: '', subtitle: '', background: '' });
+  const [heroSaving, setHeroSaving] = useState(false);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const heroFileRef = useRef(null);
+  const heroEditRef = useRef(null);
+
+  const heroKey = activeTab === 'ekskul' ? 'ekskul' : 'fasilitas';
+  const hasHeroEdit = activeTab === 'ekskul' || activeTab === 'fasilitas';
+
+  // Load hero settings when panel opens
+  useEffect(() => {
+    if (!showHeroEdit) return;
+    api.get('/api/site-settings').then((res) => {
+      const hp = res.data?.data?.settings?.homepageSections || {};
+      setHeroForm({
+        title: hp[`${heroKey}HeroTitle`] || '',
+        subtitle: hp[`${heroKey}HeroSubtitle`] || '',
+        background: hp[`${heroKey}HeroBackground`] || '',
+      });
+    }).catch(() => {});
+  }, [showHeroEdit, heroKey]);
+
+  // Close hero panel on outside click
+  useEffect(() => {
+    if (!showHeroEdit) return;
+    const handler = (e) => {
+      if (heroEditRef.current && !heroEditRef.current.contains(e.target)) setShowHeroEdit(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showHeroEdit]);
+
+  const handleHeroImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setHeroUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await api.post('/api/upload/image?folder=hero', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setHeroForm(f => ({ ...f, background: res.data.data?.url || res.data.url || '' }));
+    } catch {
+      alert('Upload gagal, coba lagi.');
+    } finally {
+      setHeroUploading(false);
+    }
+  };
+
+  const handleHeroSave = async () => {
+    setHeroSaving(true);
+    try {
+      const res = await api.get('/api/site-settings');
+      const hp = res.data?.data?.settings?.homepageSections || {};
+      await api.put('/api/site-settings', {
+        homepageSections: {
+          ...hp,
+          [`${heroKey}HeroTitle`]: heroForm.title,
+          [`${heroKey}HeroSubtitle`]: heroForm.subtitle,
+          [`${heroKey}HeroBackground`]: heroForm.background,
+        },
+      });
+      setShowHeroEdit(false);
+    } catch {
+      alert('Gagal menyimpan, coba lagi.');
+    } finally {
+      setHeroSaving(false);
+    }
+  };
 
   // Reset search when tab changes
   useEffect(() => {
@@ -128,8 +204,8 @@ const KesiswaanPage = () => {
             {activeTab === 'ekskul' && (
               <Ekskul embedded createTrigger={createTrigger} externalSearch={searchQuery} />
             )}
-{activeTab === 'alumni' && (
-              <Alumni embedded createTrigger={createTrigger} externalSearch={searchQuery} />
+            {activeTab === 'alumni' && (
+              <Alumni embedded createTrigger={createTrigger} externalSearch={searchQuery} filterVisible={showAlumniFilter} />
             )}
             {activeTab === 'fasilitas' && (
               <Fasilitas embedded createTrigger={createTrigger} externalSearch={searchQuery} />
@@ -142,7 +218,93 @@ const KesiswaanPage = () => {
         </div>
 
         {/* ── Floating ⋮ pill — absolute, always visible ─────────────────────── */}
-        <div className="absolute bottom-8 right-8 z-20 pointer-events-none">
+        <div ref={heroEditRef} className="absolute bottom-8 right-8 z-20 pointer-events-none">
+
+          {/* Hero edit panel — floats above pill */}
+          {showHeroEdit && (
+            <div className="pointer-events-auto mb-3 w-80 bg-gradient-to-b from-white/80 to-white/60 backdrop-blur-2xl border border-white/80 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] p-4 flex flex-col gap-3">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
+                Edit Hero — {heroKey === 'ekskul' ? 'Ekstrakulikuler' : 'Fasilitas'}
+              </p>
+
+              {/* Title */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Judul</label>
+                <input
+                  type="text"
+                  value={heroForm.title}
+                  onChange={e => setHeroForm(f => ({ ...f, title: e.target.value }))}
+                  className="w-full px-3 py-1.5 text-sm bg-black/[0.05] border border-black/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 text-gray-800"
+                  placeholder="Judul hero..."
+                />
+              </div>
+
+              {/* Subtitle */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Subjudul</label>
+                <textarea
+                  rows={2}
+                  value={heroForm.subtitle}
+                  onChange={e => setHeroForm(f => ({ ...f, subtitle: e.target.value }))}
+                  className="w-full px-3 py-1.5 text-sm bg-black/[0.05] border border-black/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 text-gray-800 resize-none"
+                  placeholder="Deskripsi singkat..."
+                />
+              </div>
+
+              {/* Background image */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Background</label>
+                <div
+                  onClick={() => !heroUploading && heroFileRef.current?.click()}
+                  className="relative w-full h-20 rounded-xl border-2 border-dashed border-black/15 overflow-hidden cursor-pointer hover:border-blue-400/60 transition-colors flex items-center justify-center bg-black/[0.03]"
+                >
+                  {heroForm.background ? (
+                    <>
+                      <img src={heroForm.background} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <ImagePlus size={18} className="text-white" />
+                      </div>
+                    </>
+                  ) : heroUploading ? (
+                    <Loader2 size={18} className="text-blue-500 animate-spin" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-gray-400">
+                      <ImagePlus size={18} />
+                      <span className="text-[10px]">Klik untuk upload</span>
+                    </div>
+                  )}
+                </div>
+                <input ref={heroFileRef} type="file" accept="image/*" className="hidden" onChange={handleHeroImageUpload} />
+                {heroForm.background && (
+                  <button
+                    onClick={() => setHeroForm(f => ({ ...f, background: '' }))}
+                    className="mt-1 text-[10px] text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    Hapus background
+                  </button>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setShowHeroEdit(false)}
+                  className="flex-1 py-1.5 text-xs text-gray-500 hover:text-gray-700 bg-black/[0.05] hover:bg-black/[0.09] rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleHeroSave}
+                  disabled={heroSaving}
+                  className="flex-1 py-1.5 text-xs text-white bg-blue-500 hover:bg-blue-600 rounded-xl transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60"
+                >
+                  {heroSaving ? <Loader2 size={12} className="animate-spin" /> : null}
+                  {heroSaving ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="pointer-events-auto flex justify-end items-end">
               {pillExpanded ? (
                 <div className="flex items-center gap-2 bg-gradient-to-b from-white/55 to-white/35 backdrop-blur-2xl border border-white/70 rounded-2xl px-3 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-1px_0_rgba(0,0,0,0.04)]">
@@ -159,6 +321,21 @@ const KesiswaanPage = () => {
                     />
                   )}
 
+                  {/* Filter toggle — alumni tab only */}
+                  {activeTab === 'alumni' && (
+                    <button
+                      onClick={() => setShowAlumniFilter(v => !v)}
+                      title="Filter"
+                      className={`p-1.5 rounded-xl transition-all ${
+                        showAlumniFilter
+                          ? 'bg-blue-500/15 text-blue-600'
+                          : 'text-gray-500/70 hover:text-gray-700 hover:bg-black/[0.05]'
+                      }`}
+                    >
+                      <SlidersHorizontal size={15} />
+                    </button>
+                  )}
+
                   {/* Search toggle */}
                   <button
                     onClick={() => { setShowSearch(v => !v); if (showSearch) setSearchQuery(''); }}
@@ -171,6 +348,21 @@ const KesiswaanPage = () => {
                   >
                     <Search size={15} />
                   </button>
+
+                  {/* Edit hero — ekskul & fasilitas only */}
+                  {hasHeroEdit && (
+                    <button
+                      onClick={() => setShowHeroEdit(v => !v)}
+                      title="Edit Hero Section"
+                      className={`p-1.5 rounded-xl transition-all ${
+                        showHeroEdit
+                          ? 'bg-blue-500/15 text-blue-600'
+                          : 'text-gray-500/70 hover:text-gray-700 hover:bg-black/[0.05]'
+                      }`}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                  )}
 
                   {hasCreate && (
                     <>

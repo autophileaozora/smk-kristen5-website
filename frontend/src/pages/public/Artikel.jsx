@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { useSchoolLogo } from '../../hooks/useContact';
+import SEO from '../../components/SEO';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -257,6 +258,12 @@ const Artikel = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
+      <SEO
+        title="Artikel - SMK Kristen 5 Klaten"
+        description="Baca artikel terbaru dari SMK Kristen 5 Klaten (Krisma): berita sekolah, prestasi siswa, tips karir, dan informasi jurusan SMK."
+        keywords="artikel SMK Krisma, berita SMK Klaten, prestasi SMK Kristen 5, blog SMK Krisma, informasi SMK Klaten"
+        url="/artikel"
+      />
       {/* Navbar - Same as Homepage */}
       <Navbar activePage="artikel" visible={navbarVisible} />
 

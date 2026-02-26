@@ -9,6 +9,7 @@ const Footer = () => {
   const { contact, socialMedia: contextSocialMedia } = useSchoolProfile();
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [siteSettings, setSiteSettings] = useState({});
 
   // Fallback data for backwards compatibility
   const [jurusans, setJurusans] = useState([]);
@@ -17,8 +18,12 @@ const Footer = () => {
     const fetchFooterData = async () => {
       try {
         // Try to fetch dynamic footer columns first
-        const footerRes = await api.get('/api/footer').catch(() => ({ data: { data: { columns: [] } } }));
+        const [footerRes, settingsRes] = await Promise.all([
+          api.get('/api/footer').catch(() => ({ data: { data: { columns: [] } } })),
+          api.get('/api/site-settings').catch(() => ({ data: { data: {} } })),
+        ]);
         const footerColumns = footerRes.data.data?.columns || [];
+        setSiteSettings(settingsRes.data.data?.settings || {});
 
         if (footerColumns.length > 0) {
           setColumns(footerColumns);
@@ -273,7 +278,7 @@ const Footer = () => {
           <div className="w-full h-px bg-white/30 my-5"></div>
 
           <div className="text-xs text-white font-medium text-center lg:text-left">
-            © {new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.
+            {siteSettings.footerText || `© ${new Date().getFullYear()} SMK Kristen 5 Klaten. All rights reserved.`}
           </div>
         </div>
       </footer>

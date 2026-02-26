@@ -4,7 +4,7 @@ import { MoreVertical, Edit3, Trash2, Eye, EyeOff, Star, X, ChevronDown } from '
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
 
-const Alumni = ({ embedded = false, createTrigger = 0, externalSearch = '' }) => {
+const Alumni = ({ embedded = false, createTrigger = 0, externalSearch = '', filterVisible = true }) => {
   const [alumni, setAlumni] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -267,6 +267,42 @@ const Alumni = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
       </div>
       ) : null}
 
+      {/* Compact filter row — embedded only */}
+      {embedded && filterVisible && (
+        <div className="flex items-center gap-2 px-4 pt-4 pb-2 flex-wrap">
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="px-2.5 py-1.5 text-xs bg-white/70 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all text-gray-700"
+          >
+            <option value="">Semua Tahun</option>
+            {years.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+          <select
+            value={selectedJurusan}
+            onChange={(e) => setSelectedJurusan(e.target.value)}
+            className="px-2.5 py-1.5 text-xs bg-white/70 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all text-gray-700"
+          >
+            <option value="">Semua Jurusan</option>
+            {jurusans.map((jurusan) => (
+              <option key={jurusan._id} value={jurusan.code}>
+                {jurusan.code} - {jurusan.name}
+              </option>
+            ))}
+          </select>
+          {(selectedYear || selectedJurusan) && (
+            <button
+              onClick={() => { setSelectedYear(''); setSelectedJurusan(''); }}
+              className="px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 bg-black/[0.05] hover:bg-black/[0.08] rounded-xl transition-colors"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Search and Filters */}
       {!embedded && (
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -464,7 +500,7 @@ const Alumni = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
       )}
 
       {/* Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
@@ -639,31 +675,33 @@ const Alumni = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
               </div>
 
               {/* Published & Featured */}
-              <div className="flex gap-4">
-                <div className="flex items-center">
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-start gap-2.5 p-3 rounded-xl border border-black/[0.08] bg-white/60 cursor-pointer hover:bg-green-50/50 hover:border-green-200 transition-colors">
                   <input
                     type="checkbox"
                     name="isPublished"
                     checked={formData.isPublished}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    className="mt-0.5 w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 flex-shrink-0"
                   />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Publish (tampilkan di website)
-                  </label>
-                </div>
-                <div className="flex items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700">Publish</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed">Alumni tampil di halaman Cerita Alumni &amp; dapat ditemukan publik</p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-2.5 p-3 rounded-xl border border-black/[0.08] bg-white/60 cursor-pointer hover:bg-yellow-50/50 hover:border-yellow-200 transition-colors">
                   <input
                     type="checkbox"
                     name="isFeatured"
                     checked={formData.isFeatured}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    className="mt-0.5 w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400 flex-shrink-0"
                   />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Featured (tampilkan di homepage)
-                  </label>
-                </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700">⭐ Featured</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed">Tampil di carousel testimoni homepage (harus Publish dulu)</p>
+                  </div>
+                </label>
               </div>
 
               {/* Modal Footer */}
@@ -684,7 +722,8 @@ const Alumni = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Empty State */}

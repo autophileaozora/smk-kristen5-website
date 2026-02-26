@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 
@@ -105,7 +106,7 @@ const MataPelajaran = ({ embedded = false, createTrigger = 0, externalSearch }) 
       category: mataPelajaran.category,
       semester: mataPelajaran.semester || '',
       hoursPerWeek: mataPelajaran.hoursPerWeek || '',
-      image: null,
+      image: mataPelajaran.image || null,
       isActive: mataPelajaran.isActive,
       displayOrder: mataPelajaran.displayOrder || 0,
     });
@@ -369,7 +370,7 @@ const MataPelajaran = ({ embedded = false, createTrigger = 0, externalSearch }) 
       </div>
 
       {/* Create/Edit Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
@@ -540,10 +541,10 @@ const MataPelajaran = ({ embedded = false, createTrigger = 0, externalSearch }) 
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {showDeleteModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
@@ -573,7 +574,7 @@ const MataPelajaran = ({ embedded = false, createTrigger = 0, externalSearch }) 
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 };

@@ -5,7 +5,7 @@ Disallow: /admin/
 Disallow: /login
 
 # Sitemap
-Sitemap: http://localhost:5173/sitemap.xml
+Sitemap: https://smkkrisma.sch.id/sitemap.xml
 
 # Crawl-delay
 Crawl-delay: 1

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { MoreVertical, X, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 
-const RunningText = ({ embedded = false, createTrigger = 0 }) => {
+const RunningText = ({ embedded = false, createTrigger = 0, settingsTrigger = 0 }) => {
   const [runningTexts, setRunningTexts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -13,6 +13,11 @@ const RunningText = ({ embedded = false, createTrigger = 0 }) => {
   const [textToDelete, setTextToDelete] = useState(null);
   const [toast, setToast] = useState(null);
   const [rowMenu, setRowMenu] = useState(null);
+
+  // Settings state
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settings, setSettings] = useState({ backgroundColor: '#facc15', textColor: '#111827', speed: 30 });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -24,11 +29,37 @@ const RunningText = ({ embedded = false, createTrigger = 0 }) => {
 
   useEffect(() => {
     fetchRunningTexts();
+    fetchSettings();
   }, []);
 
   useEffect(() => {
     if (createTrigger > 0) openCreateModal();
   }, [createTrigger]);
+
+  useEffect(() => {
+    if (settingsTrigger > 0) setShowSettingsModal(true);
+  }, [settingsTrigger]);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await api.get('/api/site-settings');
+      const rts = res.data.data.settings.runningTextSettings;
+      if (rts) setSettings({ backgroundColor: rts.backgroundColor || '#facc15', textColor: rts.textColor || '#111827', speed: rts.speed || 30 });
+    } catch {}
+  };
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      await api.put('/api/site-settings', { runningTextSettings: settings });
+      showToast('Pengaturan berhasil disimpan!', 'success');
+      setShowSettingsModal(false);
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Gagal menyimpan pengaturan', 'error');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const fetchRunningTexts = async () => {
     try {
@@ -268,7 +299,7 @@ const RunningText = ({ embedded = false, createTrigger = 0 }) => {
       )}
 
       {/* Create/Edit Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit}>
@@ -371,11 +402,98 @@ const RunningText = ({ embedded = false, createTrigger = 0 }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && createPortal(
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
+              <h3 className="text-sm font-semibold text-gray-800">Pengaturan Tampilan</h3>
+              <button onClick={() => setShowSettingsModal(false)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-black/5 rounded-lg transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Preview */}
+              <div className="rounded-xl overflow-hidden">
+                <div className="py-2 px-4 text-xs font-medium truncate" style={{ backgroundColor: settings.backgroundColor, color: settings.textColor }}>
+                  📢 Contoh teks berjalan di website...
+                </div>
+              </div>
+              {/* Background Color */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Warna Latar</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={settings.backgroundColor}
+                    onChange={(e) => setSettings(s => ({ ...s, backgroundColor: e.target.value }))}
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-black/[0.08] p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={settings.backgroundColor}
+                    onChange={(e) => setSettings(s => ({ ...s, backgroundColor: e.target.value }))}
+                    className="flex-1 px-3 py-2 text-xs bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none font-mono"
+                    placeholder="#facc15"
+                  />
+                </div>
+              </div>
+              {/* Text Color */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Warna Teks</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={settings.textColor}
+                    onChange={(e) => setSettings(s => ({ ...s, textColor: e.target.value }))}
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-black/[0.08] p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={settings.textColor}
+                    onChange={(e) => setSettings(s => ({ ...s, textColor: e.target.value }))}
+                    className="flex-1 px-3 py-2 text-xs bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none font-mono"
+                    placeholder="#111827"
+                  />
+                </div>
+              </div>
+              {/* Speed */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Kecepatan — {settings.speed}s <span className="text-gray-400 font-normal">(lebih kecil = lebih cepat)</span></label>
+                <input
+                  type="range"
+                  min={5}
+                  max={120}
+                  step={5}
+                  value={settings.speed}
+                  onChange={(e) => setSettings(s => ({ ...s, speed: Number(e.target.value) }))}
+                  className="w-full accent-blue-600"
+                />
+                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                  <span>Cepat (5s)</span>
+                  <span>Lambat (120s)</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-black/[0.06]">
+              <button onClick={() => setShowSettingsModal(false)} className="px-4 py-2 text-xs text-gray-600 hover:bg-black/5 rounded-xl transition-colors">
+                Batal
+              </button>
+              <button onClick={saveSettings} disabled={savingSettings} className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50">
+                {savingSettings ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && textToDelete && (
+      {showDeleteModal && textToDelete && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
             {/* Header */}
@@ -417,7 +535,8 @@ const RunningText = ({ embedded = false, createTrigger = 0 }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

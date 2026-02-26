@@ -20,6 +20,7 @@ const KegiatanPage = lazy(() => import('./pages/admin/KegiatanPage'));
 const HomepagePage = lazy(() => import('./pages/admin/HomepagePage'));
 const PengaturanPage = lazy(() => import('./pages/admin/PengaturanPage'));
 const SistemPage = lazy(() => import('./pages/admin/SistemPage'));
+const ContactMessages = lazy(() => import('./pages/ContactMessages'));
 const HomepageFixed = lazy(() => import('./pages/public/HomepageFixed'));
 const CustomPageView = lazy(() => import('./pages/public/CustomPageView'));
 const JurusanList = lazy(() => import('./pages/public/JurusanList'));
@@ -32,6 +33,7 @@ const VisiMisi = lazy(() => import('./pages/public/VisiMisi'));
 const Sambutan = lazy(() => import('./pages/public/Sambutan'));
 const SearchPage = lazy(() => import('./pages/public/SearchPage'));
 const FasilitasList = lazy(() => import('./pages/public/FasilitasList'));
+const EkskulList = lazy(() => import('./pages/public/EkskulList'));
 
 // Loading component
 const LoadingFallback = () => (
@@ -80,6 +82,7 @@ function App() {
           <Route path="/sambutan" element={<Sambutan />} />
           <Route path="/tentang" element={<Navigate to="/page/profil#tentang-kami" replace />} />
           <Route path="/fasilitas" element={<FasilitasList />} />
+          <Route path="/ekskul" element={<EkskulList />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/page/:slug" element={<CustomPageView />} />
           <Route path="/login" element={<Login />} />
@@ -103,6 +106,7 @@ function App() {
             <Route path="homepage" element={<HomepagePage />} />
             <Route path="pengaturan" element={<PengaturanPage />} />
             <Route path="sistem" element={<SistemPage />} />
+            <Route path="pesan" element={<ContactMessages />} />
             <Route path="profile" element={<ProfileManagement />} />
             <Route path="my-articles" element={<Articles />} />
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import SEO from '../../components/SEO';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -45,8 +46,40 @@ const JurusanList = () => {
     );
   }
 
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://smkkrisma.sch.id';
+
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Program Keahlian SMK Kristen 5 Klaten",
+    "description": "Daftar program keahlian unggulan di SMK Kristen 5 Klaten (Krisma)",
+    "numberOfItems": jurusans.length,
+    "itemListElement": jurusans.map((j, idx) => ({
+      "@type": "ListItem",
+      "position": idx + 1,
+      "item": {
+        "@type": "Course",
+        "name": j.name,
+        "url": `${siteUrl}/jurusan/${j.slug}`,
+        "courseCode": j.code,
+        "description": j.shortDescription || j.description?.replace(/<[^>]*>/g, '').substring(0, 120) || '',
+        "provider": {
+          "@type": "EducationalOrganization",
+          "name": "SMK Kristen 5 Klaten"
+        }
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <SEO
+        title="Jurusan - SMK Kristen 5 Klaten"
+        description="Pilih program keahlian terbaik di SMK Kristen 5 Klaten (Krisma). Tersedia berbagai jurusan unggulan dengan fasilitas modern dan kurikulum berbasis industri."
+        keywords="jurusan SMK Krisma, program keahlian SMK Klaten, SMK Kristen 5 jurusan, pilih jurusan SMK"
+        url="/jurusan"
+        structuredData={itemListSchema}
+      />
       {/* Styles */}
       <style>{`
         .vertical-text {
@@ -182,6 +215,12 @@ const JurusanList = () => {
                 isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}>
                 <div className="relative z-10">
+                  {/* Logo */}
+                  {jurusan.logo && (
+                    <div className="mb-4 w-14 h-14 lg:w-16 lg:h-16 bg-white/20 backdrop-blur-sm rounded-xl p-2 border border-white/30 shadow-lg">
+                      <img src={jurusan.logo} alt={jurusan.name} className="w-full h-full object-contain" />
+                    </div>
+                  )}
                   {/* Title */}
                   <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight text-white drop-shadow-lg">
                     {jurusan.name}
@@ -207,9 +246,15 @@ const JurusanList = () => {
               </div>
 
               {/* Content for Inactive Items - Vertical Text */}
-              <div className={`absolute inset-0 flex flex-col items-center justify-start pt-16 gap-1 transition-all duration-500 ${
+              <div className={`absolute inset-0 flex flex-col items-center justify-start pt-8 gap-1 transition-all duration-500 ${
                 isActive ? 'opacity-0' : 'opacity-100'
               }`}>
+                {/* Logo (small, at top) */}
+                {jurusan.logo && (
+                  <div className="mb-3 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg p-1 border border-white/30 flex-shrink-0">
+                    <img src={jurusan.logo} alt={jurusan.name} className="w-full h-full object-contain" />
+                  </div>
+                )}
                 {/* Code - Vertical Stacked (Each letter on new line) */}
                 {(jurusan.code || jurusan.name?.slice(0, 4).toUpperCase()).split('').map((letter, idx) => (
                   <span

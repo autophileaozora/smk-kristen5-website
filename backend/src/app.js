@@ -83,6 +83,9 @@ app.get('/health', (req, res) => {
   });
 });
 
+// SEO Routes (Sitemap at root level)
+app.use('/', sitemapRoutes);
+
 // API Routes
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
@@ -113,6 +116,8 @@ import navbarRoutes from './routes/navbar.js';
 import footerRoutes from './routes/footer.js';
 import homepageRoutes from './routes/homepage.js';
 import alumniSubmissionsRoutes from './routes/alumniSubmissions.js';
+import sitemapRoutes from './routes/sitemap.js';
+import contactMessageRoutes from './routes/contactMessages.js';
 
 // Mount routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -144,6 +149,7 @@ app.use('/api/navbar', navbarRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/homepage', homepageRoutes);
 app.use('/api/alumni-submissions', alumniSubmissionsRoutes);
+app.use('/api/contact-messages', contactMessageRoutes);
 
 // Root route
 app.get('/', (req, res) => {

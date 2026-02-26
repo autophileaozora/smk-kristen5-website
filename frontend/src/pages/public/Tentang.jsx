@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import SEO from '../../components/SEO';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { useSchoolProfile } from '../../contexts/SchoolProfileContext';
@@ -84,8 +85,47 @@ const Tentang = () => {
     { id: 'sambutan', label: 'SAMBUTAN', data: contactInfo?.principal }
   ];
 
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://smkkrisma.sch.id';
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "SMK Kristen 5 Klaten",
+    "alternateName": "SMK Krisma",
+    "url": siteUrl,
+    "logo": `${siteUrl}/logo.png`,
+    "description": "SMK Kristen 5 Klaten (Krisma) adalah sekolah menengah kejuruan swasta di Klaten, Jawa Tengah, dengan visi menghasilkan lulusan yang kompeten dan berkarakter Kristiani.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": contactInfo?.address || "Jl. Diponegoro No. 41",
+      "addressLocality": "Klaten",
+      "addressRegion": "Jawa Tengah",
+      "postalCode": "57411",
+      "addressCountry": "ID"
+    },
+    "telephone": contactInfo?.phone || "",
+    "email": contactInfo?.email || "",
+    "sameAs": [
+      contactInfo?.socialMedia?.facebook || "",
+      contactInfo?.socialMedia?.instagram || "",
+      contactInfo?.socialMedia?.youtube || ""
+    ].filter(Boolean),
+    "foundingDate": "1967",
+    "numberOfEmployees": {
+      "@type": "QuantitativeValue",
+      "minValue": 50
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="Tentang Kami - SMK Kristen 5 Klaten"
+        description="Kenali lebih dekat SMK Kristen 5 Klaten (SMK Krisma) — sejarah berdirinya, visi dan misi, serta sambutan kepala sekolah. Sekolah menengah kejuruan unggulan di Klaten, Jawa Tengah."
+        keywords="tentang SMK Krisma, sejarah SMK Kristen 5 Klaten, visi misi SMK Krisma, kepala sekolah SMK Klaten, profil SMK Kristen 5"
+        url="/tentang"
+        structuredData={organizationSchema}
+      />
       <Navbar activePage="" visible={navbarVisible} />
 
       {/* Hero Section - From Kontak */}

@@ -80,6 +80,25 @@ const articleSchema = new mongoose.Schema(
       type: String,
       trim: true,
     }],
+    keywords: [{
+      type: String,
+      trim: true,
+    }],
+    metaDescription: {
+      type: String,
+      maxlength: [160, 'Meta description cannot exceed 160 characters'],
+      trim: true,
+    },
+    altText: {
+      type: String,
+      maxlength: [125, 'Alt text cannot exceed 125 characters'],
+      trim: true,
+    },
+    faqs: [{
+      question: { type: String, trim: true },
+      answer: { type: String, trim: true },
+      _id: false,
+    }],
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
@@ -91,15 +110,31 @@ const articleSchema = new mongoose.Schema(
 );
 
 // Auto-generate slug from title before saving
-articleSchema.pre('save', function (next) {
+articleSchema.pre('save', async function (next) {
   if (this.isModified('title')) {
     const baseSlug = this.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
     
-    // Add timestamp to ensure uniqueness
-    this.slug = `${baseSlug}-${Date.now()}`;
+    let slug = baseSlug;
+    let counter = 1;
+    
+    // Check for slug uniqueness
+    while (true) {
+      const existingArticle = await this.constructor.findOne({
+        slug: slug,
+        _id: { $ne: this._id }
+      });
+      
+      if (!existingArticle) {
+        this.slug = slug;
+        break;
+      }
+      
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
   }
   next();
 });
@@ -110,6 +145,19 @@ articleSchema.pre('save', function (next) {
     // Strip HTML tags and take first 150 characters
     const plainText = this.content.replace(/<[^>]*>/g, '');
     this.excerpt = plainText.substring(0, 150) + '...';
+  }
+  next();
+});
+
+// Auto-generate metaDescription from excerpt if not provided
+articleSchema.pre('save', function (next) {
+  if (!this.metaDescription && this.excerpt) {
+    // Use first 160 characters of excerpt
+    this.metaDescription = this.excerpt.substring(0, 160).trim();
+  } else if (!this.metaDescription && this.content) {
+    // Fallback: use first 160 chars of content
+    const plainText = this.content.replace(/<[^>]*>/g, '');
+    this.metaDescription = plainText.substring(0, 160).trim();
   }
   next();
 });

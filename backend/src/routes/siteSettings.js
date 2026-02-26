@@ -51,6 +51,7 @@ router.put('/', protect, isAdministrator, async (req, res) => {
       'footerText',
       'footerDescription',
       'homepageSections',
+      'runningTextSettings',
     ];
 
     // Update only allowed fields

@@ -84,8 +84,8 @@ const FooterManagement = ({ embedded = false, createTrigger = 0, saveTrigger = 0
   const fetchFooterTextSettings = async () => {
     try {
       const res = await api.get('/api/site-settings');
-      const s = res.data.data;
-      setFooterTextSettings({ footerText: s.footerText || '', footerDescription: s.footerDescription || '' });
+      const s = res.data.data.settings;
+      setFooterTextSettings({ footerText: s?.footerText || '', footerDescription: s?.footerDescription || '' });
     } catch { /* silent */ }
   };
 
@@ -474,7 +474,7 @@ const FooterManagement = ({ embedded = false, createTrigger = 0, saveTrigger = 0
       )}
 
       {/* ── Preview modal ─────────────────────────────────────────────────── */}
-      {showPreview && (
+      {showPreview && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-start justify-center pt-16 p-4"
           onClick={() => setShowPreview(false)}>
           <div className="bg-white/75 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] w-full max-w-4xl"
@@ -519,11 +519,12 @@ const FooterManagement = ({ embedded = false, createTrigger = 0, saveTrigger = 0
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Column modal ──────────────────────────────────────────────────── */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-md w-full max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
@@ -591,11 +592,12 @@ const FooterManagement = ({ embedded = false, createTrigger = 0, saveTrigger = 0
               <button onClick={handleSaveColumn} className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">Simpan</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Item modal ────────────────────────────────────────────────────── */}
-      {showItemModal && (
+      {showItemModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-md w-full">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
@@ -664,7 +666,8 @@ const FooterManagement = ({ embedded = false, createTrigger = 0, saveTrigger = 0
               <button onClick={handleSaveItem} className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">Simpan</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Context menu portal ───────────────────────────────────────────── */}

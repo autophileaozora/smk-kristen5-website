@@ -34,6 +34,11 @@ const alumniSubmissionSchema = new mongoose.Schema(
       trim: true,
       maxlength: [200, 'Company name cannot exceed 200 characters'],
     },
+    phone: {
+      type: String,
+      trim: true,
+      maxlength: [20, 'Nomor telepon tidak boleh lebih dari 20 karakter'],
+    },
     testimonial: {
       type: String,
       required: [true, 'Testimonial is required'],

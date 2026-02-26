@@ -35,6 +35,7 @@ const HomepageFixed = () => {
     },
     events: [],
     siteSettings: null,
+    videoHeroes: [],
   });
   const [loading, setLoading] = useState(true);
   const [navbarVisible, setNavbarVisible] = useState(true);
@@ -51,7 +52,7 @@ const HomepageFixed = () => {
   const [reviewError, setReviewError] = useState('');
   const [reviewForm, setReviewForm] = useState({
     name: '', graduationYear: '', jurusan: '',
-    currentOccupation: '', company: '', testimonial: '',
+    currentOccupation: '', company: '', phone: '', testimonial: '',
     photoFile: null, photoPreview: '',
   });
 
@@ -82,6 +83,7 @@ const HomepageFixed = () => {
       fd.append('jurusan', jurusan.trim());
       fd.append('currentOccupation', reviewForm.currentOccupation.trim());
       fd.append('company', reviewForm.company.trim());
+      fd.append('phone', reviewForm.phone.trim());
       fd.append('testimonial', testimonial.trim());
       await api.post('/api/alumni-submissions', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -97,7 +99,7 @@ const HomepageFixed = () => {
     setShowReviewModal(false);
     setReviewSubmitState('idle');
     setReviewError('');
-    setReviewForm({ name: '', graduationYear: '', jurusan: '', currentOccupation: '', company: '', testimonial: '', photoFile: null, photoPreview: '' });
+    setReviewForm({ name: '', graduationYear: '', jurusan: '', currentOccupation: '', company: '', phone: '', testimonial: '', photoFile: null, photoPreview: '' });
   };
 
   const lastScrollY = useRef(0);
@@ -133,6 +135,7 @@ const HomepageFixed = () => {
           },
           events: d.events || [],
           siteSettings: d.siteSettings || null,
+          videoHeroes: d.videoHeroes || [],
         });
       } catch (error) {
         console.error('Error fetching homepage data:', error);
@@ -189,19 +192,23 @@ const HomepageFixed = () => {
     }
   }, [data.heroSlides.length, data.heroSettings.slideDuration, data.heroSettings.autoPlay]);
 
-  // Auto-rotate activity carousel
+  // Auto-rotate ekskul carousel
   useEffect(() => {
-    const tabs = data.activityTabs.length > 0 ? data.activityTabs : null;
-    if (!tabs) return;
-    const currentTab = tabs[activeActivityTab] || tabs[0];
+    const akademik = (data.ekskuls || []).filter(e => e.isActive && e.category === 'akademik');
+    const nonAkademik = (data.ekskuls || []).filter(e => e.isActive && e.category !== 'akademik');
+    const ekskulTabs = [
+      ...(akademik.length > 0 ? [{ name: 'akademik', items: akademik }] : []),
+      ...(nonAkademik.length > 0 ? [{ name: 'non-akademik', items: nonAkademik }] : []),
+    ];
+    if (!ekskulTabs.length) return;
+    const currentTab = ekskulTabs[activeActivityTab] || ekskulTabs[0];
     const len = currentTab?.items?.length || 0;
     if (len <= 1) return;
-    const duration = data.activitySettings?.slideDuration || 4000;
     const interval = setInterval(() => {
       setActiveActivitySlide((p) => (p + 1) % len);
-    }, duration);
+    }, 4000);
     return () => clearInterval(interval);
-  }, [data.activityTabs, activeActivityTab, data.activitySettings?.slideDuration]);
+  }, [data.ekskuls, activeActivityTab]);
 
   // Swipe handlers for carousels
   const heroSwipe = useSwipe({
@@ -211,15 +218,23 @@ const HomepageFixed = () => {
 
   const activitySwipe = useSwipe({
     onLeft: () => {
-      const tabs = data.activityTabs.length > 0 ? data.activityTabs : [{ items: [{},{},{},{}] }];
-      const currentTab = tabs[activeActivityTab] || tabs[0];
-      const len = currentTab?.items?.length || 1;
+      const akademik = (data.ekskuls || []).filter(e => e.isActive && e.category === 'akademik');
+      const nonAkademik = (data.ekskuls || []).filter(e => e.isActive && e.category !== 'akademik');
+      const tabs = [
+        ...(akademik.length > 0 ? [{ items: akademik }] : []),
+        ...(nonAkademik.length > 0 ? [{ items: nonAkademik }] : []),
+      ];
+      const len = (tabs[activeActivityTab] || tabs[0])?.items?.length || 1;
       setActiveActivitySlide((p) => (p + 1) % len);
     },
     onRight: () => {
-      const tabs = data.activityTabs.length > 0 ? data.activityTabs : [{ items: [{},{},{},{}] }];
-      const currentTab = tabs[activeActivityTab] || tabs[0];
-      const len = currentTab?.items?.length || 1;
+      const akademik = (data.ekskuls || []).filter(e => e.isActive && e.category === 'akademik');
+      const nonAkademik = (data.ekskuls || []).filter(e => e.isActive && e.category !== 'akademik');
+      const tabs = [
+        ...(akademik.length > 0 ? [{ items: akademik }] : []),
+        ...(nonAkademik.length > 0 ? [{ items: nonAkademik }] : []),
+      ];
+      const len = (tabs[activeActivityTab] || tabs[0])?.items?.length || 1;
       setActiveActivitySlide((p) => (p - 1 + len) % len);
     },
   });
@@ -288,12 +303,15 @@ const HomepageFixed = () => {
   }
 
   const hp = data.siteSettings?.homepageSections || {};
+  const rts = data.siteSettings?.runningTextSettings || {};
 
   return (
     <>
       <SEO
         title={data.siteSettings?.metaTitle || 'SMK Kristen 5 Klaten - Sekolah Menengah Kejuruan'}
         description={data.siteSettings?.metaDescription || 'SMK Kristen 5 Klaten menyiapkan siswa masuk dunia kerja dengan kurikulum berbasis industri'}
+        keywords="SMK Kristen 5 Klaten, SMK Krisma, SMK di Klaten, sekolah menengah kejuruan Klaten, SMK terbaik Klaten, SMK swasta Klaten"
+        url="/"
       />
 
       {/* Custom Styles */}
@@ -434,17 +452,32 @@ const HomepageFixed = () => {
 
       {/* Running Text - Below Hero */}
       {(data.runningText || []).length > 0 && (
-        <div className="w-full bg-yellow-400 text-gray-900 py-2 sm:py-3 overflow-hidden">
-          <div className="flex animate-marquee whitespace-nowrap">
+        <div
+          className="w-full py-2 sm:py-3 overflow-hidden"
+          style={{ backgroundColor: rts.backgroundColor || '#facc15', color: rts.textColor || '#111827' }}
+        >
+          <div className="flex animate-marquee whitespace-nowrap" style={{ animationDuration: `${rts.speed || 30}s` }}>
             {(data.runningText || []).map((text, textIdx) => (
               <span key={textIdx} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
-                📢 {text.text}
+                {text.link ? (
+                  <a href={text.link} target="_blank" rel="noopener noreferrer" className="hover:underline cursor-pointer">
+                    📢 {text.text}
+                  </a>
+                ) : (
+                  <>📢 {text.text}</>
+                )}
               </span>
             ))}
             {/* Duplicate for seamless loop */}
             {(data.runningText || []).map((text, textIdx) => (
               <span key={`dup-${textIdx}`} className="mx-4 sm:mx-8 text-xs sm:text-sm font-medium">
-                📢 {text.text}
+                {text.link ? (
+                  <a href={text.link} target="_blank" rel="noopener noreferrer" className="hover:underline cursor-pointer">
+                    📢 {text.text}
+                  </a>
+                ) : (
+                  <>📢 {text.text}</>
+                )}
               </span>
             ))}
           </div>
@@ -580,9 +613,14 @@ const HomepageFixed = () => {
                 className="flex justify-between items-center cursor-pointer hover:opacity-70 transition-opacity"
                 onClick={() => toggleProgram(idx)}
               >
-                <div>
-                  <h3 className="russo text-xl lg:text-2xl text-gray-700">{jurusan.code || jurusan.name.slice(0, 4).toUpperCase()}</h3>
-                  <h4 className="text-sm lg:text-base text-gray-700 font-medium mt-1.5">{jurusan.name}</h4>
+                <div className="flex items-center gap-3">
+                  {jurusan.logo && (
+                    <img src={jurusan.logo} alt={jurusan.name} className="w-10 h-10 object-contain flex-shrink-0" />
+                  )}
+                  <div>
+                    <h3 className="russo text-xl lg:text-2xl text-gray-700">{jurusan.code || jurusan.name.slice(0, 4).toUpperCase()}</h3>
+                    <h4 className="text-sm lg:text-base text-gray-700 font-medium mt-1.5">{jurusan.name}</h4>
+                  </div>
                 </div>
                 <span className="text-4xl leading-none text-gray-700 cursor-pointer transition-transform">
                   {activeProgram === idx ? '−' : '+'}
@@ -625,72 +663,81 @@ const HomepageFixed = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Detail Link */}
+                <Link
+                  to={`/jurusan/${jurusan.slug}`}
+                  className="text-[#008fd7] text-xs lg:text-sm font-medium mt-4 inline-block hover:text-[#00D9FF] transition-colors"
+                >
+                  {jurusan.detailLinkText || 'Lihat Detail Jurusan'} &gt;
+                </Link>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Activities Section */}
+      {/* Ekskul Section */}
       <section className="bg-[#1e1e1e] py-10 lg:py-[60px] relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
-        <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-base lg:text-lg font-bold text-white">{data.activitySettings?.sectionTitle || 'PEMBELAJARAN & KEGIATAN NYATA'}</h2>
-          <p className="text-sm lg:text-base leading-relaxed text-[#6a6b6d] font-medium max-w-[600px] mx-auto mt-2 px-4">
-            {data.activitySettings?.sectionSubtitle || 'SISWA DILATIH DAN DIDUKUNG DENGAN PROGRAM DAN KOMPETISI YANG MELATIH RASA DAN KEBERANIAN'}
-          </p>
+          <div className="text-center mb-6 lg:mb-8">
+            <h2 className="text-base lg:text-lg font-bold text-white">EKSTRAKURIKULER</h2>
+            <p className="text-sm lg:text-base leading-relaxed text-[#6a6b6d] font-medium max-w-[600px] mx-auto mt-2 px-4">
+              KEMBANGKAN POTENSI DAN BAKATMU BERSAMA BERAGAM EKSTRAKURIKULER PILIHAN
+            </p>
+          </div>
         </div>
 
-        {/* Tabs */}
         {(() => {
-          // Fallback data when no tabs from database
+          const akademik = (data.ekskuls || []).filter(e => e.isActive && e.category === 'akademik');
+          const nonAkademik = (data.ekskuls || []).filter(e => e.isActive && e.category !== 'akademik');
+          const tabs = [
+            ...(akademik.length > 0 ? [{ name: 'akademik', items: akademik }] : []),
+            ...(nonAkademik.length > 0 ? [{ name: 'non-akademik', items: nonAkademik }] : []),
+          ];
+
+          // Fallback when no ekskul data
           const fallbackTabs = [
-            { name: 'BELAJAR', items: [
-              { title: 'Praktikum Lab Terpadu', description: 'Siswa mengerjakan proyek langsung di laboratorium dengan peralatan standar industri.', image: 'https://images.unsplash.com/photo-1562774053-701939374585?w=1200&h=600&fit=crop' },
-              { title: 'Proyek Berbasis Masalah', description: 'Pembelajaran melalui studi kasus nyata untuk mengasah kemampuan analisis dan solusi.', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=600&fit=crop' },
-              { title: 'Bimbingan Intensif Ujian', description: 'Program persiapan ujian kompetensi dengan pendampingan guru berpengalaman.', image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1200&h=600&fit=crop' },
-              { title: 'Kelas Sertifikasi Profesi', description: 'Pelatihan khusus untuk mendapatkan sertifikat kompetensi yang diakui industri.', image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&h=600&fit=crop' },
+            { name: 'akademik', items: [
+              { name: 'Olimpiade Sains', description: 'Persiapan kompetisi sains tingkat nasional dengan bimbingan guru berpengalaman.', image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1200&h=600&fit=crop', schedule: 'Selasa & Kamis', coach: 'Tim Guru Sains' },
+              { name: 'Karya Ilmiah Remaja', description: 'Pengembangan kemampuan riset dan penulisan karya ilmiah untuk kompetisi.', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=600&fit=crop', schedule: 'Rabu', coach: 'Tim Guru Penelitian' },
             ]},
-            { name: 'BERAKSI', items: [
-              { title: 'Bakti Sosial Masyarakat', description: 'Kegiatan pelayanan ke panti asuhan dan masyarakat sekitar untuk membangun kepedulian.', image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&h=600&fit=crop' },
-              { title: 'Aksi Peduli Lingkungan', description: 'Program penghijauan dan pengelolaan sampah untuk kesadaran lingkungan hidup.', image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&h=600&fit=crop' },
-              { title: 'Perayaan Hari Besar', description: 'Pentas seni dan ibadah bersama dalam memperingati hari-hari penting nasional dan keagamaan.', image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&h=600&fit=crop' },
-              { title: 'Latihan Kepemimpinan Siswa', description: 'Program pembentukan karakter melalui kegiatan OSIS dan organisasi kesiswaan.', image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=600&fit=crop' },
-            ]},
-            { name: 'BERPENGALAMAN', items: [
-              { title: 'Magang di Perusahaan', description: 'Praktik kerja langsung di perusahaan mitra selama 3-6 bulan sesuai bidang keahlian.', image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=600&fit=crop' },
-              { title: 'Kunjungan Industri Rutin', description: 'Observasi langsung ke perusahaan untuk memahami dunia kerja profesional.', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=600&fit=crop' },
-              { title: 'Kompetisi Tingkat Nasional', description: 'Mengikuti lomba kompetensi siswa untuk mengukur kemampuan dan meraih prestasi.', image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=600&fit=crop' },
-              { title: 'Study Tour Edukatif', description: 'Kunjungan belajar ke institusi pendidikan dan tempat bersejarah di luar kota.', image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=600&fit=crop' },
+            { name: 'non-akademik', items: [
+              { name: 'Paskibra', description: 'Pembinaan fisik, mental, dan kedisiplinan melalui latihan baris-berbaris dan pengibaran bendera.', image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=600&fit=crop', schedule: 'Sabtu', coach: 'Pembina OSIS' },
+              { name: 'Basket', description: 'Latihan rutin dan kompetisi antar sekolah untuk mengembangkan bakat olahraga basket.', image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=600&fit=crop', schedule: 'Senin & Rabu', coach: 'Pelatih Olahraga' },
             ]},
           ];
 
-          const tabs = data.activityTabs.length > 0 ? data.activityTabs : fallbackTabs;
-          const currentTab = tabs[activeActivityTab] || tabs[0];
+          const activeTabs = tabs.length > 0 ? tabs : fallbackTabs;
+          const currentTab = activeTabs[activeActivityTab] || activeTabs[0];
           const currentItems = currentTab?.items || [];
           const currentItem = currentItems[activeActivitySlide] || currentItems[0];
 
           return (
             <>
-              <div className="flex justify-center gap-1 lg:gap-2 mb-4 border border-white rounded-full p-1 lg:p-1.5 w-fit mx-auto overflow-x-auto">
-                {tabs.map((tab, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => switchActivityTab(idx)}
-                    className={`px-3 lg:px-7 py-2 lg:py-2.5 rounded-full text-[10px] lg:text-xs text-white font-medium cursor-pointer transition-all whitespace-nowrap ${
-                      activeActivityTab === idx ? 'bg-[rgba(207,233,246,0.17)]' : ''
-                    }`}
-                  >
-                    {tab.name}
-                  </div>
-                ))}
+              {/* Tabs - inside container */}
+              <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
+                <div className="flex justify-center gap-1 lg:gap-2 mb-4 border border-white rounded-full p-1 lg:p-1.5 w-fit mx-auto overflow-x-auto">
+                  {activeTabs.map((tab, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => switchActivityTab(idx)}
+                      className={`px-3 lg:px-7 py-2 lg:py-2.5 rounded-full text-[10px] lg:text-xs text-white font-medium cursor-pointer transition-all whitespace-nowrap capitalize ${
+                        activeActivityTab === idx ? 'bg-[rgba(207,233,246,0.17)]' : ''
+                      }`}
+                    >
+                      {tab.name}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {currentItem && (
                 <div className="w-full" {...activitySwipe}>
-                  {/* Image wrapper with Union.svg overlays */}
-                  <div className="relative w-full h-[250px] sm:h-[350px] lg:h-[450px] pt-3 lg:pt-5 pb-0 px-2 lg:px-10">
-                    <div className="relative w-full h-full overflow-hidden">
+                  {/* Image wrapper - margin sesuai navbar (px-6 lg:px-16 dalam max-w-[1400px]) */}
+                  <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
+                    <div className="relative w-full h-[250px] sm:h-[350px] lg:h-[450px] pt-3 lg:pt-5 pb-0">
+                      <div className="relative w-full h-full overflow-hidden">
                       {/* Union overlay - Left */}
                       <div
                         className="absolute left-[-10px] top-0 w-[45px] h-full z-20 pointer-events-none hidden lg:block"
@@ -701,7 +748,6 @@ const HomepageFixed = () => {
                           transform: 'scaleX(-1)',
                         }}
                       ></div>
-
                       {/* Union overlay - Right */}
                       <div
                         className="absolute right-[-10px] top-0 w-[45px] h-full z-20 pointer-events-none hidden lg:block"
@@ -711,7 +757,6 @@ const HomepageFixed = () => {
                           backgroundSize: '100% 100%',
                         }}
                       ></div>
-
                       {/* Union overlay - Bottom */}
                       <div
                         className="absolute bottom-[-100px] left-1/2 w-[45px] h-[200px] z-20 pointer-events-none hidden lg:block"
@@ -722,18 +767,18 @@ const HomepageFixed = () => {
                           transform: 'translateX(-50%) rotate(90deg)',
                         }}
                       ></div>
-
                       {/* Image */}
                       <img
-                        src={currentItem.image}
-                        alt={currentItem.title}
+                        src={currentItem.image || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=600&fit=crop'}
+                        alt={currentItem.name || currentItem.title}
                         className="w-full h-full object-cover transition-all duration-500"
                       />
                     </div>
                   </div>
+                  </div>
 
-                  {/* Nav Dots - overlapping bottom of image */}
-                  <div className="flex justify-center gap-2 -mt-1 lg:-mt-3 relative z-30 px-4 lg:px-10">
+                  {/* Nav Dots */}
+                  <div className="flex justify-center gap-2 -mt-1 lg:-mt-3 relative z-30">
                     {currentItems.map((_, dot) => (
                       <button
                         key={dot}
@@ -745,14 +790,21 @@ const HomepageFixed = () => {
                     ))}
                   </div>
 
-                  {/* Text content */}
-                  <div className="pt-3 pb-6 lg:pb-8 px-2 lg:px-10 text-left">
+                  {/* Text content - inside container */}
+                  <div className="max-w-[1400px] mx-auto px-6 lg:px-16 pt-3 pb-6 lg:pb-8 text-left">
                     <p className="text-sm lg:text-[15px] leading-relaxed font-medium">
-                      <span className="text-white">{currentItem.title}. </span>
+                      <span className="text-white">{currentItem.name || currentItem.title}. </span>
                       <span className="text-[#bbb]">{currentItem.description}</span>
                     </p>
-                    <Link to={data.activitySettings?.globalLink || '/artikel'} className="text-[#008fd7] text-xs lg:text-sm font-medium mt-3 lg:mt-4 inline-block hover:text-[#00D9FF] transition-colors">
-                      {data.activitySettings?.globalButtonText || 'Explore Kegiatan Siswa'} &gt;
+                    {(currentItem.coach || currentItem.schedule) && (
+                      <p className="text-[11px] text-[#888] mt-1.5">
+                        {currentItem.coach && <span>Pembina: {currentItem.coach}</span>}
+                        {currentItem.coach && currentItem.schedule && <span className="mx-2">·</span>}
+                        {currentItem.schedule && <span>{currentItem.schedule}</span>}
+                      </p>
+                    )}
+                    <Link to="/ekskul" className="text-[#008fd7] text-xs lg:text-sm font-medium mt-3 lg:mt-4 inline-block hover:text-[#00D9FF] transition-colors">
+                      Lihat Semua Ekskul &gt;
                     </Link>
                   </div>
                 </div>
@@ -760,7 +812,6 @@ const HomepageFixed = () => {
             </>
           );
         })()}
-        </div>
       </section>
 
       {/* Testimonials Section */}
@@ -1263,6 +1314,19 @@ const HomepageFixed = () => {
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be]"
                       />
                     </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">No. Telepon / WhatsApp</label>
+                    <input
+                      type="tel"
+                      value={reviewForm.phone}
+                      onChange={(e) => setReviewForm((f) => ({ ...f, phone: e.target.value }))}
+                      placeholder="08xxxxxxxxxx"
+                      maxLength={20}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0d76be]/40 focus:border-[#0d76be]"
+                    />
                   </div>
 
                   {/* Testimonial */}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
+import SEO from '../../components/SEO';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { useSchoolProfile } from '../../contexts/SchoolProfileContext';
@@ -111,7 +112,7 @@ const Kontak = () => {
     setSubmitStatus(null);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await api.post('/api/contact-messages', formData);
       setSubmitStatus('success');
       setFormData({
         namaLengkap: '',
@@ -130,8 +131,58 @@ const Kontak = () => {
     }
   };
 
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://smkkrisma.sch.id';
+
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": ["EducationalOrganization", "LocalBusiness"],
+    "name": "SMK Kristen 5 Klaten",
+    "alternateName": ["SMK Krisma", "Krisma Klaten"],
+    "url": siteUrl,
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": contactInfo.address || 'Jl. Opak, Metuk, Tegalyoso, Klaten Selatan',
+      "addressLocality": "Klaten",
+      "addressRegion": "Jawa Tengah",
+      "postalCode": "57424",
+      "addressCountry": "ID"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": "-7.7138",
+      "longitude": "110.6066"
+    },
+    "telephone": contactInfo.phone || "(0272) 325260",
+    "email": contactInfo.email || "smkrisma@sch.id",
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "07:00",
+        "closes": "16:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Saturday",
+        "opens": "07:00",
+        "closes": "14:00"
+      }
+    ],
+    "sameAs": [
+      "https://www.facebook.com/smkkrisma",
+      "https://www.instagram.com/smkkrisma"
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO
+        title="Kontak - SMK Kristen 5 Klaten"
+        description="Hubungi SMK Kristen 5 Klaten (Krisma). Alamat: Jl. Opak, Klaten Selatan. Telepon: (0272) 325260. Email: smkrisma@sch.id. Senin–Jumat 07:00–16:00."
+        keywords="kontak SMK Krisma, alamat SMK Kristen 5 Klaten, telepon SMK Krisma, lokasi SMK Klaten, hubungi SMK Krisma"
+        url="/kontak"
+        structuredData={localBusinessSchema}
+      />
       <Navbar activePage="kontak" visible={navbarVisible} />
 
       {/* Hero Section with Image Background */}

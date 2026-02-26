@@ -110,7 +110,7 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
       coach,
       schedule,
       location: location || '',
-      achievements: achievements || '',
+      achievements: Array.isArray(achievements) ? achievements : [],
       createdBy: req.user.id,
     };
 
@@ -182,7 +182,9 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
     ekskul.coach = coach || ekskul.coach;
     ekskul.schedule = schedule || ekskul.schedule;
     ekskul.location = location !== undefined ? location : ekskul.location;
-    ekskul.achievements = achievements !== undefined ? achievements : ekskul.achievements;
+    if (achievements !== undefined) {
+      ekskul.achievements = Array.isArray(achievements) ? achievements : ekskul.achievements;
+    }
     ekskul.isActive = isActive !== undefined ? isActive : ekskul.isActive;
 
     // Upload new image to Cloudinary if provided

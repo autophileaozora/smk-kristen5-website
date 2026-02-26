@@ -5,7 +5,7 @@ import api from '../services/api';
 import {
   LayoutDashboard, FileText, GraduationCap,
   Users, Images, FilePlus,
-  UserCog, CalendarDays, Settings,
+  UserCog, CalendarDays, Settings, Mail,
   ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen,
   ExternalLink, LogOut,
 } from 'lucide-react';
@@ -51,6 +51,7 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
         { name: 'Kesiswaan', path: '/admin/kesiswaan', icon: Users },
         { name: 'Kegiatan & Agenda', path: '/admin/kegiatan', icon: CalendarDays },
         { name: 'Homepage', path: '/admin/homepage', icon: Images },
+        { name: 'Pesan Masuk', path: '/admin/pesan', icon: Mail },
         { name: 'Pengaturan', path: '/admin/pengaturan', icon: Settings },
         { name: 'User & Log', path: '/admin/sistem', icon: UserCog },
       ],

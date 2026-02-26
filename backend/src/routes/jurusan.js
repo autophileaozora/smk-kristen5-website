@@ -88,7 +88,7 @@ router.post('/', protect, isAdministrator, uploadMultiple([
 ]), async (req, res) => {
   try {
     const {
-      name, code, description, shortDescription, vision, mission, headOfDepartment, isActive,
+      name, code, description, shortDescription, detailLinkText, vision, mission, headOfDepartment, isActive,
       subjects, facilities, careerProspects, competencies
     } = req.body;
 
@@ -113,6 +113,7 @@ router.post('/', protect, isAdministrator, uploadMultiple([
       code: code.toUpperCase(),
       description,
       shortDescription: shortDescription || '',
+      detailLinkText: detailLinkText || 'Lihat Detail Jurusan',
       vision: vision || '',
       mission: mission || '',
       headOfDepartment: headOfDepartment || '',
@@ -291,7 +292,7 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
     }
 
     const {
-      name, code, description, shortDescription, vision, mission, headOfDepartment, isActive,
+      name, code, description, shortDescription, detailLinkText, vision, mission, headOfDepartment, isActive,
       subjects, facilities, careerProspects, competencies, logo, backgroundImage
     } = req.body;
 
@@ -310,6 +311,7 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
     jurusan.code = code ? code.toUpperCase() : jurusan.code;
     jurusan.description = description || jurusan.description;
     jurusan.shortDescription = shortDescription !== undefined ? shortDescription : jurusan.shortDescription;
+    jurusan.detailLinkText = detailLinkText !== undefined ? detailLinkText : jurusan.detailLinkText;
     jurusan.vision = vision !== undefined ? vision : jurusan.vision;
     jurusan.mission = mission !== undefined ? mission : jurusan.mission;
     jurusan.headOfDepartment = headOfDepartment !== undefined ? headOfDepartment : jurusan.headOfDepartment;
@@ -367,7 +369,11 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
       jurusan.backgroundImage = backgroundImage;
     }
 
-    // Upload new gallery images to Cloudinary if provided
+    // Update gallery: start from body gallery (respects deletions), then append new uploads
+    const bodyGallery = req.body.gallery !== undefined
+      ? (typeof req.body.gallery === 'string' ? JSON.parse(req.body.gallery) : req.body.gallery)
+      : null;
+
     if (req.files && req.files.galleryImages && req.files.galleryImages.length > 0) {
       try {
         console.log(`Uploading ${req.files.galleryImages.length} gallery images to Cloudinary...`);
@@ -382,8 +388,9 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
           });
         }
 
-        // Append new images to existing gallery
-        jurusan.gallery = [...(jurusan.gallery || []), ...galleryUrls];
+        // Use body gallery as base (respects deletions), then append new uploads
+        const baseGallery = Array.isArray(bodyGallery) ? bodyGallery : (jurusan.gallery || []);
+        jurusan.gallery = [...baseGallery, ...galleryUrls];
         console.log(`Gallery images upload success: ${galleryUrls.length} images added`);
       } catch (uploadError) {
         console.error('Gallery images upload error:', uploadError);
@@ -393,6 +400,9 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
           message: 'Failed to upload gallery images to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (Array.isArray(bodyGallery)) {
+      // No new uploads but gallery array sent — save as-is (handles item deletions)
+      jurusan.gallery = bodyGallery;
     }
 
     await jurusan.save();

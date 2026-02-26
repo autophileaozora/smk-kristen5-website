@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Plus, Edit3, Trash2, Tag, FolderOpen, X, MoreVertical, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 import Modal from '../components/Modal';
@@ -115,6 +116,7 @@ const Categories = ({ embedded = false }) => {
   };
 
   const filteredCategories = categories.filter(cat => {
+    if (cat.type === 'jurusan') return false;
     if (filterType && cat.type !== filterType) return false;
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
@@ -232,7 +234,7 @@ const Categories = ({ embedded = false }) => {
 
                 {/* Type filter — mini segmented control */}
                 <div className="flex items-center gap-0.5 bg-black/[0.05] rounded-xl p-0.5">
-                  {[{ v: '', l: 'Semua' }, { v: 'jurusan', l: 'Jurusan' }, { v: 'topik', l: 'Topik' }].map(opt => (
+                  {[{ v: '', l: 'Semua' }, { v: 'topik', l: 'Topik' }].map(opt => (
                     <button
                       key={opt.v}
                       onClick={() => setFilterType(opt.v)}
@@ -321,7 +323,7 @@ const Categories = ({ embedded = false }) => {
         </div>
 
         {/* ── Modals ─────────────────────────────────────────────────────── */}
-        <Modal
+        {createPortal(<Modal
           isOpen={showModal}
           onClose={() => { setShowModal(false); setCurrentCategory(null); }}
           title={modalMode === 'create' ? 'Tambah Kategori' : 'Edit Kategori'}
@@ -361,11 +363,10 @@ const Categories = ({ embedded = false }) => {
                   required
                 >
                   <option value="topik">Topik</option>
-                  <option value="jurusan">Jurusan</option>
                 </select>
                 <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
-              <p className="mt-1 text-xs text-gray-400">Jurusan: TKJ, RPL, MM | Topik: Berita, Pengumuman, dll.</p>
+              <p className="mt-1 text-xs text-gray-400">Contoh: Berita, Pengumuman, dll.</p>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">Deskripsi</label>
@@ -393,9 +394,9 @@ const Categories = ({ embedded = false }) => {
               </button>
             </div>
           </form>
-        </Modal>
+        </Modal>, document.body)}
 
-        <Modal
+        {createPortal(<Modal
           isOpen={showDeleteModal}
           onClose={() => { setShowDeleteModal(false); setCategoryToDelete(null); }}
           title="Hapus Kategori"
@@ -419,7 +420,7 @@ const Categories = ({ embedded = false }) => {
               </button>
             </div>
           </div>
-        </Modal>
+        </Modal>, document.body)}
 
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       </>
@@ -458,7 +459,7 @@ const Categories = ({ embedded = false }) => {
         )}
       </div>
 
-      <Modal
+      {createPortal(<Modal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setCurrentCategory(null); }}
         title={modalMode === 'create' ? 'Tambah Kategori' : 'Edit Kategori'}
@@ -478,7 +479,6 @@ const Categories = ({ embedded = false }) => {
             <div className="relative">
               <select value={formData.type} onChange={(e) => setFormData(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all appearance-none pr-8" required>
                 <option value="topik">Topik</option>
-                <option value="jurusan">Jurusan</option>
               </select>
               <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
@@ -492,9 +492,9 @@ const Categories = ({ embedded = false }) => {
             <button type="submit" className="flex-1 px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">{modalMode === 'create' ? 'Tambah' : 'Simpan'}</button>
           </div>
         </form>
-      </Modal>
+      </Modal>, document.body)}
 
-      <Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setCategoryToDelete(null); }} title="Hapus Kategori" size="sm">
+      {createPortal(<Modal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setCategoryToDelete(null); }} title="Hapus Kategori" size="sm">
         <div className="space-y-4">
           <p className="text-sm text-gray-600">Hapus kategori <span className="font-semibold">"{categoryToDelete?.name}"</span>?</p>
           <p className="text-xs text-red-600">Kategori yang masih digunakan oleh artikel tidak bisa dihapus.</p>
@@ -503,7 +503,7 @@ const Categories = ({ embedded = false }) => {
             <button onClick={handleDelete} className="flex-1 px-4 py-2 text-xs bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors">Hapus</button>
           </div>
         </div>
-      </Modal>
+      </Modal>, document.body)}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>

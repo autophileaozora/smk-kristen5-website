@@ -15,6 +15,7 @@ import CTA from '../models/CTA.js';
 import { ActivityTab, ActivitySettings } from '../models/Activity.js';
 import Event from '../models/Event.js';
 import SiteSettings from '../models/SiteSettings.js';
+import VideoHero from '../models/VideoHero.js';
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ router.get('/', async (req, res) => {
       activitySettings,
       events,
       siteSettings,
+      videoHeroes,
     ] = await Promise.all([
       Jurusan.find().sort({ name: 1 }).lean(),
       Article.find({ status: 'published' })
@@ -81,6 +83,7 @@ router.get('/', async (req, res) => {
         .select('-createdBy -createdAt -updatedAt -__v')
         .lean(),
       SiteSettings.getSettings(),
+      VideoHero.find({ isActive: true }).select('-createdBy').sort({ displayOrder: 1 }).limit(3).lean(),
     ]);
 
     // Combine running texts with prestasi texts
@@ -119,6 +122,7 @@ router.get('/', async (req, res) => {
         },
         events,
         siteSettings,
+        videoHeroes,
       },
     });
   } catch (error) {

@@ -53,6 +53,8 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
   // Preview images for gallery only
   const [galleryFiles, setGalleryFiles] = useState([]);
 
+  const [lightboxImg, setLightboxImg] = useState(null);
+
   useEffect(() => {
     fetchJurusans();
   }, []);
@@ -86,6 +88,7 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
       code: '',
       description: '',
       shortDescription: '',
+      detailLinkText: '',
       vision: '',
       mission: '',
       headOfDepartment: '',
@@ -110,6 +113,7 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
       code: jurusan.code,
       description: jurusan.description,
       shortDescription: jurusan.shortDescription || '',
+      detailLinkText: jurusan.detailLinkText || '',
       vision: jurusan.vision || '',
       mission: jurusan.mission || '',
       headOfDepartment: jurusan.headOfDepartment || '',
@@ -171,6 +175,7 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
         submitData.append('code', formData.code);
         submitData.append('description', formData.description);
         submitData.append('shortDescription', formData.shortDescription);
+        submitData.append('detailLinkText', formData.detailLinkText);
         submitData.append('vision', formData.vision);
         submitData.append('mission', formData.mission);
         submitData.append('headOfDepartment', formData.headOfDepartment);
@@ -374,7 +379,7 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
       )}
 
       {/* Create/Edit Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit}>
@@ -472,6 +477,21 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
                   <p className="text-xs text-gray-500 mt-1">
                     {formData.shortDescription.length}/300 karakter
                   </p>
+                </div>
+
+                {/* Detail Link Text */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                    Teks Link Detail (homepage accordion)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.detailLinkText}
+                    onChange={(e) => setFormData({ ...formData, detailLinkText: e.target.value })}
+                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Lihat Detail Jurusan"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Teks tombol link di bawah prospek karir pada homepage. Kosongkan untuk menggunakan default.</p>
                 </div>
 
                 {/* Vision */}
@@ -616,7 +636,8 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
                           <img
                             src={item.url}
                             alt={item.caption || `Gallery ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border"
+                            className="w-full h-24 object-cover rounded-lg border cursor-pointer"
+                            onClick={() => setLightboxImg(item.url)}
                           />
                           <button
                             type="button"
@@ -672,7 +693,7 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
                     id="isActive"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
                     Aktifkan jurusan ini
@@ -698,11 +719,12 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && jurusanToDelete && (
+      {showDeleteModal && jurusanToDelete && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-sm w-full">
             {/* Header */}
@@ -742,7 +764,29 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+      {lightboxImg && createPortal(
+        <div
+          className="fixed inset-0 bg-black/85 z-[60] flex items-center justify-center p-4"
+          onClick={() => setLightboxImg(null)}
+        >
+          <div className="relative max-w-4xl max-h-full" onClick={e => e.stopPropagation()}>
+            <img
+              src={lightboxImg}
+              alt="Preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+            />
+            <button
+              onClick={() => setLightboxImg(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:bg-white shadow-lg transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

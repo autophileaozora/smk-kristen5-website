@@ -1,68 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Static fallback sitemap. Dynamic sitemap served by backend at /sitemap.xml -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Homepage -->
   <url>
-    <loc>http://localhost:5173/</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-
-  <!-- Jurusan -->
   <url>
-    <loc>http://localhost:5173/jurusan</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/jurusan</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-
-  <!-- Artikel -->
   <url>
-    <loc>http://localhost:5173/artikel</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/artikel</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
-
-  <!-- Kontak -->
   <url>
-    <loc>http://localhost:5173/kontak</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/fasilitas</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-
-  <!-- Tentang -->
   <url>
-    <loc>http://localhost:5173/tentang</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/kontak</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-
-  <!-- Sejarah -->
   <url>
-    <loc>http://localhost:5173/sejarah</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/tentang</loc>
+    <lastmod>2026-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://smkkrisma.sch.id/sejarah</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
-
-  <!-- Visi Misi -->
   <url>
-    <loc>http://localhost:5173/visi-misi</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/visi-misi</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
-
-  <!-- Sambutan -->
   <url>
-    <loc>http://localhost:5173/sambutan</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://smkkrisma.sch.id/sambutan</loc>
+    <lastmod>2026-01-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
-
-  <!-- Add more URLs dynamically as needed -->
 </urlset>

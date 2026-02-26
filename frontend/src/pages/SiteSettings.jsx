@@ -73,6 +73,10 @@ const SiteSettings = ({ embedded = false, section = 'general', saveTrigger = 0 }
           eventsTitle: data.homepageSections?.eventsTitle || '',
           eventsDescription: data.homepageSections?.eventsDescription || '',
           eventsButtonText: data.homepageSections?.eventsButtonText || '',
+          ekskulHeroTitle: data.homepageSections?.ekskulHeroTitle || '',
+          ekskulHeroSubtitle: data.homepageSections?.ekskulHeroSubtitle || '',
+          fasilitasHeroTitle: data.homepageSections?.fasilitasHeroTitle || '',
+          fasilitasHeroSubtitle: data.homepageSections?.fasilitasHeroSubtitle || '',
         },
       });
     } catch (error) {
@@ -329,6 +333,43 @@ const SiteSettings = ({ embedded = false, section = 'general', saveTrigger = 0 }
                   </div>
                 )}
               </div>
+
+              {/* Ekskul Page Hero */}
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-800 text-sm">Hero Halaman Ekstrakulikuler</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Teks yang tampil di bagian atas halaman /ekskul</p>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+                    <input type="text" value={formData.homepageSections.ekskulHeroTitle} onChange={(e) => updateHP('ekskulHeroTitle', e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="EKSTRAKULIKULER" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Subjudul</label>
+                    <textarea value={formData.homepageSections.ekskulHeroSubtitle} onChange={(e) => updateHP('ekskulHeroSubtitle', e.target.value)} rows={2} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Kembangkan potensi dan bakatmu bersama ekstrakulikuler pilihan..." />
+                  </div>
+                </div>
+              </div>
+
+              {/* Fasilitas Page Hero */}
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-800 text-sm">Hero Halaman Fasilitas</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Teks yang tampil di bagian atas halaman /fasilitas</p>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+                    <input type="text" value={formData.homepageSections.fasilitasHeroTitle} onChange={(e) => updateHP('fasilitasHeroTitle', e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="FASILITAS SEKOLAH" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Subjudul</label>
+                    <textarea value={formData.homepageSections.fasilitasHeroSubtitle} onChange={(e) => updateHP('fasilitasHeroSubtitle', e.target.value)} rows={2} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Menunjang kegiatan belajar mengajar dengan fasilitas modern..." />
+                  </div>
+                </div>
+              </div>
+
             </div>
           )}
 

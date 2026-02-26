@@ -246,7 +246,7 @@ router.get('/:id', protect, async (req, res) => {
 // @access  Protected
 router.post('/', protect, async (req, res) => {
   try {
-    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metadata } = req.body;
+    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metaDescription, keywords, altText, metadata, faqs } = req.body;
 
     // Validation
     if (!title || !content) {
@@ -264,9 +264,13 @@ router.post('/', protect, async (req, res) => {
       title,
       content,
       excerpt,
+      metaDescription,
+      keywords: keywords || [],
       categoryJurusan: categoryJurusan || null,
       categoryTopik: categoryTopik || null,
       featuredImage: featuredImage ? { url: featuredImage } : undefined,
+      altText,
+      faqs: Array.isArray(faqs) ? faqs.filter(f => f.question && f.answer) : [],
       author: req.user.id,
       status: initialStatus,
       metadata: metadata || {},
@@ -337,19 +341,25 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metadata } = req.body;
+    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metaDescription, keywords, altText, metadata, faqs } = req.body;
 
     article.title = title || article.title;
     article.content = content || article.content;
     article.excerpt = excerpt || article.excerpt;
+    if (metaDescription !== undefined) article.metaDescription = metaDescription || undefined;
+    if (keywords !== undefined) article.keywords = keywords || [];
     if (categoryJurusan !== undefined) article.categoryJurusan = categoryJurusan || null;
     if (categoryTopik !== undefined) article.categoryTopik = categoryTopik || null;
     if (featuredImage !== undefined) {
       article.featuredImage = featuredImage ? { url: featuredImage } : undefined;
     }
+    if (altText !== undefined) article.altText = altText || undefined;
     if (metadata !== undefined) {
       article.metadata = metadata || {};
       article.markModified('metadata');
+    }
+    if (faqs !== undefined) {
+      article.faqs = Array.isArray(faqs) ? faqs.filter(f => f.question && f.answer) : [];
     }
 
     await article.save();
@@ -661,6 +671,125 @@ router.patch('/:id/unpublish', protect, isAdministrator, async (req, res) => {
       success: true,
       message: 'Article unpublished',
       data: { article },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @route   GET /api/articles/:id/related
+// @desc    Get related articles for internal linking suggestions
+// @access  Public
+router.get('/:id/related', async (req, res) => {
+  try {
+    const article = await Article.findById(req.params.id)
+      .select('slug keywords categoryTopik categoryJurusan tags')
+      .lean();
+
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found',
+      });
+    }
+
+    // Build search query based on article metadata
+    const query = {
+      status: 'published',
+      _id: { $ne: article._id },
+    };
+
+    let relatedArticles = [];
+
+    // First priority: same category
+    if (article.categoryTopik) {
+      relatedArticles = await Article.find({
+        ...query,
+        categoryTopik: article.categoryTopik,
+      })
+        .select('slug title excerpt metaDescription publishedAt featuredImage keywords categoryTopik')
+        .limit(5)
+        .lean();
+    }
+
+    // If not enough, second priority: matching keywords
+    if (relatedArticles.length < 5 && article.keywords && article.keywords.length > 0) {
+      const keywordMatched = await Article.find({
+        ...query,
+        keywords: { $in: article.keywords },
+      })
+        .select('slug title excerpt metaDescription publishedAt featuredImage keywords categoryTopik')
+        .limit(5 - relatedArticles.length)
+        .lean();
+
+      relatedArticles = [...relatedArticles, ...keywordMatched];
+    }
+
+    // If still not enough, third priority: same jurusan
+    if (relatedArticles.length < 5 && article.categoryJurusan) {
+      const jurusanMatched = await Article.find({
+        ...query,
+        categoryJurusan: article.categoryJurusan,
+      })
+        .select('slug title excerpt metaDescription publishedAt featuredImage keywords categoryTopik')
+        .limit(5 - relatedArticles.length)
+        .lean();
+
+      relatedArticles = [...relatedArticles, ...jurusanMatched];
+    }
+
+    // Remove duplicates by _id
+    const seenIds = new Set();
+    relatedArticles = relatedArticles.filter(a => {
+      if (seenIds.has(a._id.toString())) return false;
+      seenIds.add(a._id.toString());
+      return true;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { articles: relatedArticles.slice(0, 5) },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// @route   GET /api/articles/search/keywords
+// @desc    Search articles by keywords for internal linking
+// @access  Public
+router.get('/search/keywords', async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Query must be at least 2 characters',
+      });
+    }
+
+    const articles = await Article.find({
+      status: 'published',
+      $or: [
+        { title: { $regex: q, $options: 'i' } },
+        { keywords: { $regex: q, $options: 'i' } },
+        { excerpt: { $regex: q, $options: 'i' } },
+      ],
+    })
+      .select('slug title excerpt')
+      .limit(10)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: { articles },
     });
   } catch (error) {
     res.status(500).json({

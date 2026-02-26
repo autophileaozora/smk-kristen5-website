@@ -428,7 +428,7 @@ const HeroSlides = ({ embedded = false, createTrigger = 0, settingsTrigger = 0 }
       )}
 
       {/* Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] sticky top-0 bg-white/80 backdrop-blur-2xl rounded-t-2xl">
@@ -555,7 +555,8 @@ const HeroSlides = ({ embedded = false, createTrigger = 0, settingsTrigger = 0 }
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Empty State */}
@@ -604,7 +605,7 @@ const HeroSlides = ({ embedded = false, createTrigger = 0, settingsTrigger = 0 }
       )}
 
       {/* Settings Modal */}
-      {showSettingsModal && (
+      {showSettingsModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] w-full max-w-sm">
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06]">
@@ -653,7 +654,8 @@ const HeroSlides = ({ embedded = false, createTrigger = 0, settingsTrigger = 0 }
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

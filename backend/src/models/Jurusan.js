@@ -39,6 +39,11 @@ const jurusanSchema = new mongoose.Schema(
       maxlength: [300, 'Short description cannot exceed 300 characters'],
       default: '',
     },
+    detailLinkText: {
+      type: String,
+      default: 'Lihat Detail Jurusan',
+      trim: true,
+    },
     vision: {
       type: String,
       default: '',

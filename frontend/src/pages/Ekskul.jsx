@@ -30,7 +30,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
     coach: '',
     schedule: '',
     location: '',
-    achievements: '',
+    achievements: [],
     image: '',
     isActive: true,
   });
@@ -107,7 +107,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
       coach: '',
       schedule: '',
       location: '',
-      achievements: '',
+      achievements: [],
       image: '',
       isActive: true,
     });
@@ -125,7 +125,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
       coach: ekskul.coach,
       schedule: ekskul.schedule,
       location: ekskul.location || '',
-      achievements: ekskul.achievements || '',
+      achievements: Array.isArray(ekskul.achievements) ? ekskul.achievements : [],
       image: ekskul.image || '',
       isActive: ekskul.isActive,
     });
@@ -143,7 +143,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
       coach: '',
       schedule: '',
       location: '',
-      achievements: '',
+      achievements: [],
       image: '',
       isActive: true,
     });
@@ -376,7 +376,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
       )}
 
       {/* Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
@@ -504,19 +504,52 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
                   />
                 </div>
 
-                {/* Achievements */}
+                {/* Prestasi */}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">
                     Prestasi (Opsional)
                   </label>
-                  <textarea
-                    name="achievements"
-                    value={formData.achievements}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
-                    placeholder="Daftar prestasi yang pernah diraih..."
-                  />
+                  {formData.achievements.map((item, idx) => (
+                    <div key={idx} className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={item.nama}
+                        onChange={(e) => {
+                          const updated = [...formData.achievements];
+                          updated[idx] = { ...updated[idx], nama: e.target.value };
+                          setFormData(prev => ({ ...prev, achievements: updated }));
+                        }}
+                        placeholder="Nama prestasi"
+                        maxLength={200}
+                        className="flex-1 px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all"
+                      />
+                      <input
+                        type="url"
+                        value={item.link}
+                        onChange={(e) => {
+                          const updated = [...formData.achievements];
+                          updated[idx] = { ...updated[idx], link: e.target.value };
+                          setFormData(prev => ({ ...prev, achievements: updated }));
+                        }}
+                        placeholder="Link artikel (opsional)"
+                        className="flex-1 px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, achievements: prev.achievements.filter((_, i) => i !== idx) }))}
+                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, achievements: [...prev.achievements, { nama: '', link: '' }] }))}
+                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1"
+                  >
+                    + Tambah Prestasi
+                  </button>
                 </div>
 
                 {/* Active Status */}
@@ -552,7 +585,8 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Empty State */}

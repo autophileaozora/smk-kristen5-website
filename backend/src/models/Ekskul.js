@@ -42,10 +42,13 @@ const ekskulSchema = new mongoose.Schema(
       type: String,
       maxlength: [200, 'Location cannot exceed 200 characters'],
     },
-    achievements: {
-      type: String, // Simple text list of achievements
-      maxlength: [500, 'Achievements cannot exceed 500 characters'],
-    },
+    achievements: [
+      {
+        nama: { type: String, required: true, trim: true, maxlength: [200, 'Nama prestasi tidak boleh lebih dari 200 karakter'] },
+        link: { type: String, trim: true, default: '' },
+        _id: false,
+      }
+    ],
     isActive: {
       type: Boolean,
       default: true,

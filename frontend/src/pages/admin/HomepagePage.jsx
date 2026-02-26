@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Check, Plus, MoreVertical, Settings, X, Eye, Save } from 'lucide-react';
 
 const HeroSlides = lazy(() => import('../HeroSlides'));
-const VideoHero = lazy(() => import('../VideoHero'));
 const CTAManagement = lazy(() => import('../CTAManagement'));
 const Partner = lazy(() => import('../Partner'));
 const RunningText = lazy(() => import('../RunningText'));
@@ -26,14 +25,13 @@ const HomepagePage = () => {
 
   const tabs = [
     { id: 'hero-slides', label: 'Hero Slides' },
-    { id: 'video-hero', label: 'Video Hero' },
     { id: 'cta', label: 'CTA' },
     { id: 'partner', label: 'Partner' },
     { id: 'running-text', label: 'Running Text' },
   ];
 
-  const hasCreate = !['cta'].includes(activeTab);
-  const hasSettings = activeTab === 'hero-slides';
+  const hasCreate = !['cta', 'running-text'].includes(activeTab);
+  const hasSettings = ['hero-slides', 'running-text'].includes(activeTab);
   const hasCTAPill = activeTab === 'cta';
 
   useEffect(() => {
@@ -100,10 +98,9 @@ const HomepagePage = () => {
             {activeTab === 'hero-slides' && (
               <HeroSlides embedded createTrigger={createTrigger} settingsTrigger={settingsTrigger} />
             )}
-            {activeTab === 'video-hero' && <VideoHero embedded createTrigger={createTrigger} />}
             {activeTab === 'cta' && <CTAManagement embedded previewTrigger={previewTrigger} saveTrigger={saveTrigger} />}
             {activeTab === 'partner' && <Partner embedded createTrigger={createTrigger} />}
-            {activeTab === 'running-text' && <RunningText embedded createTrigger={createTrigger} />}
+            {activeTab === 'running-text' && <RunningText embedded createTrigger={createTrigger} settingsTrigger={settingsTrigger} />}
           </Suspense>
         </div>
 

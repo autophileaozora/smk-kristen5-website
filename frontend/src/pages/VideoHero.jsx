@@ -179,8 +179,8 @@ const VideoHero = ({ embedded = false, createTrigger = 0 }) => {
       {!embedded && (
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Video Hero</h1>
-          <p className="text-gray-600 mt-1">Kelola video hero homepage (Max 3 aktif)</p>
+          <h1 className="text-2xl font-bold text-gray-800">Video Sekolah</h1>
+          <p className="text-gray-600 mt-1">Kelola video YouTube yang ditampilkan di homepage (Max 3 aktif)</p>
           <p className="text-sm text-gray-500 mt-1">
             Video Aktif: <span className={`font-semibold ${activeCount >= 3 ? 'text-red-600' : 'text-green-600'}`}>
               {activeCount}/3
@@ -298,7 +298,7 @@ const VideoHero = ({ embedded = false, createTrigger = 0 }) => {
       )}
 
       {/* Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
@@ -448,7 +448,8 @@ const VideoHero = ({ embedded = false, createTrigger = 0 }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Context Menu Portal */}

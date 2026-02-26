@@ -433,7 +433,7 @@ const NavbarManagement = ({ embedded = false, createTrigger = 0, resetTrigger = 
       )}
 
       {/* ── Preview modal ─────────────────────────────────────────────────── */}
-      {showPreview && (
+      {showPreview && createPortal(
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-start justify-center pt-20 p-4"
           onClick={() => setShowPreview(false)}
@@ -508,11 +508,12 @@ const NavbarManagement = ({ embedded = false, createTrigger = 0, resetTrigger = 
               <p className="text-[11px] text-gray-400 mt-2.5 text-center">Hover pada menu dropdown untuk melihat submenu</p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Edit / Add modal ──────────────────────────────────────────────── */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.9)] max-w-md w-full max-h-[90vh] overflow-auto">
 
@@ -656,7 +657,8 @@ const NavbarManagement = ({ embedded = false, createTrigger = 0, resetTrigger = 
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Context menu portal ───────────────────────────────────────────── */}

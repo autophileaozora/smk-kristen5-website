@@ -25,7 +25,7 @@ router.get('/count', async (req, res) => {
 // @access  Public
 router.post('/', uploadSingle('photo'), async (req, res) => {
   try {
-    const { name, graduationYear, jurusan, currentOccupation, company, testimonial } = req.body;
+    const { name, graduationYear, jurusan, currentOccupation, company, phone, testimonial } = req.body;
 
     if (!name || !graduationYear || !jurusan || !testimonial) {
       return res.status(400).json({
@@ -57,6 +57,7 @@ router.post('/', uploadSingle('photo'), async (req, res) => {
       jurusan: jurusan.trim(),
       currentOccupation: currentOccupation?.trim() || undefined,
       company: company?.trim() || undefined,
+      phone: phone?.trim() || undefined,
       testimonial: testimonial.trim(),
     });
 

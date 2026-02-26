@@ -1,20 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import SEO from '../../components/SEO';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
+const categoryConfig = {
+  olahraga:  { label: 'Olahraga',  badge: 'bg-green-600',  glass: 'bg-green-500/20 border-green-400/30 text-green-200' },
+  seni:      { label: 'Seni',      badge: 'bg-purple-600', glass: 'bg-purple-500/20 border-purple-400/30 text-purple-200' },
+  akademik:  { label: 'Akademik',  badge: 'bg-blue-600',   glass: 'bg-blue-500/20 border-blue-400/30 text-blue-200' },
+  keagamaan: { label: 'Keagamaan', badge: 'bg-yellow-500', glass: 'bg-yellow-500/20 border-yellow-400/30 text-yellow-200' },
+  teknologi: { label: 'Teknologi', badge: 'bg-orange-500', glass: 'bg-orange-500/20 border-orange-400/30 text-orange-200' },
+  lainnya:   { label: 'Lainnya',   badge: 'bg-gray-500',   glass: 'bg-gray-500/20 border-gray-400/30 text-gray-200' },
+};
+
+const getCategoryLabel = (cat) => categoryConfig[cat]?.label || cat;
+const getCategoryBadge = (cat) => categoryConfig[cat]?.badge || 'bg-gray-500';
+const getCategoryGlass = (cat) => categoryConfig[cat]?.glass || 'bg-white/10 border-white/20 text-white/80';
+
 /* ─── Apple Glass Modal ───────────────────────────────────────────── */
-const FasilitasModal = ({ item, onClose }) => {
+const EkskulModal = ({ ekskul, onClose }) => {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey); };
   }, [onClose]);
-
-  const imgSrc = item.image?.url || item.image || null;
 
   return (
     <div
@@ -29,18 +39,20 @@ const FasilitasModal = ({ item, onClose }) => {
         className="modal-glass-enter relative w-full sm:max-w-[440px] max-h-[92vh] sm:max-h-[88vh] overflow-hidden rounded-t-3xl sm:rounded-3xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Blurred background */}
-        {imgSrc && (
-          <div className="absolute inset-0 bg-cover bg-center scale-110" style={{ backgroundImage: `url(${imgSrc})` }} />
+        {/* Blurred background layer */}
+        {ekskul.image && (
+          <div
+            className="absolute inset-0 bg-cover bg-center scale-110 transition-none"
+            style={{ backgroundImage: `url(${ekskul.image})` }}
+          />
         )}
-        {!imgSrc && <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900" />}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/65 to-black/80 backdrop-blur-[28px]" />
 
         {/* Scrollable content */}
         <div className="relative z-10 overflow-y-auto flex-1 overscroll-contain">
           <div className="p-5 sm:p-6 pb-7">
 
-            {/* Close */}
+            {/* Close button */}
             <button
               onClick={onClose}
               className="absolute top-4 right-4 w-8 h-8 bg-white/[0.12] border border-white/[0.18] backdrop-blur-sm rounded-full flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-all z-10"
@@ -50,54 +62,49 @@ const FasilitasModal = ({ item, onClose }) => {
               </svg>
             </button>
 
-            {/* Header */}
+            {/* Header — image thumb + title */}
             <div className="flex gap-4 mb-5 pr-10">
-              {imgSrc && (
+              {ekskul.image && (
                 <div className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-2xl overflow-hidden flex-shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-white/[0.18]">
-                  <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
-                </div>
-              )}
-              {!imgSrc && (
-                <div className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-2xl flex-shrink-0 bg-white/10 border border-white/20 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
+                  <img src={ekskul.image} alt={ekskul.name} className="w-full h-full object-cover" />
                 </div>
               )}
               <div className="flex flex-col justify-end gap-1.5">
-                {item.category && (
-                  <span className="inline-flex w-fit px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.12] border border-white/[0.2] text-white/80 backdrop-blur-sm">
-                    {item.category}
+                {ekskul.category && (
+                  <span className={`inline-flex w-fit px-2.5 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-sm ${getCategoryGlass(ekskul.category)}`}>
+                    {getCategoryLabel(ekskul.category)}
                   </span>
                 )}
-                <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">{item.name}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">{ekskul.name}</h2>
               </div>
             </div>
 
             {/* Stats chips */}
-            {(item.location || item.capacity) && (
+            {(ekskul.coach || ekskul.schedule || ekskul.location) && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {item.location && (
+                {ekskul.coach && (
+                  <div className="flex items-center gap-1.5 bg-white/[0.1] border border-white/[0.15] backdrop-blur-sm rounded-full px-3 py-1.5">
+                    <svg className="w-3 h-3 text-white/50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span className="text-[11px] text-white/75">{ekskul.coach}</span>
+                  </div>
+                )}
+                {ekskul.schedule && (
+                  <div className="flex items-center gap-1.5 bg-white/[0.1] border border-white/[0.15] backdrop-blur-sm rounded-full px-3 py-1.5">
+                    <svg className="w-3 h-3 text-white/50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-[11px] text-white/75">{ekskul.schedule}</span>
+                  </div>
+                )}
+                {ekskul.location && (
                   <div className="flex items-center gap-1.5 bg-white/[0.1] border border-white/[0.15] backdrop-blur-sm rounded-full px-3 py-1.5">
                     <svg className="w-3 h-3 text-white/50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span className="text-[11px] text-white/75">{item.location}</span>
-                  </div>
-                )}
-                {item.capacity && (
-                  <div className="flex items-center gap-1.5 bg-white/[0.1] border border-white/[0.15] backdrop-blur-sm rounded-full px-3 py-1.5">
-                    <svg className="w-3 h-3 text-white/50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span className="text-[11px] text-white/75">{item.capacity}</span>
-                  </div>
-                )}
-                {item.isActive && (
-                  <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 backdrop-blur-sm rounded-full px-3 py-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-                    <span className="text-[11px] text-green-300">Aktif</span>
+                    <span className="text-[11px] text-white/75">{ekskul.location}</span>
                   </div>
                 )}
               </div>
@@ -107,10 +114,29 @@ const FasilitasModal = ({ item, onClose }) => {
             <div className="h-px bg-white/[0.1] mb-4" />
 
             {/* Description */}
-            {item.description && (
+            {ekskul.description && (
               <div className="bg-white/[0.07] border border-white/[0.1] backdrop-blur-sm rounded-2xl p-4 mb-3">
                 <p className="text-[10px] font-semibold text-white/35 uppercase tracking-widest mb-2">Tentang</p>
-                <p className="text-sm text-white/80 leading-relaxed">{item.description}</p>
+                <p className="text-sm text-white/80 leading-relaxed">{ekskul.description}</p>
+              </div>
+            )}
+
+            {/* Achievements */}
+            {ekskul.achievements && ekskul.achievements.length > 0 && (
+              <div className="bg-white/[0.07] border border-white/[0.1] backdrop-blur-sm rounded-2xl p-4 mb-4">
+                <p className="text-[10px] font-semibold text-white/35 uppercase tracking-widest mb-3">Prestasi</p>
+                <div className="space-y-2">
+                  {ekskul.achievements.map((a, i) => (
+                    <div key={i} className="flex items-start gap-2.5 bg-white/[0.06] border border-white/[0.08] rounded-xl px-3 py-2.5">
+                      <span className="text-sm flex-shrink-0 mt-0.5">🏆</span>
+                      {a.link ? (
+                        <a href={a.link} target="_blank" rel="noopener noreferrer" className="text-xs text-yellow-300/90 hover:text-yellow-200 transition-colors leading-snug">{a.nama}</a>
+                      ) : (
+                        <span className="text-xs text-white/70 leading-snug">{a.nama}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -122,20 +148,20 @@ const FasilitasModal = ({ item, onClose }) => {
 };
 
 /* ─── Main Page ───────────────────────────────────────────────────── */
-const FasilitasList = () => {
-  const [fasilitas, setFasilitas] = useState([]);
+const EkskulList = () => {
+  const [ekskuls, setEkskuls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [categories, setCategories] = useState([]);
-  const [heroTitle, setHeroTitle] = useState('FASILITAS SEKOLAH');
-  const [heroSubtitle, setHeroSubtitle] = useState('Menunjang kegiatan belajar mengajar dengan fasilitas modern dan lengkap untuk seluruh siswa');
+  const [heroTitle, setHeroTitle] = useState('EKSTRAKULIKULER');
+  const [heroSubtitle, setHeroSubtitle] = useState('Kembangkan potensi dan bakatmu bersama ekstrakulikuler pilihan di SMK Kristen 5 Klaten');
   const [heroBackground, setHeroBackground] = useState('');
   const [navbarVisible, setNavbarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const scrollTimeout = useRef(null);
 
   // Modal
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedEkskul, setSelectedEkskul] = useState(null);
 
   // Floating panel
   const [showPanel, setShowPanel] = useState(false);
@@ -144,12 +170,12 @@ const FasilitasList = () => {
   const searchInputRef = useRef(null);
 
   useEffect(() => {
-    fetchFasilitas();
+    fetchEkskuls();
     api.get('/api/site-settings').then((res) => {
       const hp = res.data?.data?.settings?.homepageSections || {};
-      if (hp.fasilitasHeroTitle) setHeroTitle(hp.fasilitasHeroTitle);
-      if (hp.fasilitasHeroSubtitle) setHeroSubtitle(hp.fasilitasHeroSubtitle);
-      if (hp.fasilitasHeroBackground) setHeroBackground(hp.fasilitasHeroBackground);
+      if (hp.ekskulHeroTitle) setHeroTitle(hp.ekskulHeroTitle);
+      if (hp.ekskulHeroSubtitle) setHeroSubtitle(hp.ekskulHeroSubtitle);
+      if (hp.ekskulHeroBackground) setHeroBackground(hp.ekskulHeroBackground);
     }).catch(() => {});
   }, []);
 
@@ -177,18 +203,18 @@ const FasilitasList = () => {
     return () => { window.removeEventListener('scroll', handleScroll); clearTimeout(scrollTimeout.current); };
   }, [lastScrollY]);
 
-  const fetchFasilitas = async () => {
+  const fetchEkskuls = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/fasilitas/active');
-      const data = res.data?.data?.fasilitas || res.data?.data || [];
-      setFasilitas(data);
+      const res = await api.get('/api/ekskul/active');
+      const data = res.data?.data?.ekskuls || [];
+      setEkskuls(data);
       setCategories([...new Set(data.map((i) => i.category).filter(Boolean))]);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
-  const filteredFasilitas = fasilitas.filter((item) => {
+  const filteredEkskuls = ekskuls.filter((item) => {
     const matchCat = selectedCategory === 'Semua' || item.category === selectedCategory;
     const q = searchQuery.toLowerCase();
     const matchQ = !q || item.name?.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q);
@@ -207,12 +233,6 @@ const FasilitasList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
-      <SEO
-        title="Fasilitas - SMK Kristen 5 Klaten"
-        description="Fasilitas lengkap SMK Kristen 5 Klaten (Krisma): laboratorium komputer, ruang praktik, perpustakaan, dan sarana pendukung pembelajaran modern."
-        keywords="fasilitas SMK Krisma, lab SMK Klaten, sarana SMK Kristen 5, ruang praktik SMK Krisma"
-        url="/fasilitas"
-      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Russo+One&display=swap');
         .russo { font-family: 'Russo One', sans-serif; }
@@ -236,7 +256,7 @@ const FasilitasList = () => {
         }
       `}</style>
 
-      <Navbar activePage="fasilitas" visible={navbarVisible} />
+      <Navbar activePage="ekskul" visible={navbarVisible} />
 
       {/* Hero */}
       <section
@@ -249,7 +269,6 @@ const FasilitasList = () => {
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full" />
             <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-white/5 rounded-full" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/[0.02] rounded-full" />
           </div>
         )}
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-16 py-20 md:py-28 text-center text-white">
@@ -264,8 +283,8 @@ const FasilitasList = () => {
           <div className="max-w-[1400px] mx-auto px-6 lg:px-16 py-3 flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-400 font-medium mr-1">Filter aktif:</span>
             {selectedCategory !== 'Semua' && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-800 text-white">
-                {selectedCategory}
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white ${getCategoryBadge(selectedCategory)}`}>
+                {getCategoryLabel(selectedCategory)}
                 <button onClick={() => setSelectedCategory('Semua')} className="opacity-70 hover:opacity-100">×</button>
               </span>
             )}
@@ -285,58 +304,53 @@ const FasilitasList = () => {
       {/* Grid */}
       <section className="py-12">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-16">
-          {filteredFasilitas.length > 0 ? (
+          {filteredEkskuls.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFasilitas.map((item) => (
+              {filteredEkskuls.map((item) => (
                 <div
                   key={item._id}
-                  onClick={() => setSelectedItem(item)}
-                  className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer hover:-translate-y-0.5"
+                  onClick={() => setSelectedEkskul(item)}
+                  className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col cursor-pointer hover:-translate-y-0.5"
                 >
-                  {/* Image */}
-                  <div className="relative h-52 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
-                    <img
-                      src={item.image?.url || item.image || '/placeholder.jpg'}
-                      alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                  <div className="relative h-52 overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 flex-shrink-0">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><span className="text-7xl select-none">🎯</span></div>
+                    )}
                     {item.category && (
-                      <span className="absolute top-3 left-3 bg-gray-900/80 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        {item.category}
+                      <span className={`absolute top-3 left-3 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm ${getCategoryBadge(item.category)}`}>
+                        {getCategoryLabel(item.category)}
                       </span>
                     )}
+                    {/* Tap hint */}
                     <div className="absolute bottom-3 right-3 bg-black/40 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                       Lihat detail
                     </div>
                   </div>
-
-                  {/* Content */}
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 leading-snug group-hover:text-[#0d76be] transition-colors">
-                      {item.name}
-                    </h3>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 leading-snug group-hover:text-[#0d76be] transition-colors">{item.name}</h3>
                     {item.description && (
-                      <p className="text-gray-500 text-sm mb-4 leading-relaxed"
+                      <p className="text-gray-500 text-sm mb-4 leading-relaxed flex-1"
                         style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {item.description}
                       </p>
                     )}
-                    <div className="flex flex-wrap items-center gap-4">
-                      {item.location && (
-                        <div className="flex items-center gap-1.5 text-[#0d76be]">
-                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <div className="space-y-2 mt-auto">
+                      {item.coach && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <svg className="w-4 h-4 flex-shrink-0 text-[#0d76be]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          <span className="text-sm text-gray-600">{item.location}</span>
+                          <span className="line-clamp-1">{item.coach}</span>
                         </div>
                       )}
-                      {item.capacity && (
-                        <div className="flex items-center gap-1.5 text-[#0d76be]">
-                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      {item.schedule && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <svg className="w-4 h-4 flex-shrink-0 text-[#0d76be]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span className="text-sm text-gray-600">{item.capacity}</span>
+                          <span className="line-clamp-1">{item.schedule}</span>
                         </div>
                       )}
                     </div>
@@ -346,10 +360,8 @@ const FasilitasList = () => {
             </div>
           ) : (
             <div className="text-center py-16">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <p className="text-gray-600 text-lg">Tidak ada fasilitas yang ditemukan.</p>
+              <div className="text-7xl mb-4">🎯</div>
+              <p className="text-gray-600 text-lg">Tidak ada ekstrakulikuler yang ditemukan.</p>
               {(selectedCategory !== 'Semua' || searchQuery) && (
                 <button onClick={() => { setSelectedCategory('Semua'); setSearchQuery(''); }}
                   className="mt-4 px-6 py-2 bg-[#0d76be] hover:bg-[#0a5a91] text-white rounded-full transition-colors text-sm font-medium">
@@ -386,7 +398,7 @@ const FasilitasList = () => {
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="cari fasilitas..."
+                  placeholder="cari ekstrakulikuler..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-7 pr-6 py-1.5 text-sm bg-black/[0.06] border border-black/10 rounded-xl focus:outline-none focus:border-blue-400/50 focus:bg-black/[0.04] placeholder-gray-400/60 text-gray-700"
@@ -396,24 +408,20 @@ const FasilitasList = () => {
                 )}
               </div>
             </div>
-            {categories.length > 0 && (
-              <>
-                <div className="h-px bg-black/[0.07] mb-3" />
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Kategori</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => setSelectedCategory('Semua')}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${selectedCategory === 'Semua' ? 'bg-[#0d76be] text-white shadow-sm' : 'bg-black/[0.06] text-gray-600 hover:bg-black/[0.1]'}`}
-                  >Semua</button>
-                  {categories.map((cat) => (
-                    <button key={cat}
-                      onClick={() => setSelectedCategory(cat === selectedCategory ? 'Semua' : cat)}
-                      className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${selectedCategory === cat ? 'bg-gray-800 text-white shadow-sm' : 'bg-black/[0.06] text-gray-600 hover:bg-black/[0.1]'}`}
-                    >{cat}</button>
-                  ))}
-                </div>
-              </>
-            )}
+            <div className="h-px bg-black/[0.07] mb-3" />
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Kategori</p>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setSelectedCategory('Semua')}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${selectedCategory === 'Semua' ? 'bg-[#0d76be] text-white shadow-sm' : 'bg-black/[0.06] text-gray-600 hover:bg-black/[0.1]'}`}
+              >Semua</button>
+              {categories.map((cat) => (
+                <button key={cat}
+                  onClick={() => setSelectedCategory(cat === selectedCategory ? 'Semua' : cat)}
+                  className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${selectedCategory === cat ? `${getCategoryBadge(cat)} text-white shadow-sm` : 'bg-black/[0.06] text-gray-600 hover:bg-black/[0.1]'}`}
+                >{getCategoryLabel(cat)}</button>
+              ))}
+            </div>
             {activeFilterCount > 0 && (
               <>
                 <div className="h-px bg-black/[0.07] mt-3 mb-2" />
@@ -440,9 +448,9 @@ const FasilitasList = () => {
       </div>
 
       {/* Apple Glass Modal */}
-      {selectedItem && <FasilitasModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
+      {selectedEkskul && <EkskulModal ekskul={selectedEkskul} onClose={() => setSelectedEkskul(null)} />}
     </div>
   );
 };
 
-export default FasilitasList;
+export default EkskulList;

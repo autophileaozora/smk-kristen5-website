@@ -4,14 +4,14 @@ const SEO = ({
   title = 'SMK Kristen 5 Klaten - SMK Krisma',
   description = 'SMK Kristen 5 Klaten (Krisma) adalah sekolah menengah kejuruan terbaik di Klaten dengan berbagai jurusan unggulan. Temukan passion Anda bersama kami!',
   keywords = 'SMK di Klaten, SMK Kristen 5, SMK Krisma, Krisma, sekolah klaten, SMK terbaik klaten, jurusan SMK klaten, pendaftaran SMK klaten, SMK Kristen Klaten',
-  image = '/og-image.jpg',
+  image = null,
   url = window.location.href,
   type = 'website',
   structuredData = null,
 }) => {
-  const siteUrl = 'http://localhost:5173'; // Update this with your production URL
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://smkkrisma.sch.id';
   const fullUrl = url.startsWith('http') ? url : `${siteUrl}${url}`;
-  const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
+  const fullImageUrl = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : null;
 
   // Default structured data for school
   const defaultStructuredData = {
@@ -65,9 +65,9 @@ const SEO = ({
       <meta property="og:url" content={fullUrl} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={fullImageUrl} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
+      {fullImageUrl && <meta property="og:image" content={fullImageUrl} />}
+      {fullImageUrl && <meta property="og:image:width" content="1200" />}
+      {fullImageUrl && <meta property="og:image:height" content="630" />}
       <meta property="og:site_name" content="SMK Kristen 5 Klaten" />
       <meta property="og:locale" content="id_ID" />
 
@@ -76,7 +76,7 @@ const SEO = ({
       <meta name="twitter:url" content={fullUrl} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={fullImageUrl} />
+      {fullImageUrl && <meta name="twitter:image" content={fullImageUrl} />}
 
       {/* Geographic Tags */}
       <meta name="geo.region" content="ID-JT" />

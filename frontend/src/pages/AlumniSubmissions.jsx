@@ -283,6 +283,9 @@ const SubmissionCard = ({ submission: s, actionLoading, onApprove, onReject, onD
                   {[s.currentOccupation, s.company].filter(Boolean).join(' · ')}
                 </p>
               )}
+              {s.phone && (
+                <p className="text-xs text-gray-400 mt-0.5">📞 {s.phone}</p>
+              )}
             </div>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap flex-shrink-0 ${status.color}`}>
               {status.label}
