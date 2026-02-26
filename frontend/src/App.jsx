@@ -1,8 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { useSchoolLogo } from './hooks/useContact';
-import { fetchAndSetFavicon, setDynamicFavicon } from './utils/faviconUtils';
+import { fetchAndSetFavicon } from './utils/faviconUtils';
 
 // Lazy load all components for better performance
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -47,19 +46,19 @@ const LoadingFallback = () => (
 );
 
 function App() {
-  const { logo } = useSchoolLogo();
-
-  // Load favicon on app startup
+  // Load favicon on app startup and set interval to check for updates
   useEffect(() => {
+    // Initial load
     fetchAndSetFavicon();
-  }, []);
+    
+    // Check for favicon updates every 30 seconds
+    // (in case admin updates logo while user is on the site)
+    const interval = setInterval(() => {
+      fetchAndSetFavicon();
+    }, 30000);
 
-  // Update favicon dynamically when logo changes
-  useEffect(() => {
-    if (logo && logo !== '/logo.svg') {
-      setDynamicFavicon(logo);
-    }
-  }, [logo]);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <HelmetProvider>
