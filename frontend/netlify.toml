@@ -9,3 +9,5 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  VITE_SITE_URL = "https://smkkrisma.sch.id"
+  VITE_API_URL = "https://smk-kristen5-website.vercel.app"
