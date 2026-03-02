@@ -15,4 +15,6 @@
 [build.environment]
   NODE_VERSION = "18"
   VITE_SITE_URL = "https://smkkrisma.sch.id"
-  VITE_API_URL = "https://api.smkkrisma.sch.id"
+  # Sementara pakai Vercel sampai VPS Exabyte siap
+  # Ganti ke https://api.smkkrisma.sch.id setelah VPS aktif
+  VITE_API_URL = "https://smk-kristen5-website.vercel.app"
