@@ -18,6 +18,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://smk-kristen5.netlify.app',
+  'https://smkkrisma.sch.id',
+  'https://www.smkkrisma.sch.id',
 ];
 
 // Add production frontend URL if exists

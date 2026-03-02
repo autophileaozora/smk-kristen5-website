@@ -43,6 +43,116 @@ router.get('/favicon', async (req, res) => {
   }
 });
 
+// Helper: build minimal HTML with OG meta tags untuk social media bots
+function buildOgHtml({ title, description, image, url, type = 'website' }) {
+  const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>${esc(title)}</title>
+  <meta name="description" content="${esc(description)}">
+  <meta property="og:type" content="${type}">
+  <meta property="og:site_name" content="SMK Kristen 5 Klaten">
+  <meta property="og:title" content="${esc(title)}">
+  <meta property="og:description" content="${esc(description)}">
+  ${image ? `<meta property="og:image" content="${esc(image)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:image" content="${esc(image)}">` : ''}
+  <meta property="og:url" content="${esc(url)}">
+  <meta property="og:locale" content="id_ID">
+  <meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">
+  <meta name="twitter:title" content="${esc(title)}">
+  <meta name="twitter:description" content="${esc(description)}">
+  <meta http-equiv="refresh" content="0;url=${esc(url)}">
+</head>
+<body>
+  <p>Mengalihkan ke <a href="${esc(url)}">${esc(url)}</a>...</p>
+</body>
+</html>`;
+}
+
+// @route   GET /og/*
+// @desc    Serve OG meta HTML untuk social media bots (artikel, jurusan, halaman, dll)
+// @access  Public
+router.get('/og/*', async (req, res) => {
+  const path = req.params[0] || '';
+  const siteUrl = process.env.FRONTEND_URL || 'https://smkkrisma.sch.id';
+
+  try {
+    const settings = await SiteSettings.getSettings();
+    const defaultImage = settings.ogImage || settings.logo || null;
+
+    // Default: gunakan meta dari SiteSettings
+    let ogData = {
+      title: settings.metaTitle || 'SMK Kristen 5 Klaten - SMK Krisma',
+      description: settings.metaDescription || 'SMK Kristen 5 Klaten adalah sekolah menengah kejuruan terbaik di Klaten dengan berbagai jurusan unggulan.',
+      image: defaultImage,
+      url: `${siteUrl}/${path}`,
+      type: 'website',
+    };
+
+    // /artikel/:slug
+    if (path.startsWith('artikel/')) {
+      const slug = path.replace('artikel/', '');
+      const article = await Article.findOne({ slug, status: 'published' })
+        .select('title metaDescription excerpt featuredImage slug');
+      if (article) {
+        ogData = {
+          title: `${article.title} - SMK Kristen 5 Klaten`,
+          description: article.metaDescription || article.excerpt || article.title,
+          image: article.featuredImage?.url || defaultImage,
+          url: `${siteUrl}/artikel/${article.slug}`,
+          type: 'article',
+        };
+      }
+    }
+
+    // /jurusan/:slug
+    else if (path.startsWith('jurusan/')) {
+      const slug = path.replace('jurusan/', '');
+      try {
+        const Jurusan = (await import('../models/Jurusan.js')).default;
+        const jurusan = await Jurusan.findOne({ slug })
+          .select('name shortDescription description logo backgroundImage slug');
+        if (jurusan) {
+          ogData = {
+            title: `${jurusan.name} - SMK Kristen 5 Klaten`,
+            description: jurusan.shortDescription || jurusan.description || `Program keahlian ${jurusan.name} di SMK Kristen 5 Klaten`,
+            image: jurusan.logo || jurusan.backgroundImage || defaultImage,
+            url: `${siteUrl}/jurusan/${jurusan.slug}`,
+            type: 'website',
+          };
+        }
+      } catch (err) { /* pakai default */ }
+    }
+
+    // /page/:slug
+    else if (path.startsWith('page/')) {
+      const slug = path.replace('page/', '');
+      const page = await CustomPage.findOne({ slug, status: 'published' })
+        .select('title seo slug');
+      if (page) {
+        ogData = {
+          title: page.seo?.metaTitle || `${page.title} - SMK Kristen 5 Klaten`,
+          description: page.seo?.metaDescription || `${page.title} - SMK Kristen 5 Klaten`,
+          image: page.seo?.ogImage || defaultImage,
+          url: `${siteUrl}/page/${page.slug}`,
+          type: 'website',
+        };
+      }
+    }
+
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=300'); // 5 menit
+    return res.send(buildOgHtml(ogData));
+  } catch (error) {
+    console.error('OG route error:', error);
+    res.status(500).send('<html><body>Error generating OG preview</body></html>');
+  }
+});
+
 // @route   GET /sitemap.xml
 // @desc    Generate dynamic sitemap for SEO
 // @access  Public

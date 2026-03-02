@@ -2,6 +2,11 @@
   command = "npm run build"
   publish = "dist"
 
+# Edge Function: deteksi bot dan sajikan OG meta HTML dinamis
+[[edge_functions]]
+  function = "og-preview"
+  path = "/*"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -10,4 +15,4 @@
 [build.environment]
   NODE_VERSION = "18"
   VITE_SITE_URL = "https://smkkrisma.sch.id"
-  VITE_API_URL = "https://smk-kristen5-website.vercel.app"
+  VITE_API_URL = "https://api.smkkrisma.sch.id"
