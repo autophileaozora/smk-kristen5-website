@@ -61,6 +61,10 @@ const siteSettingsSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    ogImage: {
+      type: String, // Cloudinary URL - ukuran ideal 1200x630px untuk social media preview
+      default: '',
+    },
 
     // Contact Info
     email: {

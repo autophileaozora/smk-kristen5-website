@@ -12,6 +12,7 @@ const SiteSettings = ({ embedded = false, section = 'general', saveTrigger = 0 }
     siteName: '',
     siteTagline: '',
     favicon: '',
+    ogImage: '',
     metaTitle: '',
     metaDescription: '',
     metaKeywords: '',
@@ -51,6 +52,7 @@ const SiteSettings = ({ embedded = false, section = 'general', saveTrigger = 0 }
         siteName: data.siteName || '',
         siteTagline: data.siteTagline || '',
         favicon: data.favicon || '',
+        ogImage: data.ogImage || '',
         metaTitle: data.metaTitle || '',
         metaDescription: data.metaDescription || '',
         metaKeywords: data.metaKeywords || '',
@@ -409,6 +411,35 @@ const SiteSettings = ({ embedded = false, section = 'general', saveTrigger = 0 }
                     <span>{formData.favicon ? 'Ganti' : 'Upload'} Favicon</span>
                     <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'favicon')} className="hidden" />
                   </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gambar Open Graph (OG Image)
+                </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Gambar yang muncul saat link website dibagikan ke WhatsApp, Telegram, Facebook, dll. Ukuran ideal: <strong>1200 x 630 piksel</strong>.
+                </p>
+                <div className="flex items-start gap-4">
+                  {formData.ogImage && (
+                    <img src={formData.ogImage} alt="OG Image Preview" className="w-40 h-[84px] object-cover rounded-lg border border-gray-200" />
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <label className={`cursor-pointer px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <span>{formData.ogImage ? 'Ganti' : 'Upload'} OG Image</span>
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'ogImage')} className="hidden" disabled={uploading} />
+                    </label>
+                    {formData.ogImage && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, ogImage: '' }))}
+                        className="text-xs text-red-500 hover:text-red-700 text-left"
+                      >
+                        Hapus gambar
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

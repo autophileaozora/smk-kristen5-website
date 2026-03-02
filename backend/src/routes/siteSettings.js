@@ -38,6 +38,7 @@ router.put('/', protect, isAdministrator, async (req, res) => {
       'logo',
       'logoLight',
       'favicon',
+      'ogImage',
       'email',
       'phone',
       'whatsapp',
@@ -184,7 +185,7 @@ router.put('/contact', protect, isAdministrator, async (req, res) => {
 // @access  Protected + Admin
 router.put('/seo', protect, isAdministrator, async (req, res) => {
   try {
-    const { metaTitle, metaDescription, metaKeywords, googleAnalyticsId } =
+    const { metaTitle, metaDescription, metaKeywords, googleAnalyticsId, ogImage } =
       req.body;
 
     let settings = await SiteSettings.getSettings();
@@ -192,8 +193,8 @@ router.put('/seo', protect, isAdministrator, async (req, res) => {
     if (metaTitle !== undefined) settings.metaTitle = metaTitle;
     if (metaDescription !== undefined) settings.metaDescription = metaDescription;
     if (metaKeywords !== undefined) settings.metaKeywords = metaKeywords;
-    if (googleAnalyticsId !== undefined)
-      settings.googleAnalyticsId = googleAnalyticsId;
+    if (googleAnalyticsId !== undefined) settings.googleAnalyticsId = googleAnalyticsId;
+    if (ogImage !== undefined) settings.ogImage = ogImage;
 
     await settings.save();
 

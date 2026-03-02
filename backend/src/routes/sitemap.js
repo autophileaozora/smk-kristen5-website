@@ -1,8 +1,47 @@
 import express from 'express';
 import Article from '../models/Article.js';
 import CustomPage from '../models/CustomPage.js';
+import SiteSettings from '../models/SiteSettings.js';
 
 const router = express.Router();
+
+// @route   GET /og-image
+// @desc    Redirect to current OG image (ogImage atau logo dari SiteSettings)
+// @access  Public
+router.get('/og-image', async (req, res) => {
+  try {
+    const settings = await SiteSettings.getSettings();
+    const imageUrl = settings.ogImage || settings.logo;
+
+    if (imageUrl) {
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.redirect(302, imageUrl);
+    }
+
+    res.status(404).json({ success: false, message: 'OG image belum dikonfigurasi' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @route   GET /favicon
+// @desc    Redirect to current favicon (favicon atau logo dari SiteSettings)
+// @access  Public
+router.get('/favicon', async (req, res) => {
+  try {
+    const settings = await SiteSettings.getSettings();
+    const imageUrl = settings.favicon || settings.logo;
+
+    if (imageUrl) {
+      res.set('Cache-Control', 'public, max-age=86400'); // 24 jam cache
+      return res.redirect(302, imageUrl);
+    }
+
+    res.status(404).json({ success: false, message: 'Favicon belum dikonfigurasi' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // @route   GET /sitemap.xml
 // @desc    Generate dynamic sitemap for SEO

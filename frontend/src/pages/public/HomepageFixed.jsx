@@ -311,6 +311,7 @@ const HomepageFixed = () => {
         title={data.siteSettings?.metaTitle || 'SMK Kristen 5 Klaten - Sekolah Menengah Kejuruan'}
         description={data.siteSettings?.metaDescription || 'SMK Kristen 5 Klaten menyiapkan siswa masuk dunia kerja dengan kurikulum berbasis industri'}
         keywords="SMK Kristen 5 Klaten, SMK Krisma, SMK di Klaten, sekolah menengah kejuruan Klaten, SMK terbaik Klaten, SMK swasta Klaten"
+        image={data.siteSettings?.ogImage || data.siteSettings?.logo || null}
         url="/"
       />
 
