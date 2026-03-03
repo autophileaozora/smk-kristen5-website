@@ -27,26 +27,25 @@ const PostsCardBlock = ({
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      let url = `/api/news?limit=${limit}&status=published`;
+      let url = `/api/articles/public?limit=${limit}`;
 
-      // Support multiple categories
+      // Support multiple categories — API accepts single topikSlug, use first
       if (categories && categories.length > 0) {
-        const categorySlugs = categories.map(c => c.slug).filter(Boolean).join(',');
-        if (categorySlugs) {
-          url += `&categories=${categorySlugs}`;
+        const firstSlug = categories.map(c => c.slug).filter(Boolean)[0];
+        if (firstSlug) {
+          url += `&topikSlug=${firstSlug}`;
         }
       } else if (category) {
-        // Legacy single category support
-        url += `&category=${category}`;
+        url += `&topikSlug=${category}`;
       }
 
       if (jurusan) {
-        url += `&jurusan=${jurusan}`;
+        url += `&jurusanCode=${jurusan}`;
       }
 
       const response = await api.get(url);
       if (response.data.success) {
-        setPosts(response.data.data || []);
+        setPosts(response.data.data?.articles || []);
       }
     } catch (err) {
       console.error('Error fetching posts:', err);
