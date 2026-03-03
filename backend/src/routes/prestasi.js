@@ -2,7 +2,7 @@ import express from 'express';
 import Prestasi from '../models/Prestasi.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
-import { uploadSingle, uploadToCloudinary } from '../utils/cloudinaryUpload.js';
+import { uploadSingle, uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUpload.js';
 import AuditLog from '../models/AuditLog.js';
 
 const router = express.Router();
@@ -162,6 +162,11 @@ router.put('/:id', protect, uploadSingle('image'), async (req, res) => {
     // Upload new image to Cloudinary if provided
     if (req.file) {
       try {
+        // Delete old image from Cloudinary before uploading new one
+        if (prestasi.image) {
+          const oldPublicId = getPublicIdFromUrl(prestasi.image);
+          if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
+        }
         console.log('Uploading image to Cloudinary...');
         const result = await uploadToCloudinary(req.file.buffer);
         console.log('Cloudinary upload success:', result.secure_url);
@@ -219,6 +224,12 @@ router.delete('/:id', protect, async (req, res) => {
         success: false,
         message: 'Prestasi not found',
       });
+    }
+
+    // Hard-delete image from Cloudinary
+    if (prestasi.image) {
+      const publicId = getPublicIdFromUrl(prestasi.image);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
     }
 
     await prestasi.deleteOne();

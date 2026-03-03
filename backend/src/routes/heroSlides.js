@@ -4,6 +4,7 @@ import HeroSettings from '../models/HeroSettings.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
 import AuditLog from '../models/AuditLog.js';
+import { deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUpload.js';
 
 const router = express.Router();
 
@@ -178,6 +179,12 @@ router.put('/:id', protect, isAdministrator, async (req, res) => {
 
     slide.title = title || slide.title;
     slide.subtitle = subtitle !== undefined ? subtitle : slide.subtitle;
+
+    // Delete old backgroundImage from Cloudinary if being replaced
+    if (backgroundImage && backgroundImage !== slide.backgroundImage && slide.backgroundImage) {
+      const oldPublicId = getPublicIdFromUrl(slide.backgroundImage);
+      if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
+    }
     slide.backgroundImage = backgroundImage || slide.backgroundImage;
     slide.primaryButtonText = primaryButtonText || slide.primaryButtonText;
     slide.primaryButtonLink = primaryButtonLink || slide.primaryButtonLink;
@@ -227,6 +234,12 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
         success: false,
         message: 'Hero slide not found',
       });
+    }
+
+    // Hard-delete backgroundImage from Cloudinary
+    if (slide.backgroundImage) {
+      const publicId = getPublicIdFromUrl(slide.backgroundImage);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
     }
 
     await slide.deleteOne();

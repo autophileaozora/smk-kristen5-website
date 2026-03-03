@@ -3,6 +3,7 @@ import Partner from '../models/Partner.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
 import AuditLog from '../models/AuditLog.js';
+import { deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUpload.js';
 
 const router = express.Router();
 
@@ -141,6 +142,12 @@ router.put('/:id', protect, isAdministrator, async (req, res) => {
     const { name, logo, startYear, endYear, location, description, order, isActive } = req.body;
 
     partner.name = name || partner.name;
+
+    // Delete old logo from Cloudinary if being replaced
+    if (logo && logo !== partner.logo && partner.logo) {
+      const oldPublicId = getPublicIdFromUrl(partner.logo);
+      if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
+    }
     partner.logo = logo || partner.logo;
     partner.startYear = startYear !== undefined ? startYear : partner.startYear;
     partner.endYear = endYear !== undefined ? endYear : partner.endYear;
@@ -189,6 +196,12 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
         success: false,
         message: 'Partner not found',
       });
+    }
+
+    // Hard-delete logo from Cloudinary
+    if (partner.logo) {
+      const publicId = getPublicIdFromUrl(partner.logo);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
     }
 
     await partner.deleteOne();

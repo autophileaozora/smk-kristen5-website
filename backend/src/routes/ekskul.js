@@ -2,7 +2,7 @@ import express from 'express';
 import Ekskul from '../models/Ekskul.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
-import { uploadSingle, uploadToCloudinary } from '../utils/cloudinaryUpload.js';
+import { uploadSingle, uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUpload.js';
 import AuditLog from '../models/AuditLog.js';
 
 const router = express.Router();
@@ -190,6 +190,11 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
     // Upload new image to Cloudinary if provided
     if (req.file) {
       try {
+        // Delete old image from Cloudinary before uploading new one
+        if (ekskul.image) {
+          const oldPublicId = getPublicIdFromUrl(ekskul.image);
+          if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
+        }
         console.log('Uploading ekskul image to Cloudinary...');
         const result = await uploadToCloudinary(req.file.buffer);
         console.log('Cloudinary upload success:', result.secure_url);
@@ -247,6 +252,12 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
         success: false,
         message: 'Ekskul not found',
       });
+    }
+
+    // Hard-delete image from Cloudinary
+    if (ekskul.image) {
+      const publicId = getPublicIdFromUrl(ekskul.image);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
     }
 
     await ekskul.deleteOne();

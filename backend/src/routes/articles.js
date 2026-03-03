@@ -4,6 +4,7 @@ import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
 import AuditLog from '../models/AuditLog.js';
 import { sanitizePagination } from '../middleware/validate.js';
+import { deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUpload.js';
 
 const router = express.Router();
 
@@ -351,6 +352,12 @@ router.put('/:id', protect, async (req, res) => {
     if (categoryJurusan !== undefined) article.categoryJurusan = categoryJurusan || null;
     if (categoryTopik !== undefined) article.categoryTopik = categoryTopik || null;
     if (featuredImage !== undefined) {
+      const oldImageUrl = article.featuredImage?.url;
+      // Delete old image from Cloudinary if being replaced
+      if (oldImageUrl && featuredImage !== oldImageUrl) {
+        const publicId = article.featuredImage?.publicId || getPublicIdFromUrl(oldImageUrl);
+        if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
+      }
       article.featuredImage = featuredImage ? { url: featuredImage } : undefined;
     }
     if (altText !== undefined) article.altText = altText || undefined;
@@ -427,6 +434,12 @@ router.delete('/:id', protect, async (req, res) => {
         success: false,
         message: 'Cannot delete published article',
       });
+    }
+
+    // Hard-delete featured image from Cloudinary
+    if (article.featuredImage?.url) {
+      const publicId = article.featuredImage?.publicId || getPublicIdFromUrl(article.featuredImage.url);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
     }
 
     await article.deleteOne();

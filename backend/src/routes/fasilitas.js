@@ -2,7 +2,7 @@ import express from 'express';
 import Fasilitas from '../models/Fasilitas.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
-import { uploadSingle, uploadToCloudinary } from '../utils/cloudinaryUpload.js';
+import { uploadSingle, uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUpload.js';
 import AuditLog from '../models/AuditLog.js';
 
 const router = express.Router();
@@ -195,6 +195,11 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
     // Upload new image to Cloudinary if provided
     if (req.file) {
       try {
+        // Delete old image from Cloudinary before uploading new one
+        if (fasilitas.image) {
+          const oldPublicId = getPublicIdFromUrl(fasilitas.image);
+          if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
+        }
         console.log('Uploading image to Cloudinary...');
         const result = await uploadToCloudinary(req.file.buffer);
         console.log('Image upload success:', result.secure_url);
@@ -252,6 +257,12 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
         success: false,
         message: 'Fasilitas not found',
       });
+    }
+
+    // Hard-delete image from Cloudinary
+    if (fasilitas.image) {
+      const publicId = getPublicIdFromUrl(fasilitas.image);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
     }
 
     await fasilitas.deleteOne();

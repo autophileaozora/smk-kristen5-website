@@ -104,13 +104,16 @@ export const deleteFromCloudinary = async (publicId) => {
 };
 
 // Get public ID from Cloudinary URL
+// Example: https://res.cloudinary.com/demo/image/upload/v123/smk-kristen5/fasilitas/abc.jpg
+// Returns: smk-kristen5/fasilitas/abc
 export const getPublicIdFromUrl = (url) => {
   if (!url) return null;
-  const parts = url.split('/');
-  const lastPart = parts[parts.length - 1];
-  const publicId = lastPart.split('.')[0];
-  const folder = parts[parts.length - 2];
-  return `${folder}/${publicId}`;
+  const uploadIndex = url.indexOf('/upload/');
+  if (uploadIndex === -1) return null;
+  let path = url.slice(uploadIndex + 8); // remove '/upload/'
+  path = path.replace(/^v\d+\//, '');    // remove version prefix (v1234567890/)
+  path = path.replace(/\.[^/.]+$/, '');  // remove file extension
+  return path || null;
 };
 
 export default {

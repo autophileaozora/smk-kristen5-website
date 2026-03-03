@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import Jurusan from '../models/Jurusan.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
-import { uploadSingle, uploadMultiple, uploadToCloudinary } from '../utils/cloudinaryUpload.js';
+import { uploadSingle, uploadMultiple, uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUpload.js';
 import AuditLog from '../models/AuditLog.js';
 
 const router = express.Router();
@@ -334,6 +334,11 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
     // Upload new logo to Cloudinary if provided
     if (req.files && req.files.logo && req.files.logo[0]) {
       try {
+        // Delete old logo from Cloudinary
+        if (jurusan.logo) {
+          const oldPublicId = getPublicIdFromUrl(jurusan.logo);
+          if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
+        }
         console.log('Uploading logo to Cloudinary...');
         const result = await uploadToCloudinary(req.files.logo[0].buffer);
         console.log('Logo upload success:', result.secure_url);
@@ -353,6 +358,11 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
     // Upload new backgroundImage to Cloudinary if provided
     if (req.files && req.files.backgroundImage && req.files.backgroundImage[0]) {
       try {
+        // Delete old backgroundImage from Cloudinary
+        if (jurusan.backgroundImage) {
+          const oldPublicId = getPublicIdFromUrl(jurusan.backgroundImage);
+          if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
+        }
         console.log('Uploading background image to Cloudinary...');
         const result = await uploadToCloudinary(req.files.backgroundImage[0].buffer);
         console.log('Background image upload success:', result.secure_url);
@@ -402,6 +412,13 @@ router.put('/:id', protect, isAdministrator, uploadMultiple([
       }
     } else if (Array.isArray(bodyGallery)) {
       // No new uploads but gallery array sent — save as-is (handles item deletions)
+      // Delete removed gallery images from Cloudinary
+      const keptUrls = new Set(bodyGallery.map(g => g.url));
+      const removedImages = (jurusan.gallery || []).filter(g => g.url && !keptUrls.has(g.url));
+      for (const img of removedImages) {
+        const publicId = getPublicIdFromUrl(img.url);
+        if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
+      }
       jurusan.gallery = bodyGallery;
     }
 
@@ -446,6 +463,22 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
         success: false,
         message: 'Jurusan not found',
       });
+    }
+
+    // Hard-delete all images from Cloudinary
+    if (jurusan.logo) {
+      const publicId = getPublicIdFromUrl(jurusan.logo);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
+    }
+    if (jurusan.backgroundImage) {
+      const publicId = getPublicIdFromUrl(jurusan.backgroundImage);
+      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
+    }
+    for (const img of (jurusan.gallery || [])) {
+      if (img.url) {
+        const publicId = getPublicIdFromUrl(img.url);
+        if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
+      }
     }
 
     await jurusan.deleteOne();
