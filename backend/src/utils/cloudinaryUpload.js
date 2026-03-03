@@ -20,7 +20,7 @@ const imageFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 2 * 1024 * 1024, // 2MB — cukup, gambar dikompresi otomatis oleh Cloudinary
   },
   fileFilter: imageFilter,
 });
@@ -35,13 +35,44 @@ export const uploadMultiple = (fields) => {
   return upload.fields(fields);
 };
 
+// Preset transformasi berdasarkan konteks penggunaan
+const PRESETS = {
+  // Thumbnail kecil: logo partner, foto alumni, foto profil
+  thumbnail: [
+    { quality: 'auto:good', fetch_format: 'auto' },
+    { width: 400, crop: 'limit' },
+  ],
+  // Gambar sedang: artikel, prestasi, ekskul
+  medium: [
+    { quality: 'auto:good', fetch_format: 'auto' },
+    { width: 800, crop: 'limit' },
+  ],
+  // Gambar besar: hero, fasilitas, jurusan, galeri
+  large: [
+    { quality: 'auto:good', fetch_format: 'auto' },
+    { width: 1200, crop: 'limit' },
+  ],
+};
+
+// Pilih preset otomatis berdasarkan nama folder
+const getPreset = (folder) => {
+  if (folder.includes('partner') || folder.includes('alumni') || folder.includes('logo')) {
+    return PRESETS.thumbnail;
+  }
+  if (folder.includes('artikel') || folder.includes('article') || folder.includes('prestasi') || folder.includes('ekskul')) {
+    return PRESETS.medium;
+  }
+  return PRESETS.large; // default: hero, fasilitas, jurusan, galeri, dll
+};
+
 // Upload buffer to Cloudinary
 export const uploadToCloudinary = (buffer, folder = 'smk-kristen5') => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: folder,
-        resource_type: 'auto',
+        resource_type: 'image',
+        transformation: getPreset(folder),
       },
       (error, result) => {
         if (error) {

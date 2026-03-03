@@ -21,8 +21,8 @@ export const uploadImage = async (fileBuffer, folder = 'smk-kristen5') => {
         folder: folder,
         resource_type: 'image',
         transformation: [
-          { quality: 'auto', fetch_format: 'auto' }, // Auto optimize
-          { width: 1200, crop: 'limit' }, // Max width 1200px
+          { quality: 'auto:good', fetch_format: 'auto' },
+          { width: 1200, crop: 'limit' },
         ],
       },
       (error, result) => {
