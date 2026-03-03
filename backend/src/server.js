@@ -14,15 +14,10 @@ const { default: connectDB } = await import('./config/database.js');
 const { default: logger } = await import('./utils/logger.js');
 
 // Validate required environment variables
+// PORT is excluded — it has a default value (5000) and is not needed in serverless
 const requiredEnvVars = [
-  'NODE_ENV',
-  'PORT',
   'MONGODB_URI',
   'JWT_SECRET',
-  'FRONTEND_URL',
-  'CLOUDINARY_CLOUD_NAME',
-  'CLOUDINARY_API_KEY',
-  'CLOUDINARY_API_SECRET',
 ];
 
 const missingEnvVars = requiredEnvVars.filter(
