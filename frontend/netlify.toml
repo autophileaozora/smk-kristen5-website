@@ -17,4 +17,4 @@
   VITE_SITE_URL = "https://smkkrisma.sch.id"
   # Sementara pakai Vercel sampai VPS Exabyte siap
   # Ganti ke https://api.smkkrisma.sch.id setelah VPS aktif
-  VITE_API_URL = "https://smk-kristen5-website.vercel.app"
+  VITE_API_URL = "https://smk-kristen5-website-tan.vercel.app"
