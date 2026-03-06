@@ -55,7 +55,7 @@ const DashboardLayout = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
+      <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} onOpenSearch={() => setCommandPaletteOpen(true)} />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

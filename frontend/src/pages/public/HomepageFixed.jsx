@@ -36,6 +36,7 @@ const HomepageFixed = () => {
     events: [],
     siteSettings: null,
     videoHeroes: [],
+    statsCards: [],
   });
   const [loading, setLoading] = useState(true);
   const [navbarVisible, setNavbarVisible] = useState(true);
@@ -136,6 +137,7 @@ const HomepageFixed = () => {
           events: d.events || [],
           siteSettings: d.siteSettings || null,
           videoHeroes: d.videoHeroes || [],
+          statsCards: d.statsCards || [],
         });
       } catch (error) {
         console.error('Error fetching homepage data:', error);
@@ -416,12 +418,18 @@ const HomepageFixed = () => {
                   {currentSlide.subtitle}
                 </p>
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 mt-7 md:mt-9 flex-wrap">
-                  <button className="w-full md:w-auto bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 md:px-8 py-3 md:py-[14px] rounded-lg text-[11px] md:text-xs font-semibold tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+                  <Link
+                    to={currentSlide.primaryButtonLink || '#'}
+                    className="w-full md:w-auto bg-gradient-to-br from-yellow-300 to-yellow-400 text-gray-900 px-5 md:px-8 py-3 md:py-[14px] rounded-lg text-[11px] md:text-xs font-semibold tracking-wide shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 text-center"
+                  >
                     {currentSlide.primaryButtonText || 'BAGIKAN CERITAMU'}
-                  </button>
-                  <button className="w-full md:w-auto bg-transparent text-yellow-300 px-5 md:px-8 py-3 md:py-[14px] border-2 border-yellow-300 rounded-lg text-[11px] md:text-xs font-semibold tracking-wide hover:bg-yellow-300/10 transition-all">
+                  </Link>
+                  <Link
+                    to={currentSlide.secondaryButtonLink || '#'}
+                    className="w-full md:w-auto bg-transparent text-yellow-300 px-5 md:px-8 py-3 md:py-[14px] border-2 border-yellow-300 rounded-lg text-[11px] md:text-xs font-semibold tracking-wide hover:bg-yellow-300/10 transition-all text-center"
+                  >
                     {currentSlide.secondaryButtonText || 'LIHAT LEBIH LANJUT'}
-                  </button>
+                  </Link>
                 </div>
 
                 {/* Slide indicators */}
@@ -517,7 +525,7 @@ const HomepageFixed = () => {
               <div className="mt-6 lg:mt-10">
                 <h4 className="text-[10px] lg:text-xs font-semibold text-gray-700 mb-3 lg:mb-5 tracking-wide">{hp.statsHeading || 'ALUMNI KAMI TELAH BEKERJA DI TOP COMPANY'}</h4>
                 <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-[400px]">
-                  {(data.partners || []).slice(0, 6).map((partner, idx) => (
+                  {(data.partners || []).map((partner, idx) => (
                     <div key={idx} className="bg-white rounded-md p-1.5 lg:p-2.5 h-12 lg:h-16 flex items-center justify-center">
                       <img src={partner.logo} alt={partner.name} loading="lazy" className="max-w-full max-h-full object-contain" />
                     </div>
@@ -529,37 +537,35 @@ const HomepageFixed = () => {
             {/* Stats Cards - 50% */}
             <div className="w-full lg:w-1/2">
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-0 lg:mt-24 w-full">
-              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-[#008fd7] sm:aspect-square flex flex-col">
-                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.ekskuls || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Ekstrakurikuler</h4>
-                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
-                  {(data.ekskuls || []).slice(0, 3).map(e => e.name).join(', ') || 'Loading...'}{(data.ekskuls || []).length > 3 ? ', dan lainnya' : ''}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-yellow-300 sm:aspect-square flex flex-col">
-                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.fasilitas || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Fasilitas</h4>
-                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
-                  {(data.fasilitas || []).slice(0, 3).map(f => f.name).join(', ') || 'Loading...'}{(data.fasilitas || []).length > 3 ? ', dan lainnya' : ''}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-red-500 sm:aspect-square flex flex-col">
-                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{new Date().getFullYear() - (hp.foundingYear || 1999)}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Tahun Melayani</h4>
-                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
-                  {`Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] border-orange-600 sm:aspect-square flex flex-col">
-                <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{(data.jurusans || []).length}</div>
-                <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">Bidang Kompetensi</h4>
-                <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block">
-                  {(data.jurusans || []).slice(0, 3).map(j => j.name).join(', ') || 'Loading...'}{(data.jurusans || []).length > 3 ? '' : ''}
-                </p>
-              </div>
+              {(data.statsCards.length > 0 ? data.statsCards : [
+                { _id: 'fb-1', title: 'Ekstrakurikuler', description: (data.ekskuls || []).slice(0, 3).map(e => e.name).join(', ') + ((data.ekskuls || []).length > 3 ? ', dan lainnya' : ''), resolvedValue: (data.ekskuls || []).length, borderColor: '#008fd7' },
+                { _id: 'fb-2', title: 'Fasilitas', description: (data.fasilitas || []).slice(0, 3).map(f => f.name).join(', ') + ((data.fasilitas || []).length > 3 ? ', dan lainnya' : ''), resolvedValue: (data.fasilitas || []).length, borderColor: '#fbbf24' },
+                { _id: 'fb-3', title: 'Tahun Melayani', description: `Melayani pendidikan di Klaten sejak tahun ${hp.foundingYear || 1999}`, resolvedValue: new Date().getFullYear() - (hp.foundingYear || 1999), borderColor: '#ef4444' },
+                { _id: 'fb-4', title: 'Bidang Kompetensi', description: (data.jurusans || []).slice(0, 3).map(j => j.name).join(', '), resolvedValue: (data.jurusans || []).length, borderColor: '#ea580c' },
+              ]).map((card) => (
+                <div
+                  key={card._id}
+                  className="group bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 shadow-lg border-l-4 lg:border-l-[6px] sm:aspect-square flex flex-col"
+                  style={{ borderLeftColor: card.borderColor }}
+                >
+                  <div className="russo text-2xl sm:text-3xl lg:text-[42px] leading-none text-gray-700">{card.resolvedValue}</div>
+                  <h4 className="text-xs sm:text-sm lg:text-base font-bold text-black mt-1 lg:mt-2 uppercase tracking-wide">{card.title}</h4>
+                  {card.description && (
+                    <p className="text-xs lg:text-sm leading-relaxed text-gray-600 mt-1.5 lg:mt-2.5 hidden sm:block line-clamp-4">
+                      {card.description}
+                    </p>
+                  )}
+                  {card.linkUrl && (
+                    <a
+                      href={card.linkUrl}
+                      className="mt-auto pt-2 hidden sm:inline-block text-xs font-semibold hover:underline opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      style={{ color: card.borderColor }}
+                    >
+                      {card.linkText || 'Lihat Selengkapnya'} →
+                    </a>
+                  )}
+                </div>
+              ))}
             </div>
             </div>
           </div>

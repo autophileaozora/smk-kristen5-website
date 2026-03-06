@@ -11,6 +11,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
   const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
   const [currentEkskul, setCurrentEkskul] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [submitting, setSubmitting] = useState(false);
   const [cardMenu, setCardMenu] = useState(null); // { item, top, right }
 
   const openMenuFor = (e, item) => {
@@ -26,7 +27,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: 'lainnya',
+    category: 'non-akademik',
     coach: '',
     schedule: '',
     location: '',
@@ -37,12 +38,8 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
 
   // Category options with colors
   const categories = [
-    { value: 'olahraga', label: 'Olahraga', color: 'bg-green-100 text-green-800' },
-    { value: 'seni', label: 'Seni', color: 'bg-purple-100 text-purple-800' },
     { value: 'akademik', label: 'Akademik', color: 'bg-blue-100 text-blue-800' },
-    { value: 'keagamaan', label: 'Keagamaan', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'teknologi', label: 'Teknologi', color: 'bg-orange-100 text-orange-800' },
-    { value: 'lainnya', label: 'Lainnya', color: 'bg-gray-100 text-gray-800' },
+    { value: 'non-akademik', label: 'Non-Akademik', color: 'bg-green-100 text-green-800' },
   ];
 
   // Fetch ekskuls
@@ -103,7 +100,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
     setFormData({
       name: '',
       description: '',
-      category: 'lainnya',
+      category: 'non-akademik',
       coach: '',
       schedule: '',
       location: '',
@@ -118,10 +115,11 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
   const openEditModal = (ekskul) => {
     setModalMode('edit');
     setCurrentEkskul(ekskul);
+    const validCats = ['akademik', 'non-akademik'];
     setFormData({
       name: ekskul.name,
       description: ekskul.description,
-      category: ekskul.category,
+      category: validCats.includes(ekskul.category) ? ekskul.category : 'non-akademik',
       coach: ekskul.coach,
       schedule: ekskul.schedule,
       location: ekskul.location || '',
@@ -139,7 +137,7 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
     setFormData({
       name: '',
       description: '',
-      category: 'lainnya',
+      category: 'non-akademik',
       coach: '',
       schedule: '',
       location: '',
@@ -152,6 +150,8 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
 
     try {
       if (modalMode === 'create') {
@@ -166,6 +166,8 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
       closeModal();
     } catch (error) {
       showToast(error.response?.data?.message || 'Gagal menyimpan ekstrakurikuler', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -578,9 +580,10 @@ const Ekskul = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =>
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  disabled={submitting}
+                  className="px-4 py-2 text-xs bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {modalMode === 'create' ? 'Tambah' : 'Update'}
+                  {submitting ? 'Menyimpan...' : (modalMode === 'create' ? 'Tambah' : 'Update')}
                 </button>
               </div>
             </form>

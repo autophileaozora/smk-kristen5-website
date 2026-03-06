@@ -16,6 +16,7 @@ import { ActivityTab, ActivitySettings } from '../models/Activity.js';
 import Event from '../models/Event.js';
 import SiteSettings from '../models/SiteSettings.js';
 import VideoHero from '../models/VideoHero.js';
+import StatsCard from '../models/StatsCard.js';
 
 const router = express.Router();
 
@@ -47,6 +48,7 @@ router.get('/', async (req, res) => {
       events,
       siteSettings,
       videoHeroes,
+      statsCards,
     ] = await Promise.all([
       Jurusan.find().sort({ name: 1 }).lean(),
       Article.find({ status: 'published' })
@@ -84,7 +86,23 @@ router.get('/', async (req, res) => {
         .lean(),
       SiteSettings.getSettings(),
       VideoHero.find({ isActive: true }).select('-createdBy').sort({ displayOrder: 1 }).limit(3).lean(),
+      StatsCard.find({ isVisible: true }).sort({ order: 1, createdAt: 1 }).lean(),
     ]);
+
+    // Resolve statsCard values using already-fetched collection data
+    const foundingYear = siteSettings?.homepageSections?.foundingYear ?? 1999;
+    const resolvedStatsCards = statsCards.map((card) => ({
+      ...card,
+      resolvedValue: (() => {
+        switch (card.dataSource) {
+          case 'ekskul': return ekskuls.length;
+          case 'fasilitas': return fasilitas.length;
+          case 'jurusan': return jurusans.length;
+          case 'tahun': return new Date().getFullYear() - foundingYear;
+          default: return card.customValue;
+        }
+      })(),
+    }));
 
     // Combine running texts with prestasi texts
     const prestasiTexts = prestasiRunning.map(p => ({
@@ -123,6 +141,7 @@ router.get('/', async (req, res) => {
         events,
         siteSettings,
         videoHeroes,
+        statsCards: resolvedStatsCards,
       },
     });
   } catch (error) {

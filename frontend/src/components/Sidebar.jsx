@@ -2,20 +2,22 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
+import { useSchoolLogo } from '../hooks/useContact';
 import {
   LayoutDashboard, FileText, GraduationCap,
   Users, Images, FilePlus,
   UserCog, CalendarDays, Settings, Mail,
   ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen,
-  ExternalLink, LogOut,
+  ExternalLink, LogOut, Search,
 } from 'lucide-react';
 
-const Sidebar = ({ collapsed, onToggleCollapse }) => {
+const Sidebar = ({ collapsed, onToggleCollapse, onOpenSearch }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingArticlesCount, setPendingArticlesCount] = useState(0);
   const [openGroups, setOpenGroups] = useState({});
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const { logo } = useSchoolLogo();
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
@@ -170,21 +172,30 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
     );
   };
 
+  // School logo element
+  const LogoImg = ({ size = 9 }) => (
+    <div className={`w-${size} h-${size} rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0`}>
+      <img
+        src={logo}
+        alt="Logo Sekolah"
+        className="w-full h-full object-contain p-0.5"
+        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+      />
+      <span style={{ display: 'none' }} className="text-blue-600 font-bold text-xs w-full h-full items-center justify-center bg-blue-600 text-white rounded-xl">K5</span>
+    </div>
+  );
+
   const sidebarContent = (
     <>
       {/* Logo/Header */}
       <div className={`border-b border-gray-100 ${collapsed ? 'p-3' : 'p-4'}`}>
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {collapsed ? (
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">K5</span>
-            </div>
+            <LogoImg size={9} />
           ) : (
             <>
               <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-bold text-sm">K5</span>
-                </div>
+                <LogoImg size={9} />
                 <div>
                   <h1 className="text-sm font-bold text-gray-900 leading-tight">KRISMA</h1>
                   <p className="text-[10px] text-gray-400 font-medium">Admin Panel</p>
@@ -212,6 +223,28 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
         )}
       </div>
 
+      {/* Search Button */}
+      <div className={`${collapsed ? 'p-2' : 'px-3 pt-3 pb-1'}`}>
+        {collapsed ? (
+          <button
+            onClick={onOpenSearch}
+            title="Cari menu (Ctrl+K)"
+            className="w-full flex justify-center p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+          >
+            <Search size={18} />
+          </button>
+        ) : (
+          <button
+            onClick={onOpenSearch}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+          >
+            <Search size={13} className="flex-shrink-0" />
+            <span className="flex-1 text-left text-xs">Cari menu...</span>
+            <kbd className="text-[10px] bg-white border border-gray-200 text-gray-400 px-1.5 py-0.5 rounded font-sans">⌘K</kbd>
+          </button>
+        )}
+      </div>
+
       {/* Navigation */}
       <nav className={`flex-1 overflow-y-auto ${collapsed ? 'p-2' : 'p-3'} space-y-0.5`}>
         {menuGroups.map(renderGroup)}
@@ -232,40 +265,64 @@ const Sidebar = ({ collapsed, onToggleCollapse }) => {
           {!collapsed && <span className="text-xs font-medium">Lihat Website</span>}
         </a>
 
+        {/* User section */}
         <div className={`border-t border-gray-100 ${collapsed ? 'p-2' : 'p-3'}`}>
-          <Link
-            to="/admin/profile"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className={`flex items-center rounded-lg hover:bg-gray-50 transition-colors ${
-              collapsed ? 'justify-center p-2' : 'p-2 space-x-3'
-            }`}
-            title={collapsed ? user?.name : undefined}
-          >
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-semibold">
-                {user?.name?.charAt(0).toUpperCase()}
-              </span>
+          {collapsed ? (
+            <>
+              <Link
+                to="/admin/profile"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex justify-center p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                title={user?.name}
+              >
+                <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                  <img
+                    src={logo}
+                    alt="Logo"
+                    className="w-full h-full object-contain p-0.5"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex justify-center items-center text-gray-400 hover:text-red-500 transition-colors rounded-lg w-full mt-1 p-2"
+                title="Logout"
+              >
+                <LogOut size={16} />
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Link
+                to="/admin/profile"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2.5 flex-1 min-w-0 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                  <img
+                    src={logo}
+                    alt="Logo"
+                    className="w-full h-full object-contain p-0.5"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+                  <p className="text-[11px] text-gray-400 truncate">
+                    {user?.role === 'administrator' ? 'Administrator' : 'Staff'}
+                  </p>
+                </div>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                title="Logout"
+              >
+                <LogOut size={16} />
+              </button>
             </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-                <p className="text-[11px] text-gray-400 truncate">
-                  {user?.role === 'administrator' ? 'Administrator' : 'Staff'}
-                </p>
-              </div>
-            )}
-          </Link>
-
-          <button
-            onClick={handleLogout}
-            className={`flex items-center text-gray-400 hover:text-red-500 transition-colors rounded-lg w-full mt-1 ${
-              collapsed ? 'justify-center p-2' : 'px-2 py-2 space-x-3'
-            }`}
-            title={collapsed ? 'Logout' : undefined}
-          >
-            <LogOut size={16} />
-            {!collapsed && <span className="text-xs font-medium">Logout</span>}
-          </button>
+          )}
         </div>
       </div>
     </>

@@ -27,6 +27,7 @@ const allCommands = [
   { name: 'CTA', path: '/admin/homepage?tab=cta', icon: MousePointerClick, category: 'Homepage' },
   { name: 'Partner', path: '/admin/homepage?tab=partner', icon: Handshake, category: 'Homepage' },
   { name: 'Running Text', path: '/admin/homepage?tab=running-text', icon: Megaphone, category: 'Homepage' },
+  { name: 'Stats Cards', path: '/admin/homepage?tab=stats-cards', icon: School, category: 'Homepage' },
   { name: 'Pengaturan Website', path: '/admin/pengaturan?tab=website', icon: Settings, category: 'Pengaturan' },
   { name: 'Informasi Sekolah', path: '/admin/pengaturan?tab=sekolah', icon: School, category: 'Pengaturan' },
   { name: 'Navbar', path: '/admin/pengaturan?tab=navbar', icon: Navigation, category: 'Pengaturan' },

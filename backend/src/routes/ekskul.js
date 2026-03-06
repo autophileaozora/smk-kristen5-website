@@ -12,8 +12,14 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
+    // Auto-migrate old category values to new 2-category system
+    await Ekskul.updateMany(
+      { category: { $nin: ['akademik', 'non-akademik'] } },
+      { $set: { category: 'non-akademik' } }
+    );
+
     const { category, isActive } = req.query;
-    
+
     const filter = {};
     if (category) filter.category = category;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
@@ -41,7 +47,7 @@ router.get('/', async (req, res) => {
 router.get('/active', async (req, res) => {
   try {
     const { category } = req.query;
-    
+
     const filter = { isActive: true };
     if (category) filter.category = category;
 
@@ -106,7 +112,7 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
     const ekskulData = {
       name,
       description,
-      category: category || 'lainnya',
+      category: ['akademik', 'non-akademik'].includes(category) ? category : 'non-akademik',
       coach,
       schedule,
       location: location || '',
@@ -176,42 +182,40 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
 
     const { name, description, category, coach, schedule, location, achievements, isActive, image } = req.body;
 
-    ekskul.name = name || ekskul.name;
-    ekskul.description = description || ekskul.description;
-    ekskul.category = category || ekskul.category;
-    ekskul.coach = coach || ekskul.coach;
-    ekskul.schedule = schedule || ekskul.schedule;
-    ekskul.location = location !== undefined ? location : ekskul.location;
-    if (achievements !== undefined) {
-      ekskul.achievements = Array.isArray(achievements) ? achievements : ekskul.achievements;
-    }
-    ekskul.isActive = isActive !== undefined ? isActive : ekskul.isActive;
+    const validCategories = ['akademik', 'non-akademik'];
+    const updateData = {
+      ...(name && { name }),
+      ...(description && { description }),
+      category: validCategories.includes(category) ? category : (validCategories.includes(ekskul.category) ? ekskul.category : 'non-akademik'),
+      ...(coach && { coach }),
+      ...(schedule && { schedule }),
+      ...(location !== undefined && { location }),
+      ...(achievements !== undefined && { achievements: Array.isArray(achievements) ? achievements : [] }),
+      ...(isActive !== undefined && { isActive }),
+    };
 
     // Upload new image to Cloudinary if provided
     if (req.file) {
       try {
-        // Delete old image from Cloudinary before uploading new one
         if (ekskul.image) {
           const oldPublicId = getPublicIdFromUrl(ekskul.image);
           if (oldPublicId) await deleteFromCloudinary(oldPublicId).catch(() => {});
         }
-        console.log('Uploading ekskul image to Cloudinary...');
         const result = await uploadToCloudinary(req.file.buffer);
-        console.log('Cloudinary upload success:', result.secure_url);
-        ekskul.image = result.secure_url;
+        updateData.image = result.secure_url;
       } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
         const errorMessage = uploadError?.message || uploadError?.error?.message || JSON.stringify(uploadError) || 'Unknown error';
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to upload image to Cloudinary: ' + errorMessage,
-        });
+        return res.status(500).json({ success: false, message: 'Failed to upload image: ' + errorMessage });
       }
     } else if (image !== undefined) {
-      ekskul.image = image;
+      updateData.image = image;
     }
 
-    await ekskul.save();
+    const updatedEkskul = await Ekskul.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true, runValidators: false }
+    );
 
     // Audit log
     await AuditLog.create({
@@ -229,7 +233,7 @@ router.put('/:id', protect, isAdministrator, uploadSingle('image'), async (req, 
     res.status(200).json({
       success: true,
       message: 'Ekskul updated successfully',
-      data: { ekskul },
+      data: { ekskul: updatedEkskul },
     });
   } catch (error) {
     console.error('Ekskul update error:', error);
@@ -302,6 +306,10 @@ router.patch('/:id/toggle-active', protect, isAdministrator, async (req, res) =>
     }
 
     ekskul.isActive = !ekskul.isActive;
+    // Normalize legacy category values before save
+    if (!['akademik', 'non-akademik'].includes(ekskul.category)) {
+      ekskul.category = 'non-akademik';
+    }
     await ekskul.save();
 
     // Audit log

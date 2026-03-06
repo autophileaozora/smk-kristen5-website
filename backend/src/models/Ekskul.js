@@ -25,8 +25,8 @@ const ekskulSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['olahraga', 'seni', 'akademik', 'keagamaan', 'teknologi', 'lainnya'],
-      default: 'lainnya',
+      enum: ['akademik', 'non-akademik'],
+      default: 'non-akademik',
     },
     coach: {
       type: String,

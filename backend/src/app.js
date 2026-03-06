@@ -8,6 +8,9 @@ import logger from './utils/logger.js';
 
 const app = express();
 
+// Trust Vercel's reverse proxy (required for express-rate-limit with X-Forwarded-For)
+app.set('trust proxy', 1);
+
 // Security Middleware
 app.use(helmet()); // Set security headers
 app.use(mongoSanitize()); // Prevent MongoDB injection
@@ -120,6 +123,8 @@ import homepageRoutes from './routes/homepage.js';
 import alumniSubmissionsRoutes from './routes/alumniSubmissions.js';
 import sitemapRoutes from './routes/sitemap.js';
 import contactMessageRoutes from './routes/contactMessages.js';
+import statsCardsRoutes from './routes/statsCards.js';
+import ogRoutes from './routes/og.js';
 
 // Mount routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -152,6 +157,8 @@ app.use('/api/footer', footerRoutes);
 app.use('/api/homepage', homepageRoutes);
 app.use('/api/alumni-submissions', alumniSubmissionsRoutes);
 app.use('/api/contact-messages', contactMessageRoutes);
+app.use('/api/stats-cards', statsCardsRoutes);
+app.use('/api/og', ogRoutes);
 
 // Root route
 app.get('/', (req, res) => {

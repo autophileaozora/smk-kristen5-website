@@ -6,6 +6,7 @@ const HeroSlides = lazy(() => import('../HeroSlides'));
 const CTAManagement = lazy(() => import('../CTAManagement'));
 const Partner = lazy(() => import('../Partner'));
 const RunningText = lazy(() => import('../RunningText'));
+const StatsCardManagement = lazy(() => import('../StatsCardManagement'));
 
 const TabLoading = () => (
   <div className="flex items-center justify-center h-48">
@@ -28,6 +29,7 @@ const HomepagePage = () => {
     { id: 'cta', label: 'CTA' },
     { id: 'partner', label: 'Partner' },
     { id: 'running-text', label: 'Running Text' },
+    { id: 'stats-cards', label: 'Stats Cards' },
   ];
 
   const hasCreate = !['cta', 'running-text'].includes(activeTab);
@@ -101,6 +103,7 @@ const HomepagePage = () => {
             {activeTab === 'cta' && <CTAManagement embedded previewTrigger={previewTrigger} saveTrigger={saveTrigger} />}
             {activeTab === 'partner' && <Partner embedded createTrigger={createTrigger} />}
             {activeTab === 'running-text' && <RunningText embedded createTrigger={createTrigger} settingsTrigger={settingsTrigger} />}
+            {activeTab === 'stats-cards' && <StatsCardManagement embedded createTrigger={createTrigger} />}
           </Suspense>
         </div>
 
