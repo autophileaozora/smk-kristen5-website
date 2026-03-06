@@ -55,8 +55,8 @@ router.get('/', async (req, res) => {
     const path = decodeURIComponent(req.query.path || '/');
     const settings = await SiteSettings.getSettings();
     const defaultImage = settings.ogImage || '';
-    const siteTitle = settings.siteTitle || 'SMK Kristen 5 Klaten - SMK Krisma';
-    const siteDesc = settings.siteDescription || DEFAULT_DESC;
+    const siteTitle = settings.metaTitle || settings.siteName || 'SMK Kristen 5 Klaten - SMK Krisma';
+    const siteDesc = settings.metaDescription || DEFAULT_DESC;
 
     // /artikel/:slug
     const articleMatch = path.match(/^\/artikel\/([^/?#]+)/);
