@@ -22,7 +22,7 @@ export default async function (request, context) {
   const apiUrl = Deno.env.get('VITE_API_URL') || 'https://smk-kristen5-website.vercel.app';
 
   try {
-    const ogUrl = `${apiUrl}/og${url.pathname}`;
+    const ogUrl = `${apiUrl}/api/og?path=${encodeURIComponent(url.pathname + url.search)}`;
     const response = await fetch(ogUrl, {
       signal: AbortSignal.timeout(5000), // timeout 5 detik
       headers: { 'User-Agent': 'Netlify-OG-Bot/1.0' },
