@@ -19,7 +19,7 @@ export default async function (request, context) {
   if (url.pathname.startsWith('/api/')) return;
 
   // URL backend untuk fetch OG data
-  const apiUrl = Deno.env.get('VITE_API_URL') || 'https://smk-kristen5-website.vercel.app';
+  const apiUrl = Deno.env.get('VITE_API_URL') || 'https://smk-kristen5-website-five.vercel.app';
 
   try {
     const ogUrl = `${apiUrl}/api/og?path=${encodeURIComponent(url.pathname + url.search)}`;
