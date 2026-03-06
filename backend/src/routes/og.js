@@ -5,7 +5,7 @@ import SiteSettings from '../models/SiteSettings.js';
 
 const router = express.Router();
 
-const SITE_URL = process.env.SITE_URL || 'https://smkkrisma.sch.id';
+const SITE_URL = process.env.SITE_URL || process.env.FRONTEND_URL || 'https://smkkristen5klaten.netlify.app';
 const DEFAULT_DESC = 'SMK Kristen 5 Klaten (Krisma) adalah sekolah menengah kejuruan terbaik di Klaten dengan berbagai jurusan unggulan.';
 
 const escape = (str) => String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
