@@ -23,6 +23,8 @@ const allowedOrigins = [
   'https://smk-kristen5.netlify.app',
   'https://smkkrisma.sch.id',
   'https://www.smkkrisma.sch.id',
+  'https://new.smkkrisma.sch.id',
+  'https://smkkristen5klaten.netlify.app',
 ];
 
 // Add production frontend URL if exists
