@@ -27,7 +27,7 @@ jobs:
         working-directory: frontend
         env:
           VITE_API_URL: https://smk-kristen5-website-five.vercel.app
-          VITE_SITE_URL: https://smkkrisma.sch.id
+          VITE_SITE_URL: https://new.smkkrisma.sch.id
         run: npm run build
 
       - name: Deploy to cPanel via FTP
@@ -38,5 +38,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 21
           local-dir: frontend/dist/
-          server-dir: /public_html/
+          server-dir: /home/k7236358/new.smkkrisma.sch.id/
           dangerous-clean-slate: false
