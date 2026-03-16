@@ -826,7 +826,7 @@ const HomepageFixed = () => {
                   <div key={idx} className="p-6 bg-transparent border border-white/10 rounded-lg flex-shrink-0">
                     <p className="text-sm leading-relaxed text-[#d9d9d9]">{alumni.testimonial}</p>
                     <div className="flex items-center gap-3.5 mt-5">
-                      <img src={alumni.photo || 'https://via.placeholder.com/48'} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" />
+                      {alumni.photo ? <img src={alumni.photo} alt={alumni.name} loading="lazy" className="w-12 h-12 rounded-full object-cover" /> : <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">{alumni.name?.charAt(0)}</div>}
                       <div>
                         <h4 className="text-sm font-semibold text-white">{alumni.name}</h4>
                         <span className="text-[11px] text-[#b8b8b8] block mt-0.5">{alumni.currentOccupation} - {alumni.company}</span>
