@@ -493,11 +493,7 @@ export const BLOCK_DEFINITIONS = [
     category: 'Media',
     description: 'Image gallery with lightbox',
     defaultProps: {
-      images: [
-        { src: 'https://via.placeholder.com/400', alt: 'Image 1', caption: '' },
-        { src: 'https://via.placeholder.com/400', alt: 'Image 2', caption: '' },
-        { src: 'https://via.placeholder.com/400', alt: 'Image 3', caption: '' },
-      ],
+      images: [],
       columns: 3,
       gap: 'md',
       rounded: true,
@@ -511,11 +507,7 @@ export const BLOCK_DEFINITIONS = [
     category: 'Media',
     description: 'Image carousel/slider',
     defaultProps: {
-      slides: [
-        { image: 'https://via.placeholder.com/800x400', title: 'Slide 1', description: 'Description 1' },
-        { image: 'https://via.placeholder.com/800x400', title: 'Slide 2', description: 'Description 2' },
-        { image: 'https://via.placeholder.com/800x400', title: 'Slide 3', description: 'Description 3' },
-      ],
+      slides: [],
       autoplay: true,
       interval: 5000,
       showIndicators: true,
@@ -632,11 +624,7 @@ export const BLOCK_DEFINITIONS = [
     defaultProps: {
       title: 'Tim Kami',
       subtitle: '',
-      members: [
-        { name: 'Nama Lengkap', role: 'Kepala Sekolah', image: '', bio: '', social: {} },
-        { name: 'Nama Lengkap', role: 'Wakil Kepala Sekolah', image: '', bio: '', social: {} },
-        { name: 'Nama Lengkap', role: 'Guru', image: '', bio: '', social: {} },
-      ],
+      members: [],
       columns: 3,
       variant: 'card',
       showBio: false,

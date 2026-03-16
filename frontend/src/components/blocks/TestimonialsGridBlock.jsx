@@ -92,7 +92,7 @@ const TestimonialsGridBlock = ({
       </p>
       <div className={`flex items-center gap-3 ${compact ? 'mt-4' : 'mt-5'}`}>
         <img
-          src={testimonial.photo || 'https://via.placeholder.com/48'}
+          src={testimonial.photo || ''}
           alt={testimonial.name}
           className={`${compact ? 'w-10 h-10' : 'w-12 h-12'} rounded-full object-cover`}
         />

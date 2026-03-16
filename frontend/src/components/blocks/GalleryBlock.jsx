@@ -2,11 +2,7 @@ import { useState } from 'react';
 import useSwipe from '../../hooks/useSwipe';
 
 const GalleryBlock = ({
-  images = [
-    { src: 'https://via.placeholder.com/400', alt: 'Image 1', caption: '' },
-    { src: 'https://via.placeholder.com/400', alt: 'Image 2', caption: '' },
-    { src: 'https://via.placeholder.com/400', alt: 'Image 3', caption: '' },
-  ],
+  images = [],
   columns = 3,
   gap = 'md',
   rounded = true,

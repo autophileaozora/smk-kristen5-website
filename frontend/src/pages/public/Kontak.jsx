@@ -29,7 +29,7 @@ const Kontak = () => {
     operatingHours: { weekdays: '07:00 - 16:00', saturday: '07:00 - 14:00', sunday: 'Tutup' },
     socialMedia: { instagram: '', facebook: '', youtube: '', twitter: '' },
     mapUrl: '',
-    heroImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80'
+    heroImage: ''
   };
 
   useEffect(() => {

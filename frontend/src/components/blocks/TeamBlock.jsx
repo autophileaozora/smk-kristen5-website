@@ -2,11 +2,7 @@
 const TeamBlock = ({
   title = 'Tim Kami',
   subtitle = '',
-  members = [
-    { name: 'Nama Lengkap', role: 'Kepala Sekolah', image: '', bio: '', social: {} },
-    { name: 'Nama Lengkap', role: 'Wakil Kepala Sekolah', image: '', bio: '', social: {} },
-    { name: 'Nama Lengkap', role: 'Guru', image: '', bio: '', social: {} },
-  ],
+  members = [],
   columns = 3,
   variant = 'card', // card, simple, circle
   showBio = false,
@@ -30,7 +26,7 @@ const TeamBlock = ({
   };
 
   const renderMember = (member, idx) => {
-    const placeholder = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&size=200&background=random`;
+    const placeholder = '';
 
     if (variant === 'circle') {
       return (

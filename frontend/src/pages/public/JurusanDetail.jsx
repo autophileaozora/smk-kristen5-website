@@ -736,7 +736,7 @@ export default function JurusanDetail() {
                         <div className="py-3">
                           <div className="flex items-center gap-3 mb-2">
                             <img
-                              src={alumni.photo || 'https://i.pravatar.cc/150'}
+                              src={alumni.photo || ''}
                               alt={alumni.name}
                               className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                             />

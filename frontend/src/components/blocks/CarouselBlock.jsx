@@ -2,11 +2,7 @@ import { useState, useEffect } from 'react';
 import useSwipe from '../../hooks/useSwipe';
 
 const CarouselBlock = ({
-  slides = [
-    { image: 'https://via.placeholder.com/800x400', title: 'Slide 1', description: 'Description 1' },
-    { image: 'https://via.placeholder.com/800x400', title: 'Slide 2', description: 'Description 2' },
-    { image: 'https://via.placeholder.com/800x400', title: 'Slide 3', description: 'Description 3' },
-  ],
+  slides = [],
   autoplay = true,
   interval = 5000,
   showIndicators = true,
