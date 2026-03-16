@@ -506,6 +506,45 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     setImgLayoutToolbar(null);
   };
 
+  const imgOverlayRef = useRef(null);
+  const imgHandleRefs = useRef({ nw: null, ne: null, sw: null, se: null });
+
+  const startResize = (e, corner) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const img = imgLayoutToolbar?.el;
+    if (!img) return;
+    const startX = e.clientX;
+    const startW = img.getBoundingClientRect().width;
+    const isRight = corner === 'ne' || corner === 'se';
+
+    const updateHandles = () => {
+      const r = img.getBoundingClientRect();
+      if (imgOverlayRef.current) Object.assign(imgOverlayRef.current.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px' });
+      const h = imgHandleRefs.current;
+      if (h.nw) Object.assign(h.nw.style, { top: (r.top - 5) + 'px', left: (r.left - 5) + 'px' });
+      if (h.ne) Object.assign(h.ne.style, { top: (r.top - 5) + 'px', left: (r.right - 5) + 'px' });
+      if (h.sw) Object.assign(h.sw.style, { top: (r.bottom - 5) + 'px', left: (r.left - 5) + 'px' });
+      if (h.se) Object.assign(h.se.style, { top: (r.bottom - 5) + 'px', left: (r.right - 5) + 'px' });
+    };
+
+    const onMove = (e) => {
+      const newW = Math.max(50, Math.round(startW + (isRight ? e.clientX - startX : startX - e.clientX)));
+      img.style.width = newW + 'px';
+      img.style.height = 'auto';
+      updateHandles();
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      const quill = quillRef.current?.getEditor();
+      if (quill) setFormData(prev => ({ ...prev, content: quill.root.innerHTML }));
+      setImgLayoutToolbar(prev => prev ? { ...prev, rect: img.getBoundingClientRect() } : null);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
+
   const uploadImageToQuillRef = useRef(uploadImageToQuill);
   uploadImageToQuillRef.current = uploadImageToQuill;
 
@@ -828,46 +867,68 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
           )}
         </div>
 
-        {/* Image layout toolbar */}
-        {imgLayoutToolbar && createPortal(
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setImgLayoutToolbar(null)} />
-            <div
-              className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-1.5 flex gap-1"
-              style={{
-                top: Math.max(8, imgLayoutToolbar.rect.top - 56),
-                left: imgLayoutToolbar.rect.left,
-              }}
-            >
-              {[
-                { key: 'inline', label: 'Inline', icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="8" width="16" height="4" rx="1" fill="currentColor"/><rect x="2" y="3" width="16" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="15" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
-                )},
-                { key: 'left', label: 'Kiri', icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="12" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="12" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
-                )},
-                { key: 'center', label: 'Tengah', icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="5" y="4" width="10" height="8" rx="1" fill="currentColor"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
-                )},
-                { key: 'right', label: 'Kanan', icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="10" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="2" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
-                )},
-              ].map(opt => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => applyImageLayout(opt.key)}
-                  className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors"
-                  title={opt.label}
-                >
-                  {opt.icon}
-                  <span className="text-[10px] font-medium">{opt.label}</span>
-                </button>
+        {/* Image layout toolbar + resize handles */}
+        {imgLayoutToolbar && (() => {
+          const r = imgLayoutToolbar.rect;
+          const handles = [
+            { key: 'nw', top: r.top - 5, left: r.left - 5, cursor: 'nw-resize' },
+            { key: 'ne', top: r.top - 5, left: r.right - 5, cursor: 'ne-resize' },
+            { key: 'sw', top: r.bottom - 5, left: r.left - 5, cursor: 'sw-resize' },
+            { key: 'se', top: r.bottom - 5, left: r.right - 5, cursor: 'se-resize' },
+          ];
+          return createPortal(
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setImgLayoutToolbar(null)} />
+              {/* Layout toolbar */}
+              <div
+                className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-1.5 flex gap-1"
+                style={{ top: Math.max(8, r.top - 58), left: r.left }}
+              >
+                {[
+                  { key: 'inline', label: 'Inline', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="8" width="16" height="4" rx="1" fill="currentColor"/><rect x="2" y="3" width="16" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="15" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                  { key: 'left', label: 'Kiri', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="12" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="12" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                  { key: 'center', label: 'Tengah', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="5" y="4" width="10" height="8" rx="1" fill="currentColor"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                  { key: 'right', label: 'Kanan', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="10" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="2" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                ].map(opt => (
+                  <button key={opt.key} type="button" onClick={() => applyImageLayout(opt.key)}
+                    className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors" title={opt.label}>
+                    {opt.icon}
+                    <span className="text-[10px] font-medium">{opt.label}</span>
+                  </button>
+                ))}
+                <div className="w-px bg-gray-200 mx-0.5" />
+                <div className="flex items-center gap-1 px-1">
+                  <span className="text-[10px] text-gray-500">W:</span>
+                  <input
+                    type="number" min="50" max="1200" step="10"
+                    defaultValue={Math.round(r.width)}
+                    className="w-14 text-xs border border-gray-300 rounded px-1 py-0.5"
+                    onClick={e => e.stopPropagation()}
+                    onChange={e => {
+                      const w = Math.max(50, parseInt(e.target.value) || 50);
+                      imgLayoutToolbar.el.style.width = w + 'px';
+                      imgLayoutToolbar.el.style.height = 'auto';
+                      const quill = quillRef.current?.getEditor();
+                      if (quill) setFormData(prev => ({ ...prev, content: quill.root.innerHTML }));
+                    }}
+                  />
+                  <span className="text-[10px] text-gray-400">px</span>
+                </div>
+              </div>
+              {/* Blue border overlay */}
+              <div ref={imgOverlayRef} className="fixed pointer-events-none z-[9997]"
+                style={{ top: r.top, left: r.left, width: r.width, height: r.height, border: '2px solid #3b82f6', borderRadius: 2 }} />
+              {/* Corner resize handles */}
+              {handles.map(h => (
+                <div key={h.key} ref={el => imgHandleRefs.current[h.key] = el}
+                  className="fixed z-[9998] w-2.5 h-2.5 bg-white border-2 border-blue-500 rounded-sm"
+                  style={{ top: h.top, left: h.left, cursor: h.cursor }}
+                  onMouseDown={e => startResize(e, h.key)} />
               ))}
-            </div>
-          </>,
-          document.body
-        )}
+            </>,
+            document.body
+          );
+        })()}
 
         {/* Article context menu — portal to body so it's never clipped */}
         {articleMenu && createPortal(
