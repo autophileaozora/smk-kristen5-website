@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -384,15 +384,49 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     return article.status !== 'published';
   };
 
+  const quillRef = useRef(null);
+
+  const quillImageHandler = () => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran gambar maksimal 5MB');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const res = await api.post('/api/upload/image?folder=smk-kristen5/articles', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        if (res.data.success) {
+          const quill = quillRef.current?.getEditor();
+          const range = quill?.getSelection();
+          quill?.insertEmbed(range?.index ?? 0, 'image', res.data.data.url);
+        }
+      } catch (err) {
+        alert('Gagal mengupload gambar: ' + (err.response?.data?.message || err.message));
+      }
+    };
+  };
+
   const quillModules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ align: [] }],
-      ['link', 'image'],
-      ['clean'],
-    ],
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ align: [] }],
+        ['link', 'image'],
+        ['clean'],
+      ],
+      handlers: { image: quillImageHandler },
+    },
   };
 
   // ── Article card ─────────────────────────────────────────────────────────
@@ -912,7 +946,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Konten Artikel *</label>
-              <ReactQuill theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
+              <ReactQuill ref={quillRef} theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
             </div>
 
             <ImageUpload label="Gambar Unggulan" value={formData.featuredImage} onChange={(url) => setFormData(f => ({ ...f, featuredImage: url }))} folder="smk-kristen5/articles" previewClassName="h-48 w-full object-cover" />
@@ -1428,7 +1462,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Konten Artikel *</label>
-            <ReactQuill theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
+            <ReactQuill ref={quillRef} theme="snow" value={formData.content} onChange={(content) => setFormData(f => ({ ...f, content }))} modules={quillModules} className="bg-white" style={{ height: '300px', marginBottom: '50px' }} />
           </div>
 
           <ImageUpload label="Gambar Unggulan" value={formData.featuredImage} onChange={(url) => setFormData(f => ({ ...f, featuredImage: url }))} folder="smk-kristen5/articles" previewClassName="h-48 w-full object-cover" />
