@@ -81,7 +81,7 @@ const NewsGridBlock = ({
               >
                 <div className="h-48 overflow-hidden">
                   <img
-                    src={article.featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop'}
+                    src={article.featuredImage || ''}
                     alt={article.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -124,7 +124,7 @@ const NewsGridBlock = ({
               >
                 <div className="relative h-[280px] lg:h-[400px]">
                   <img
-                    src={articles[0].featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop'}
+                    src={articles[0].featuredImage || ''}
                     alt={articles[0].title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -154,7 +154,7 @@ const NewsGridBlock = ({
                 >
                   <div className="w-24 h-20 flex-shrink-0 rounded-lg overflow-hidden">
                     <img
-                      src={article.featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200&h=150&fit=crop'}
+                      src={article.featuredImage || ''}
                       alt={article.title}
                       className="w-full h-full object-cover"
                     />
@@ -195,7 +195,7 @@ const NewsGridBlock = ({
               <Link to={`/artikel/${articles[0].slug}`} className="relative rounded-xl overflow-hidden mb-4 block group">
                 <div className="relative h-[220px] sm:h-[280px] lg:h-[320px]">
                   <img
-                    src={articles[0].featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop'}
+                    src={articles[0].featuredImage || ''}
                     alt={articles[0].title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -234,7 +234,7 @@ const NewsGridBlock = ({
                   </div>
                   <div className="w-16 h-14 sm:w-20 sm:h-16 flex-shrink-0 rounded overflow-hidden">
                     <img
-                      src={article.featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200&h=150&fit=crop'}
+                      src={article.featuredImage || ''}
                       alt={article.title}
                       className="w-full h-full object-cover"
                     />

@@ -133,7 +133,7 @@ const Tentang = () => {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <img
-            src={sections.sejarah?.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&h=1080&fit=crop'}
+            src={sections.sejarah?.image || ''}
             alt="Tentang SMK Kristen 5 Klaten"
             className="w-full h-full object-cover"
           />

@@ -206,7 +206,7 @@ const JurusanList = () => {
               <div
                 className="absolute inset-0 bg-cover bg-center transition-all duration-700 mix-blend-overlay opacity-10 rounded-3xl"
                 style={{
-                  backgroundImage: `url(${jurusan.backgroundImage || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=1200&fit=crop'})`,
+                  backgroundImage: jurusan.backgroundImage ? `url(${jurusan.backgroundImage})` : 'none',
                 }}
               ></div>
 

@@ -380,7 +380,7 @@ const HomepageFixed = () => {
             {
               title: 'SMK YANG MENYIAPKAN SISWA MASUK DUNIA KERJA, BUKAN SEKADAR LULUS',
               subtitle: 'Kurikulum berbasis industri, praktik langsung, dan pembinaan karakter sejak kelas X.',
-              backgroundImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&h=1080&fit=crop',
+              backgroundImage: '',
               primaryButtonText: 'BAGIKAN CERITAMU',
               secondaryButtonText: 'LIHAT LEBIH LANJUT',
             },
@@ -604,7 +604,7 @@ const HomepageFixed = () => {
           {/* Image Container */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[85%] h-[420px] border border-white/20 rounded-xl p-2 bg-white/5 backdrop-blur-sm shadow-[0_8px_32px_rgba(139,92,246,0.2)] z-10">
             <img
-              src={(data.jurusans || [])[activeProgram]?.backgroundImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop'}
+              src={(data.jurusans || [])[activeProgram]?.backgroundImage || ''}
               alt="Program"
               loading="lazy"
               className="w-full h-full rounded-lg object-cover transition-opacity duration-300"
@@ -642,7 +642,7 @@ const HomepageFixed = () => {
               >
                 {/* Mobile Image */}
                 <div className="lg:hidden w-full h-48 mb-4 rounded-lg overflow-hidden">
-                  <img src={jurusan.backgroundImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop'} alt={jurusan.name} loading="lazy" className="w-full h-full object-cover" />
+                  <img src={jurusan.backgroundImage || ''} alt={jurusan.name} loading="lazy" className="w-full h-full object-cover" />
                 </div>
 
                 {/* Short Description (plain text) or fallback to full description */}
@@ -703,19 +703,7 @@ const HomepageFixed = () => {
             ...(nonAkademik.length > 0 ? [{ name: 'non-akademik', items: nonAkademik }] : []),
           ];
 
-          // Fallback when no ekskul data
-          const fallbackTabs = [
-            { name: 'akademik', items: [
-              { name: 'Olimpiade Sains', description: 'Persiapan kompetisi sains tingkat nasional dengan bimbingan guru berpengalaman.', image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1200&h=600&fit=crop', schedule: 'Selasa & Kamis', coach: 'Tim Guru Sains' },
-              { name: 'Karya Ilmiah Remaja', description: 'Pengembangan kemampuan riset dan penulisan karya ilmiah untuk kompetisi.', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=600&fit=crop', schedule: 'Rabu', coach: 'Tim Guru Penelitian' },
-            ]},
-            { name: 'non-akademik', items: [
-              { name: 'Paskibra', description: 'Pembinaan fisik, mental, dan kedisiplinan melalui latihan baris-berbaris dan pengibaran bendera.', image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=600&fit=crop', schedule: 'Sabtu', coach: 'Pembina OSIS' },
-              { name: 'Basket', description: 'Latihan rutin dan kompetisi antar sekolah untuk mengembangkan bakat olahraga basket.', image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=600&fit=crop', schedule: 'Senin & Rabu', coach: 'Pelatih Olahraga' },
-            ]},
-          ];
-
-          const activeTabs = tabs.length > 0 ? tabs : fallbackTabs;
+          const activeTabs = tabs;
           const currentTab = activeTabs[activeActivityTab] || activeTabs[0];
           const currentItems = currentTab?.items || [];
           const currentItem = currentItems[activeActivitySlide] || currentItems[0];
@@ -776,7 +764,7 @@ const HomepageFixed = () => {
                       ></div>
                       {/* Image */}
                       <img
-                        src={currentItem.image || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=600&fit=crop'}
+                        src={currentItem.image || ''}
                         alt={currentItem.name || currentItem.title}
                         className="w-full h-full object-cover transition-all duration-500"
                       />
@@ -929,7 +917,7 @@ const HomepageFixed = () => {
               <Link to={`/artikel/${data.articles[0].slug}`} className="relative rounded-xl overflow-hidden mb-4 block group">
                 <div className="relative h-[220px] sm:h-[280px] lg:h-[320px]">
                   <img
-                    src={data.articles[0].featuredImage?.url || data.articles[0].featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop'}
+                    src={data.articles[0].featuredImage?.url || data.articles[0].featuredImage || ''}
                     alt={data.articles[0].title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -970,7 +958,7 @@ const HomepageFixed = () => {
                   </div>
                   <div className="w-16 h-14 sm:w-20 sm:h-16 flex-shrink-0 rounded overflow-hidden">
                     <img
-                      src={article.featuredImage?.url || article.featuredImage || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=200&h=150&fit=crop'}
+                      src={article.featuredImage?.url || article.featuredImage || ''}
                       alt={article.title}
                       className="w-full h-full object-cover"
                     />
@@ -1149,7 +1137,7 @@ const HomepageFixed = () => {
       {/* CTA Section */}
       <section className="relative min-h-[400px] lg:h-[550px] overflow-hidden flex">
         <img
-          src={data.cta?.backgroundImage || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&h=1080&fit=crop'}
+          src={data.cta?.backgroundImage || ''}
           alt="CTA Background"
           className="absolute inset-0 w-full h-full object-cover z-10"
         />

@@ -313,7 +313,7 @@ export default function JurusanDetail() {
             style={{
               backgroundImage: jurusan.backgroundImage
                 ? `url(${jurusan.backgroundImage})`
-                : 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=600&fit=crop)'
+                : 'none'
             }}
           />
         </div>
