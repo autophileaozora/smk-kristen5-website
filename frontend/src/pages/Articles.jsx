@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -444,19 +444,10 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     return () => clearTimeout(timer);
   }, [showCreateModal, showEditModal]);
 
-  const quillImageHandler = () => {
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', 'image/*');
-    input.click();
-    input.onchange = async () => {
-      const file = input.files[0];
-      if (!file) return;
-      await uploadImageToQuill(file);
-    };
-  };
+  const uploadImageToQuillRef = useRef(uploadImageToQuill);
+  uploadImageToQuillRef.current = uploadImageToQuill;
 
-  const quillModules = {
+  const quillModules = useMemo(() => ({
     toolbar: {
       container: [
         [{ header: [1, 2, 3, false] }],
@@ -466,9 +457,21 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
         ['link', 'image'],
         ['clean'],
       ],
-      handlers: { image: quillImageHandler },
+      handlers: {
+        image: () => {
+          const input = document.createElement('input');
+          input.setAttribute('type', 'file');
+          input.setAttribute('accept', 'image/*');
+          input.click();
+          input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+            await uploadImageToQuillRef.current(file);
+          };
+        },
+      },
     },
-  };
+  }), []);
 
   // ── Article card ─────────────────────────────────────────────────────────
   const ArticleCard = ({ article }) => {
