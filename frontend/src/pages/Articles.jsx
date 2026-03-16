@@ -386,6 +386,49 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
   const quillRef = useRef(null);
 
+  const uploadImageToQuill = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Ukuran gambar maksimal 5MB'); return; }
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await api.post('/api/upload/image?folder=smk-kristen5/articles', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (res.data.success) {
+        const quill = quillRef.current?.getEditor();
+        const range = quill?.getSelection() || { index: quill?.getLength() || 0 };
+        quill?.insertEmbed(range.index, 'image', res.data.data.url);
+      }
+    } catch (err) {
+      alert('Gagal mengupload gambar: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  // Intercept paste events so images go to Cloudinary instead of base64
+  useEffect(() => {
+    const isOpen = showCreateModal || showEditModal;
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) return;
+      const handlePaste = (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            uploadImageToQuill(item.getAsFile());
+            break;
+          }
+        }
+      };
+      quill.root.addEventListener('paste', handlePaste);
+      return () => quill.root.removeEventListener('paste', handlePaste);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [showCreateModal, showEditModal]);
+
   const quillImageHandler = () => {
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
@@ -394,24 +437,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     input.onchange = async () => {
       const file = input.files[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Ukuran gambar maksimal 5MB');
-        return;
-      }
-      const formData = new FormData();
-      formData.append('image', file);
-      try {
-        const res = await api.post('/api/upload/image?folder=smk-kristen5/articles', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        if (res.data.success) {
-          const quill = quillRef.current?.getEditor();
-          const range = quill?.getSelection();
-          quill?.insertEmbed(range?.index ?? 0, 'image', res.data.data.url);
-        }
-      } catch (err) {
-        alert('Gagal mengupload gambar: ' + (err.response?.data?.message || err.message));
-      }
+      await uploadImageToQuill(file);
     };
   };
 
