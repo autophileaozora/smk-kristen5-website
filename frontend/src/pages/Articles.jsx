@@ -461,14 +461,47 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
   const applyImageLayout = (layout) => {
     if (!imgLayoutToolbar?.el) return;
-    const styles = {
-      inline: '',
-      left: 'float:left; margin:0 1rem 0.5rem 0; max-width:50%;',
-      right: 'float:right; margin:0 0 0.5rem 1rem; max-width:50%;',
-      center: 'display:block; float:none; margin:0.5rem auto;',
-    };
-    imgLayoutToolbar.el.setAttribute('style', styles[layout]);
+    const img = imgLayoutToolbar.el;
     const quill = quillRef.current?.getEditor();
+    const editorRoot = quill?.root;
+
+    if (layout === 'inline') {
+      img.removeAttribute('style');
+      // Wrap back in <p> if not already inside one
+      if (editorRoot && img.parentElement === editorRoot) {
+        const p = document.createElement('p');
+        editorRoot.insertBefore(p, img);
+        p.appendChild(img);
+        // Add clearfix after
+        const br = editorRoot.querySelector('p[data-clearfix]');
+        if (br) br.remove();
+      }
+    } else if (layout === 'center') {
+      img.setAttribute('style', 'display:block; float:none; margin:0.5rem auto;');
+    } else {
+      // float left or right — move image OUT of <p> so text can flow beside it
+      const floatStyle = layout === 'left'
+        ? 'float:left; margin:0 1rem 0.75rem 0; max-width:50%;'
+        : 'float:right; margin:0 0 0.75rem 1rem; max-width:50%;';
+      img.setAttribute('style', floatStyle);
+      const parentP = img.parentElement;
+      if (parentP && parentP.tagName === 'P' && editorRoot) {
+        // Move img before its parent <p>
+        editorRoot.insertBefore(img, parentP);
+        // Remove empty <p>
+        if (!parentP.textContent.trim() && parentP.children.length === 0) {
+          parentP.remove();
+        }
+        // Add clearfix after last paragraph so float doesn't overflow
+        if (!editorRoot.querySelector('p[data-clearfix]')) {
+          const cf = document.createElement('p');
+          cf.setAttribute('data-clearfix', '1');
+          cf.setAttribute('style', 'clear:both; margin:0; padding:0;');
+          editorRoot.appendChild(cf);
+        }
+      }
+    }
+
     if (quill) setFormData(prev => ({ ...prev, content: quill.root.innerHTML }));
     setImgLayoutToolbar(null);
   };
