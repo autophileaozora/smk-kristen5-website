@@ -42,6 +42,8 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
+  const [imgLayoutToolbar, setImgLayoutToolbar] = useState(null); // { el, rect }
+
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -420,10 +422,11 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     }
   };
 
-  // Intercept paste events so images go to Cloudinary instead of base64
+  // Intercept paste events + click image for layout toolbar
   useEffect(() => {
     const isOpen = showCreateModal || showEditModal;
-    if (!isOpen) return;
+    if (!isOpen) { setImgLayoutToolbar(null); return; }
+    let cleanup = null;
     const timer = setTimeout(() => {
       const quill = quillRef.current?.getEditor();
       if (!quill) return;
@@ -438,11 +441,37 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
           }
         }
       };
+      const handleClick = (e) => {
+        if (e.target.tagName === 'IMG') {
+          const rect = e.target.getBoundingClientRect();
+          setImgLayoutToolbar({ el: e.target, rect });
+        } else {
+          setImgLayoutToolbar(null);
+        }
+      };
       quill.root.addEventListener('paste', handlePaste);
-      return () => quill.root.removeEventListener('paste', handlePaste);
+      quill.root.addEventListener('click', handleClick);
+      cleanup = () => {
+        quill.root.removeEventListener('paste', handlePaste);
+        quill.root.removeEventListener('click', handleClick);
+      };
     }, 300);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); cleanup?.(); };
   }, [showCreateModal, showEditModal]);
+
+  const applyImageLayout = (layout) => {
+    if (!imgLayoutToolbar?.el) return;
+    const styles = {
+      inline: '',
+      left: 'float:left; margin:0 1rem 0.5rem 0; max-width:50%;',
+      right: 'float:right; margin:0 0 0.5rem 1rem; max-width:50%;',
+      center: 'display:block; float:none; margin:0.5rem auto;',
+    };
+    imgLayoutToolbar.el.setAttribute('style', styles[layout]);
+    const quill = quillRef.current?.getEditor();
+    if (quill) setFormData(prev => ({ ...prev, content: quill.root.innerHTML }));
+    setImgLayoutToolbar(null);
+  };
 
   const uploadImageToQuillRef = useRef(uploadImageToQuill);
   uploadImageToQuillRef.current = uploadImageToQuill;
@@ -765,6 +794,47 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
             articles.map(a => <ArticleCard key={a._id} article={a} />)
           )}
         </div>
+
+        {/* Image layout toolbar */}
+        {imgLayoutToolbar && createPortal(
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setImgLayoutToolbar(null)} />
+            <div
+              className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-1.5 flex gap-1"
+              style={{
+                top: Math.max(8, imgLayoutToolbar.rect.top - 56),
+                left: imgLayoutToolbar.rect.left,
+              }}
+            >
+              {[
+                { key: 'inline', label: 'Inline', icon: (
+                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="8" width="16" height="4" rx="1" fill="currentColor"/><rect x="2" y="3" width="16" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="15" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
+                )},
+                { key: 'left', label: 'Kiri', icon: (
+                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="12" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="12" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
+                )},
+                { key: 'center', label: 'Tengah', icon: (
+                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="5" y="4" width="10" height="8" rx="1" fill="currentColor"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
+                )},
+                { key: 'right', label: 'Kanan', icon: (
+                  <svg width="20" height="20" viewBox="0 0 20 20"><rect x="10" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="2" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg>
+                )},
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => applyImageLayout(opt.key)}
+                  className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors"
+                  title={opt.label}
+                >
+                  {opt.icon}
+                  <span className="text-[10px] font-medium">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </>,
+          document.body
+        )}
 
         {/* Article context menu — portal to body so it's never clipped */}
         {articleMenu && createPortal(
