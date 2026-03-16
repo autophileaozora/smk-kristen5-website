@@ -190,8 +190,22 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     }
   };
 
+  const validateNoBase64 = () => {
+    if (formData.content.includes('data:image')) {
+      showToast('Konten mengandung gambar yang di-paste langsung. Hapus gambar tersebut lalu gunakan tombol 🖼️ di toolbar editor untuk upload gambar.', 'error');
+      return false;
+    }
+    const size = new Blob([formData.content]).size;
+    if (size > 3 * 1024 * 1024) {
+      showToast('Konten terlalu besar (maks 3MB). Kurangi gambar atau teks.', 'error');
+      return false;
+    }
+    return true;
+  };
+
   const handleCreateArticle = async (e) => {
     e.preventDefault();
+    if (!validateNoBase64()) return;
     try {
       await api.post('/api/articles', {
         title: formData.title,
@@ -218,6 +232,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
   const handleUpdateArticle = async (e) => {
     e.preventDefault();
+    if (!validateNoBase64()) return;
     try {
       await api.put(`/api/articles/${selectedArticle._id}`, {
         title: formData.title,
