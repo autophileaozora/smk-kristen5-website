@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
         .lean(),
       Ekskul.find().sort({ createdAt: -1 }).lean(),
       Alumni.find({ isPublished: true }).sort({ graduationYear: -1, createdAt: -1 }).lean(),
-      Partner.find().sort({ order: 1, createdAt: -1 }).lean(),
+      Partner.find({ isActive: true }).sort({ order: 1, createdAt: -1 }).lean(),
       Fasilitas.find().sort({ displayOrder: 1, name: 1 }).lean(),
       Prestasi.find().sort({ date: -1, createdAt: -1 }).lean(),
       HeroSlide.find({ isActive: true })

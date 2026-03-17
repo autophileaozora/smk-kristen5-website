@@ -32,6 +32,8 @@ const homepageSectionsSchema = new mongoose.Schema(
     fasilitasHeroTitle: { type: String, default: 'FASILITAS SEKOLAH', trim: true },
     fasilitasHeroSubtitle: { type: String, default: 'Menunjang kegiatan belajar mengajar dengan fasilitas modern dan lengkap untuk seluruh siswa', trim: true },
     fasilitasHeroBackground: { type: String, default: '', trim: true }, // Cloudinary URL
+    // Jurusan section default background (shown when no accordion selected)
+    jurusanDefaultBg: { type: String, default: '', trim: true }, // Cloudinary URL
   },
   { _id: false }
 );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
@@ -25,6 +25,9 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
   const [jurusanToDelete, setJurusanToDelete] = useState(null);
   const [toast, setToast] = useState(null);
   const [cardMenu, setCardMenu] = useState(null); // { item, top, right }
+  const [bgUploadTarget, setBgUploadTarget] = useState(null);
+  const [bgUploading, setBgUploading] = useState({});
+  const bgInputRef = useRef(null);
 
   const openMenuFor = (e, item) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -146,6 +149,53 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
   };
 
 
+  // Quick background image upload from card
+  const handleBgImageClick = (jurusanId) => {
+    setBgUploadTarget(jurusanId);
+    bgInputRef.current?.click();
+  };
+
+  const handleBgImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !bgUploadTarget) return;
+    if (!file.type.startsWith('image/')) { showToast('Hanya file gambar yang diperbolehkan', 'error'); return; }
+    if (file.size > 5 * 1024 * 1024) { showToast('Ukuran maksimal 5MB', 'error'); return; }
+    const id = bgUploadTarget;
+    setBgUploadTarget(null);
+    setBgUploading(prev => ({ ...prev, [id]: true }));
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const uploadRes = await api.post('/api/upload/image?folder=smk-kristen5/jurusan/background', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (uploadRes.data.success) {
+        const url = uploadRes.data.data.url;
+        await api.put(`/api/jurusan/${id}`, { backgroundImage: url });
+        setJurusans(prev => prev.map(j => j._id === id ? { ...j, backgroundImage: url } : j));
+        showToast('Background berhasil diupdate');
+      }
+    } catch (err) {
+      showToast('Gagal upload: ' + (err.response?.data?.message || err.message), 'error');
+    } finally {
+      setBgUploading(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleBgImageRemove = async (jurusanId) => {
+    setBgUploading(prev => ({ ...prev, [jurusanId]: true }));
+    try {
+      await api.put(`/api/jurusan/${jurusanId}`, { backgroundImage: '' });
+      setJurusans(prev => prev.map(j => j._id === jurusanId ? { ...j, backgroundImage: '' } : j));
+      showToast('Background dihapus');
+    } catch (err) {
+      showToast('Gagal hapus background', 'error');
+    } finally {
+      setBgUploading(prev => ({ ...prev, [jurusanId]: false }));
+    }
+  };
+
   const handleGalleryChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
@@ -247,6 +297,15 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
 
   return (
     <div className={embedded ? '' : 'p-6'}>
+      {/* Hidden file input for background image quick-upload */}
+      <input
+        ref={bgInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleBgImageChange}
+      />
+
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -337,17 +396,75 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
                   />
                 )}
 
-                {/* Background card thumbnail */}
-                {jurusan.backgroundImage && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <img
-                      src={jurusan.backgroundImage}
-                      alt="bg"
-                      className="w-9 h-9 object-cover rounded-lg border border-gray-100"
-                    />
-                    <span className="text-xs text-gray-400">Background card</span>
-                  </div>
-                )}
+                {/* Background card quick-edit */}
+                <div className="mt-3">
+                  {jurusan.backgroundImage ? (
+                    <div className="group/bg flex items-center gap-2">
+                      <div className="relative w-9 h-9 flex-shrink-0">
+                        <img
+                          src={jurusan.backgroundImage}
+                          alt="bg"
+                          className="w-9 h-9 object-cover rounded-lg border border-gray-100"
+                        />
+                        {bgUploading[jurusan._id] ? (
+                          <div className="absolute inset-0 bg-white/80 rounded-lg flex items-center justify-center">
+                            <svg className="animate-spin w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover/bg:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleBgImageClick(jurusan._id)}
+                              className="p-0.5 text-white hover:text-blue-300 transition-colors"
+                              title="Ganti gambar"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBgImageRemove(jurusan._id)}
+                              className="p-0.5 text-white hover:text-red-300 transition-colors"
+                              title="Hapus gambar"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-400">Background card</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleBgImageClick(jurusan._id)}
+                      disabled={bgUploading[jurusan._id]}
+                      className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-50"
+                    >
+                      {bgUploading[jurusan._id] ? (
+                        <svg className="animate-spin w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <polyline points="21 15 16 10 5 21" strokeLinecap="round" strokeLinejoin="round"/>
+                          <line x1="12" y1="3" x2="12" y2="8" strokeLinecap="round"/>
+                          <line x1="9.5" y1="5.5" x2="14.5" y2="5.5" strokeLinecap="round"/>
+                        </svg>
+                      )}
+                      <span>Tambah background</span>
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -369,6 +486,28 @@ const Jurusan = ({ embedded = false, createTrigger = 0, externalSearch = '' }) =
               {cardMenu.item.isActive ? <ToggleRight size={13} className="text-emerald-500" /> : <ToggleLeft size={13} className="text-gray-400" />}
               {cardMenu.item.isActive ? 'Nonaktifkan' : 'Aktifkan'}
             </button>
+            <div className="h-px bg-gray-100 my-1" />
+            <button onClick={() => { handleBgImageClick(cardMenu.item._id); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-gray-700 hover:bg-black/[0.05]">
+              <svg className="w-[13px] h-[13px] text-purple-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="12" y1="3" x2="12" y2="8" strokeLinecap="round"/>
+                <line x1="9.5" y1="5.5" x2="14.5" y2="5.5" strokeLinecap="round"/>
+              </svg>
+              {cardMenu.item.backgroundImage ? 'Ganti Background' : 'Tambah Background'}
+            </button>
+            {cardMenu.item.backgroundImage && (
+              <button onClick={() => { handleBgImageRemove(cardMenu.item._id); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-orange-500 hover:bg-orange-50/60">
+                <svg className="w-[13px] h-[13px]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="5" y1="5" x2="19" y2="19" strokeLinecap="round"/>
+                </svg>
+                Hapus Background
+              </button>
+            )}
             <div className="h-px bg-gray-100 my-1" />
             <button onClick={() => { openDeleteModal(cardMenu.item); setCardMenu(null); }} className="w-full px-4 py-2 text-left text-sm flex items-center gap-2.5 text-red-500 hover:bg-red-50/60">
               <Trash2 size={13} /> Hapus

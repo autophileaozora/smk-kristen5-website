@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { useNavigate } from 'react-router-dom';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import api from '../utils/api';
 import useAuthStore from '../store/authStore';
 import Modal from '../components/Modal';
@@ -16,6 +17,7 @@ import {
 const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginationChange }) => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'administrator';
+  const navigate = useNavigate();
 
   const [articles, setArticles] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -192,12 +194,17 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     }
   };
 
+  // Always read from Quill's live DOM so inline styles (resize, layout) are preserved
+  const getLiveContent = () =>
+    quillRef.current?.getEditor()?.root?.innerHTML ?? formData.content;
+
   const validateNoBase64 = () => {
-    if (formData.content.includes('data:image')) {
+    const content = getLiveContent();
+    if (content.includes('data:image')) {
       showToast('Konten mengandung gambar yang di-paste langsung. Hapus gambar tersebut lalu gunakan tombol 🖼️ di toolbar editor untuk upload gambar.', 'error');
       return false;
     }
-    const size = new Blob([formData.content]).size;
+    const size = new Blob([content]).size;
     if (size > 3 * 1024 * 1024) {
       showToast('Konten terlalu besar (maks 3MB). Kurangi gambar atau teks.', 'error');
       return false;
@@ -211,7 +218,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     try {
       await api.post('/api/articles', {
         title: formData.title,
-        content: formData.content,
+        content: getLiveContent(),
         excerpt: formData.excerpt,
         metaDescription: formData.metaDescription,
         keywords: formData.keywords,
@@ -238,7 +245,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
     try {
       await api.put(`/api/articles/${selectedArticle._id}`, {
         title: formData.title,
-        content: formData.content,
+        content: getLiveContent(),
         excerpt: formData.excerpt,
         metaDescription: formData.metaDescription,
         keywords: formData.keywords,
@@ -467,7 +474,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
     if (layout === 'inline') {
       img.removeAttribute('style');
-      // Wrap back in <p> if not already inside one
+      // Wrap back in <p> if sitting directly in editorRoot (was floated)
       if (editorRoot && img.parentElement === editorRoot) {
         const p = document.createElement('p');
         editorRoot.insertBefore(p, img);
@@ -480,19 +487,22 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
       img.setAttribute('style', 'display:block; float:none; margin:0.5rem auto;');
     } else {
       // float left or right — move image OUT of <p> so text can flow beside it
+      const currentW = img.style.width || '40%';
       const floatStyle = layout === 'left'
-        ? 'float:left; margin:0 1rem 0.75rem 0; max-width:50%;'
-        : 'float:right; margin:0 0 0.75rem 1rem; max-width:50%;';
+        ? `float:left; margin:0 1rem 0.75rem 0; width:${currentW};`
+        : `float:right; margin:0 0 0.75rem 1rem; width:${currentW};`;
       img.setAttribute('style', floatStyle);
       const parentP = img.parentElement;
-      if (parentP && parentP.tagName === 'P' && editorRoot) {
-        // Move img before its parent <p>
-        editorRoot.insertBefore(img, parentP);
-        // Remove empty <p>
-        if (!parentP.textContent.trim() && parentP.children.length === 0) {
-          parentP.remove();
+      if (editorRoot) {
+        if (parentP && parentP.tagName === 'P' && parentP.parentElement === editorRoot) {
+          // Move img before its parent <p> so text in subsequent <p>s can flow beside it
+          editorRoot.insertBefore(img, parentP);
+          // Remove empty <p>
+          if (!parentP.textContent.trim() && parentP.children.length === 0) {
+            parentP.remove();
+          }
         }
-        // Add clearfix after last paragraph so float doesn't overflow
+        // Ensure clearfix exists at end of editor so float doesn't overflow container
         if (!editorRoot.querySelector('p[data-clearfix]')) {
           const cf = document.createElement('p');
           cf.setAttribute('data-clearfix', '1');
@@ -502,48 +512,10 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
       }
     }
 
-    if (quill) setFormData(prev => ({ ...prev, content: quill.root.innerHTML }));
     setImgLayoutToolbar(null);
   };
 
-  const imgOverlayRef = useRef(null);
-  const imgHandleRefs = useRef({ nw: null, ne: null, sw: null, se: null });
-
-  const startResize = (e, corner) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const img = imgLayoutToolbar?.el;
-    if (!img) return;
-    const startX = e.clientX;
-    const startW = img.getBoundingClientRect().width;
-    const isRight = corner === 'ne' || corner === 'se';
-
-    const updateHandles = () => {
-      const r = img.getBoundingClientRect();
-      if (imgOverlayRef.current) Object.assign(imgOverlayRef.current.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px' });
-      const h = imgHandleRefs.current;
-      if (h.nw) Object.assign(h.nw.style, { top: (r.top - 5) + 'px', left: (r.left - 5) + 'px' });
-      if (h.ne) Object.assign(h.ne.style, { top: (r.top - 5) + 'px', left: (r.right - 5) + 'px' });
-      if (h.sw) Object.assign(h.sw.style, { top: (r.bottom - 5) + 'px', left: (r.left - 5) + 'px' });
-      if (h.se) Object.assign(h.se.style, { top: (r.bottom - 5) + 'px', left: (r.right - 5) + 'px' });
-    };
-
-    const onMove = (e) => {
-      const newW = Math.max(50, Math.round(startW + (isRight ? e.clientX - startX : startX - e.clientX)));
-      img.style.width = newW + 'px';
-      img.style.height = 'auto';
-      updateHandles();
-    };
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      const quill = quillRef.current?.getEditor();
-      if (quill) setFormData(prev => ({ ...prev, content: quill.root.innerHTML }));
-      setImgLayoutToolbar(prev => prev ? { ...prev, rect: img.getBoundingClientRect() } : null);
-    };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  };
+  const imgWidthDisplayRef = useRef(null);
 
   const uploadImageToQuillRef = useRef(uploadImageToQuill);
   uploadImageToQuillRef.current = uploadImageToQuill;
@@ -791,7 +763,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
                 {/* Add article */}
                 <button
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => navigate('/admin/articles/new')}
                   className="p-1.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-500/90 hover:to-blue-700 text-white transition-all shadow-[0_2px_8px_rgba(59,130,246,0.40),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_3px_12px_rgba(59,130,246,0.50)]"
                   title="Buat Artikel"
                 >
@@ -858,7 +830,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
             <div className="col-span-3 py-16 text-center">
               <FileText size={40} className="mx-auto text-gray-200 mb-3" />
               <p className="text-sm text-gray-400">Belum ada artikel</p>
-              <button onClick={() => setShowCreateModal(true)} className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+              <button onClick={() => navigate('/admin/articles/new')} className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
                 Buat Artikel Pertama
               </button>
             </div>
@@ -867,64 +839,63 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
           )}
         </div>
 
-        {/* Image layout toolbar + resize handles */}
+        {/* Image layout toolbar */}
         {imgLayoutToolbar && (() => {
           const r = imgLayoutToolbar.rect;
-          const handles = [
-            { key: 'nw', top: r.top - 5, left: r.left - 5, cursor: 'nw-resize' },
-            { key: 'ne', top: r.top - 5, left: r.right - 5, cursor: 'ne-resize' },
-            { key: 'sw', top: r.bottom - 5, left: r.left - 5, cursor: 'sw-resize' },
-            { key: 'se', top: r.bottom - 5, left: r.right - 5, cursor: 'se-resize' },
-          ];
+          const quill = quillRef.current?.getEditor();
+          const containerW = quill?.root?.offsetWidth || 800;
+          const initPct = Math.min(100, Math.max(10, Math.round(r.width / containerW * 100)));
           return createPortal(
             <>
               <div className="fixed inset-0 z-40" onClick={() => setImgLayoutToolbar(null)} />
-              {/* Layout toolbar */}
               <div
-                className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-1.5 flex gap-1"
-                style={{ top: Math.max(8, r.top - 58), left: r.left }}
+                className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-1.5 flex flex-col gap-1.5"
+                style={{ top: Math.max(8, r.top - 94), left: r.left }}
+                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
               >
-                {[
-                  { key: 'inline', label: 'Inline', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="8" width="16" height="4" rx="1" fill="currentColor"/><rect x="2" y="3" width="16" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="15" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
-                  { key: 'left', label: 'Kiri', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="12" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="12" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
-                  { key: 'center', label: 'Tengah', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="5" y="4" width="10" height="8" rx="1" fill="currentColor"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
-                  { key: 'right', label: 'Kanan', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="10" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="2" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
-                ].map(opt => (
-                  <button key={opt.key} type="button" onClick={() => applyImageLayout(opt.key)}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors" title={opt.label}>
-                    {opt.icon}
-                    <span className="text-[10px] font-medium">{opt.label}</span>
-                  </button>
-                ))}
-                <div className="w-px bg-gray-200 mx-0.5" />
-                <div className="flex items-center gap-1 px-1">
-                  <span className="text-[10px] text-gray-500">W:</span>
+                {/* Layout buttons */}
+                <div className="flex gap-1">
+                  {[
+                    { key: 'inline', label: 'Inline', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="8" width="16" height="4" rx="1" fill="currentColor"/><rect x="2" y="3" width="16" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="15" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                    { key: 'left', label: 'Kiri', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="12" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="12" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                    { key: 'center', label: 'Tengah', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="5" y="4" width="10" height="8" rx="1" fill="currentColor"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                    { key: 'right', label: 'Kanan', icon: <svg width="20" height="20" viewBox="0 0 20 20"><rect x="10" y="2" width="8" height="10" rx="1" fill="currentColor"/><rect x="2" y="3" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="7" width="6" height="2" rx="1" fill="#d1d5db"/><rect x="2" y="14" width="16" height="2" rx="1" fill="#d1d5db"/></svg> },
+                  ].map(opt => (
+                    <button key={opt.key} type="button" onClick={() => applyImageLayout(opt.key)}
+                      className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors" title={opt.label}>
+                      {opt.icon}
+                      <span className="text-[10px] font-medium">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* Width slider */}
+                <div className="flex items-center gap-2 px-1 pb-0.5">
+                  <span className="text-[10px] text-gray-500 shrink-0">Lebar:</span>
                   <input
-                    type="number" min="50" max="1200" step="10"
-                    defaultValue={Math.round(r.width)}
-                    className="w-14 text-xs border border-gray-300 rounded px-1 py-0.5"
-                    onClick={e => e.stopPropagation()}
-                    onChange={e => {
-                      const w = Math.max(50, parseInt(e.target.value) || 50);
-                      imgLayoutToolbar.el.style.width = w + 'px';
+                    type="range" min="10" max="100" step="5"
+                    defaultValue={initPct}
+                    className="w-28 accent-blue-600"
+                    style={{ height: '4px' }}
+                    onInput={e => {
+                      const pct = parseInt(e.target.value);
+                      if (imgWidthDisplayRef.current) imgWidthDisplayRef.current.textContent = pct + '%';
+                      imgLayoutToolbar.el.style.width = pct + '%';
                       imgLayoutToolbar.el.style.height = 'auto';
-                      const quill = quillRef.current?.getEditor();
-                      if (quill) setFormData(prev => ({ ...prev, content: quill.root.innerHTML }));
+                    }}
+                    onMouseUp={() => {
+                      requestAnimationFrame(() => {
+                        const newRect = imgLayoutToolbar?.el?.getBoundingClientRect();
+                        if (newRect) setImgLayoutToolbar(prev => prev ? { ...prev, rect: newRect } : null);
+                      });
                     }}
                   />
-                  <span className="text-[10px] text-gray-400">px</span>
+                  <span ref={imgWidthDisplayRef} className="text-[10px] font-medium text-blue-600 w-8 tabular-nums">{initPct}%</span>
                 </div>
               </div>
-              {/* Blue border overlay */}
-              <div ref={imgOverlayRef} className="fixed pointer-events-none z-[9997]"
+              {/* Blue selection border */}
+              <div className="fixed pointer-events-none z-[9997]"
                 style={{ top: r.top, left: r.left, width: r.width, height: r.height, border: '2px solid #3b82f6', borderRadius: 2 }} />
-              {/* Corner resize handles */}
-              {handles.map(h => (
-                <div key={h.key} ref={el => imgHandleRefs.current[h.key] = el}
-                  className="fixed z-[9998] w-2.5 h-2.5 bg-white border-2 border-blue-500 rounded-sm"
-                  style={{ top: h.top, left: h.left, cursor: h.cursor }}
-                  onMouseDown={e => startResize(e, h.key)} />
-              ))}
             </>,
             document.body
           );
@@ -942,7 +913,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
                 <Eye size={14} className="text-gray-400/70" /><span>Preview</span>
               </button>
               {canEdit(articleMenu.article) && (
-                <button onClick={() => { openEditModal(articleMenu.article); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] flex items-center gap-2.5 transition-colors">
+                <button onClick={() => { navigate(`/admin/articles/${articleMenu.article._id}/edit`); setArticleMenu(null); }} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-black/[0.05] flex items-center gap-2.5 transition-colors">
                   <Edit3 size={14} className="text-gray-400/70" /><span>Edit</span>
                 </button>
               )}
@@ -1392,7 +1363,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
 
           {/* Add article */}
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => navigate('/admin/articles/new')}
             className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
             title="Buat Artikel"
           >
@@ -1468,7 +1439,7 @@ const Articles = ({ embedded = false, externalPage = 1, onPageChange, onPaginati
                   <div className="col-span-3 py-16 text-center">
                     <FileText size={40} className="mx-auto text-gray-200 mb-3" />
                     <p className="text-sm text-gray-400">Belum ada artikel</p>
-                    <button onClick={() => setShowCreateModal(true)} className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                    <button onClick={() => navigate('/admin/articles/new')} className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
                       Buat Artikel Pertama
                     </button>
                   </div>

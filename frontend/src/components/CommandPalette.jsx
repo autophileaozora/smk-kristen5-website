@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Megaphone, Trophy, GraduationCap,
-  BookOpen, Building2, Dribbble, Users, Video, Images, FilePlus,
+  BookOpen, Building2, Dribbble, Users, Images, FilePlus,
   FolderOpen, UserCog, ClipboardList, Share2, Handshake, MousePointerClick,
-  CalendarDays, CalendarCheck, School, Settings, Navigation, PanelBottom,
+  School, Settings, Navigation, PanelBottom,
   Search, ExternalLink, Plus,
 } from 'lucide-react';
 
@@ -20,10 +20,7 @@ const allCommands = [
   { name: 'Prestasi', path: '/admin/kesiswaan?tab=prestasi', icon: Trophy, category: 'Kesiswaan' },
   { name: 'Alumni', path: '/admin/kesiswaan?tab=alumni', icon: Users, category: 'Kesiswaan' },
   { name: 'Fasilitas', path: '/admin/kesiswaan?tab=fasilitas', icon: Building2, category: 'Kesiswaan' },
-  { name: 'Kegiatan', path: '/admin/kegiatan?tab=kegiatan', icon: CalendarDays, category: 'Kegiatan' },
-  { name: 'Agenda', path: '/admin/kegiatan?tab=agenda', icon: CalendarCheck, category: 'Kegiatan' },
   { name: 'Hero Slides', path: '/admin/homepage?tab=hero-slides', icon: Images, category: 'Homepage' },
-  { name: 'Video Hero', path: '/admin/homepage?tab=video-hero', icon: Video, category: 'Homepage' },
   { name: 'CTA', path: '/admin/homepage?tab=cta', icon: MousePointerClick, category: 'Homepage' },
   { name: 'Partner', path: '/admin/homepage?tab=partner', icon: Handshake, category: 'Homepage' },
   { name: 'Running Text', path: '/admin/homepage?tab=running-text', icon: Megaphone, category: 'Homepage' },

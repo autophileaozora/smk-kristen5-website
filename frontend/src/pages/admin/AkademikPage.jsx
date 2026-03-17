@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronDown, Check, Plus, Search, X, MoreVertical } from 'lucide-react';
+import { ChevronDown, Check, Plus, Search, X, MoreVertical, Image } from 'lucide-react';
+import api from '../../services/api';
 
 const Jurusan = lazy(() => import('../Jurusan'));
 const MataPelajaran = lazy(() => import('../MataPelajaran'));
@@ -30,6 +31,57 @@ const AkademikPage = () => {
 
   // Trigger modal open inside child component — increment to fire
   const [createTrigger, setCreateTrigger] = useState(0);
+
+  // Default jurusan section bg image
+  const [defaultBgUrl, setDefaultBgUrl] = useState('');
+  const [defaultBgUploading, setDefaultBgUploading] = useState(false);
+  const defaultBgInputRef = useRef(null);
+
+  useEffect(() => {
+    api.get('/api/site-settings').then(res => {
+      setDefaultBgUrl(res.data.data.settings?.homepageSections?.jurusanDefaultBg || '');
+    }).catch(() => {});
+  }, []);
+
+  const saveJurusanDefaultBg = async (url) => {
+    const settingsRes = await api.get('/api/site-settings');
+    const currentSections = settingsRes.data.data.settings?.homepageSections || {};
+    await api.put('/api/site-settings', {
+      homepageSections: { ...currentSections, jurusanDefaultBg: url }
+    });
+  };
+
+  const handleDefaultBgChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDefaultBgUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const uploadRes = await api.post('/api/upload/image?folder=smk-kristen5/jurusan/default', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (uploadRes.data.success) {
+        const url = uploadRes.data.data.url;
+        await saveJurusanDefaultBg(url);
+        setDefaultBgUrl(url);
+      }
+    } catch (err) {
+      console.error('Default bg upload failed', err);
+    } finally {
+      setDefaultBgUploading(false);
+      if (defaultBgInputRef.current) defaultBgInputRef.current.value = '';
+    }
+  };
+
+  const handleDefaultBgRemove = async () => {
+    try {
+      await saveJurusanDefaultBg('');
+      setDefaultBgUrl('');
+    } catch (err) {
+      console.error('Remove default bg failed', err);
+    }
+  };
 
   const tabs = [
     { id: 'jurusan', label: 'Jurusan' },
@@ -95,6 +147,9 @@ const AkademikPage = () => {
         </div>
       </div>
 
+      {/* Hidden file input for default bg upload */}
+      <input ref={defaultBgInputRef} type="file" accept="image/*" className="hidden" onChange={handleDefaultBgChange} />
+
       {/* ── Content area ─────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50/40 to-slate-100 p-3 lg:p-4">
 
@@ -149,6 +204,44 @@ const AkademikPage = () => {
                   </button>
 
                   <div className="w-px h-5 bg-black/[0.08]" />
+
+                  {/* Default bg image (jurusan tab only) */}
+                  {activeTab === 'jurusan' && (
+                    <>
+                      <button
+                        onClick={() => defaultBgInputRef.current?.click()}
+                        disabled={defaultBgUploading}
+                        title={defaultBgUrl ? 'Ganti gambar default section jurusan' : 'Tambah gambar default section jurusan'}
+                        className={`p-1.5 rounded-xl transition-all relative ${
+                          defaultBgUrl
+                            ? 'text-purple-600 hover:bg-purple-400/15'
+                            : 'text-gray-500/70 hover:text-gray-700 hover:bg-black/[0.05]'
+                        } disabled:opacity-50`}
+                      >
+                        {defaultBgUploading ? (
+                          <svg className="animate-spin w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                          </svg>
+                        ) : (
+                          <Image size={15} />
+                        )}
+                        {defaultBgUrl && (
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-full" />
+                        )}
+                      </button>
+                      {defaultBgUrl && (
+                        <button
+                          onClick={handleDefaultBgRemove}
+                          title="Hapus gambar default section jurusan"
+                          className="p-1.5 rounded-xl text-orange-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                      <div className="w-px h-5 bg-black/[0.08]" />
+                    </>
+                  )}
 
                   {/* Create */}
                   <button

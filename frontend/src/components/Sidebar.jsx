@@ -6,7 +6,7 @@ import { useSchoolLogo } from '../hooks/useContact';
 import {
   LayoutDashboard, FileText, GraduationCap,
   Users, Images, FilePlus,
-  UserCog, CalendarDays, Settings, Mail,
+  UserCog, Settings, Mail,
   ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen,
   ExternalLink, LogOut, Search,
 } from 'lucide-react';
@@ -51,7 +51,6 @@ const Sidebar = ({ collapsed, onToggleCollapse, onOpenSearch }) => {
         { name: 'Halaman Kustom', path: '/admin/custom-pages', icon: FilePlus },
         { name: 'Jurusan & Mapel', path: '/admin/akademik', icon: GraduationCap },
         { name: 'Kesiswaan', path: '/admin/kesiswaan', icon: Users },
-        { name: 'Kegiatan & Agenda', path: '/admin/kegiatan', icon: CalendarDays },
         { name: 'Homepage', path: '/admin/homepage', icon: Images },
         { name: 'Pesan Masuk', path: '/admin/pesan', icon: Mail },
         { name: 'Pengaturan', path: '/admin/pengaturan', icon: Settings },

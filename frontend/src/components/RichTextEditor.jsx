@@ -1,6 +1,6 @@
 import { useMemo, useRef, useCallback, useEffect, useState } from 'react';
-import ReactQuill, { Quill } from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill, { Quill } from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 // Register custom Image blot that preserves width, style, class attributes
 const BlockEmbed = Quill.import('blots/block/embed');
@@ -56,7 +56,9 @@ class ResizableImage extends BlockEmbed {
 
 ResizableImage.blotName = 'image';
 ResizableImage.tagName = 'IMG';
-Quill.register(ResizableImage, true);
+if (!Quill.find('formats/image')) {
+  Quill.register(ResizableImage, true);
+}
 
 // Image toolbar component
 const ImageToolbar = ({ position, onAction, onClose }) => {
@@ -144,7 +146,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Masukkan teks...' }) =
   const formats = [
     'header', 'font', 'size',
     'bold', 'italic', 'underline', 'strike', 'blockquote',
-    'list', 'bullet', 'indent',
+    'list', 'indent',
     'link', 'image', 'video',
     'color', 'background', 'align',
     'width', 'style', 'data-size', 'data-float',

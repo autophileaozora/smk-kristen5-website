@@ -115,7 +115,29 @@ button {
 }
 
 .article-content img {
-  @apply rounded-lg shadow-md my-6 w-full h-auto;
+  @apply rounded-lg shadow-md my-6 h-auto;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Floated images — inline style controls float/width/margin, reset CSS overrides */
+.article-content img[style*="float"] {
+  width: unset;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* If a <p> contains ONLY a floated image, make it transparent (display:contents)
+   so the float escapes the block formatting context and text flows beside it */
+.article-content p:has(> img[style*="float"]:only-child) {
+  display: contents;
+}
+
+/* Clearfix so floated images don't overflow the article area */
+.article-content::after {
+  content: '';
+  display: table;
+  clear: both;
 }
 
 .article-content code {

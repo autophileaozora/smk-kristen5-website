@@ -7,7 +7,6 @@ const FULLSCREEN_ROUTES = [
   '/admin/custom-pages',
   '/admin/akademik',
   '/admin/kesiswaan',
-  '/admin/kegiatan',
   '/admin/homepage',
   '/admin/pengaturan',
   '/admin/sistem',

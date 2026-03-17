@@ -7,6 +7,7 @@ const Ekskul = lazy(() => import('../Ekskul'));
 const Alumni = lazy(() => import('../Alumni'));
 const Fasilitas = lazy(() => import('../Fasilitas'));
 const AlumniSubmissions = lazy(() => import('../AlumniSubmissions'));
+const Events = lazy(() => import('../Events'));
 
 const TabLoading = () => (
   <div className="flex items-center justify-center h-48">
@@ -123,6 +124,7 @@ const KesiswaanPage = () => {
 
   const tabs = [
     { id: 'ekskul', label: 'Ekskul' },
+    { id: 'agenda', label: 'Agenda' },
     { id: 'alumni', label: 'Alumni' },
     { id: 'fasilitas', label: 'Fasilitas' },
     { id: 'review-alumni', label: 'Review Alumni', badge: pendingCount || undefined },
@@ -209,6 +211,9 @@ const KesiswaanPage = () => {
             )}
             {activeTab === 'fasilitas' && (
               <Fasilitas embedded createTrigger={createTrigger} externalSearch={searchQuery} />
+            )}
+            {activeTab === 'agenda' && (
+              <Events embedded createTrigger={createTrigger} />
             )}
             {activeTab === 'review-alumni' && (
               <AlumniSubmissions embedded onCountChange={setPendingCount} />

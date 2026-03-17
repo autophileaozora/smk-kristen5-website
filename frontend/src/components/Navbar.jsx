@@ -211,7 +211,7 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
 
           {/* Dropdown */}
           {openDropdown === item._id && (
-            <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl py-2 min-w-[180px] z-50">
+            <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl py-2 w-max z-50">
               {item.children.map((child) => (
                 <button
                   key={child._id}
@@ -226,7 +226,7 @@ const Navbar = ({ activePage = '', visible = true, className = '' }) => {
                       navigate(child.url);
                     }
                   }}
-                  className={`block w-full text-left px-4 py-2 text-sm ${
+                  className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap ${
                     isActive(child.url)
                       ? 'bg-primary-50 text-primary-700 font-medium'
                       : 'text-gray-700 hover:bg-gray-50'

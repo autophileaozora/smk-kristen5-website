@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { useSchoolLogo } from './hooks/useContact';
+import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
+
+const GATracker = () => { useGoogleAnalytics(); return null; };
 
 // Lazy load all components for better performance
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -10,13 +13,13 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Articles = lazy(() => import('./pages/Articles'));
 const CustomPages = lazy(() => import('./pages/CustomPages'));
 const CustomPageEditor = lazy(() => import('./pages/CustomPageEditor'));
+const ArticleEditorPage = lazy(() => import('./pages/ArticleEditorPage'));
 const ProfileManagement = lazy(() => import('./pages/ProfileManagement'));
 
 // Consolidated admin wrapper pages
 const ArtikelPage = lazy(() => import('./pages/admin/ArtikelPage'));
 const AkademikPage = lazy(() => import('./pages/admin/AkademikPage'));
 const KesiswaanPage = lazy(() => import('./pages/admin/KesiswaanPage'));
-const KegiatanPage = lazy(() => import('./pages/admin/KegiatanPage'));
 const HomepagePage = lazy(() => import('./pages/admin/HomepagePage'));
 const PengaturanPage = lazy(() => import('./pages/admin/PengaturanPage'));
 const SistemPage = lazy(() => import('./pages/admin/SistemPage'));
@@ -68,6 +71,7 @@ function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
+        <GATracker />
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
           {/* Public Routes */}
@@ -91,6 +95,8 @@ function App() {
           <Route path="/admin/custom-pages/create" element={<CustomPageEditor />} />
           <Route path="/admin/custom-pages/:id/edit" element={<CustomPageEditor />} />
           <Route path="/admin/jurusan/:jurusanId/edit-layout" element={<CustomPageEditor sourceType="jurusan" />} />
+          <Route path="/admin/articles/new" element={<ArticleEditorPage />} />
+          <Route path="/admin/articles/:id/edit" element={<ArticleEditorPage />} />
 
           {/* Protected Routes - Admin Panel */}
           <Route path="/admin" element={<DashboardLayout />}>
@@ -102,7 +108,6 @@ function App() {
             <Route path="custom-pages" element={<CustomPages />} />
             <Route path="akademik" element={<AkademikPage />} />
             <Route path="kesiswaan" element={<KesiswaanPage />} />
-            <Route path="kegiatan" element={<KegiatanPage />} />
             <Route path="homepage" element={<HomepagePage />} />
             <Route path="pengaturan" element={<PengaturanPage />} />
             <Route path="sistem" element={<SistemPage />} />
@@ -115,13 +120,12 @@ function App() {
             <Route path="jurusan" element={<Navigate to="/admin/akademik?tab=jurusan" replace />} />
             <Route path="mata-pelajaran" element={<Navigate to="/admin/akademik?tab=mapel" replace />} />
             <Route path="ekskul" element={<Navigate to="/admin/kesiswaan?tab=ekskul" replace />} />
+            <Route path="agenda" element={<Navigate to="/admin/kesiswaan?tab=agenda" replace />} />
+            <Route path="events" element={<Navigate to="/admin/kesiswaan?tab=agenda" replace />} />
             <Route path="prestasi" element={<Navigate to="/admin/kesiswaan?tab=prestasi" replace />} />
             <Route path="alumni" element={<Navigate to="/admin/kesiswaan?tab=alumni" replace />} />
             <Route path="fasilitas" element={<Navigate to="/admin/kesiswaan?tab=fasilitas" replace />} />
-            <Route path="activities" element={<Navigate to="/admin/kegiatan?tab=kegiatan" replace />} />
-            <Route path="events" element={<Navigate to="/admin/kegiatan?tab=agenda" replace />} />
             <Route path="hero-slides" element={<Navigate to="/admin/homepage?tab=hero-slides" replace />} />
-            <Route path="video-hero" element={<Navigate to="/admin/homepage?tab=video-hero" replace />} />
             <Route path="cta" element={<Navigate to="/admin/homepage?tab=cta" replace />} />
             <Route path="partners" element={<Navigate to="/admin/homepage?tab=partner" replace />} />
             <Route path="running-text" element={<Navigate to="/admin/homepage?tab=running-text" replace />} />

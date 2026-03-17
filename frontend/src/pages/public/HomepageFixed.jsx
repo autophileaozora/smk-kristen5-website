@@ -28,14 +28,13 @@ const HomepageFixed = () => {
     about: null,
     activityTabs: [],
     activitySettings: {
-      globalLink: '/kegiatan',
+      globalLink: '/artikel',
       globalButtonText: 'Explore Kegiatan Siswa',
       sectionTitle: 'Pembelajaran & Kegiatan',
       sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
     },
     events: [],
     siteSettings: null,
-    videoHeroes: [],
     statsCards: [],
   });
   const [loading, setLoading] = useState(true);
@@ -129,14 +128,13 @@ const HomepageFixed = () => {
           about: null,
           activityTabs: d.activityTabs || [],
           activitySettings: d.activitySettings || {
-            globalLink: '/kegiatan',
+            globalLink: '/artikel',
             globalButtonText: 'Explore Kegiatan Siswa',
             sectionTitle: 'Pembelajaran & Kegiatan',
             sectionSubtitle: 'Berbagai aktivitas pembelajaran dan kegiatan siswa',
           },
           events: d.events || [],
           siteSettings: d.siteSettings || null,
-          videoHeroes: d.videoHeroes || [],
           statsCards: d.statsCards || [],
         });
       } catch (error) {
@@ -603,12 +601,31 @@ const HomepageFixed = () => {
 
           {/* Image Container */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[85%] h-[420px] border border-white/20 rounded-xl p-2 bg-white/5 backdrop-blur-sm shadow-[0_8px_32px_rgba(139,92,246,0.2)] z-10">
-            <img
-              src={(data.jurusans || [])[activeProgram]?.backgroundImage || ''}
-              alt="Program"
-              loading="lazy"
-              className="w-full h-full rounded-lg object-cover transition-opacity duration-300"
-            />
+            {(() => {
+              const activeBg = (data.jurusans || [])[activeProgram]?.backgroundImage;
+              const defaultBg = hp.jurusanDefaultBg;
+              const imgSrc = activeBg || (activeProgram === -1 ? defaultBg : null);
+              const imgAlt = activeProgram >= 0
+                ? ((data.jurusans || [])[activeProgram]?.name || 'Program')
+                : 'Jurusan';
+              return imgSrc ? (
+                <img
+                  src={imgSrc}
+                  alt={imgAlt}
+                  loading="lazy"
+                  className="w-full h-full rounded-lg object-cover transition-opacity duration-300"
+                />
+              ) : (
+                <div className="w-full h-full rounded-lg flex flex-col items-center justify-center gap-3 text-white/30">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <span className="text-sm font-light tracking-wide">Pilih program untuk melihat foto</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
