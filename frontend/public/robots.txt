@@ -5,7 +5,4 @@ Disallow: /admin/
 Disallow: /login
 
 # Sitemap
-Sitemap: https://smkkrisma.sch.id/sitemap.xml
-
-# Crawl-delay
-Crawl-delay: 1
+Sitemap: https://new.smkkrisma.sch.id/sitemap.xml

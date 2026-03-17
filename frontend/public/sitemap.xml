@@ -2,57 +2,69 @@
 <!-- Static fallback sitemap. Dynamic sitemap served by backend at /sitemap.xml -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://smkkrisma.sch.id/</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/jurusan</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/jurusan</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/artikel</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/artikel</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/fasilitas</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/fasilitas</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/kontak</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/ekskul</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/tentang</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/kontak</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://new.smkkrisma.sch.id/tentang</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/sejarah</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/sejarah</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/visi-misi</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/visi-misi</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://smkkrisma.sch.id/sambutan</loc>
-    <lastmod>2026-01-01</lastmod>
+    <loc>https://new.smkkrisma.sch.id/sambutan</loc>
+    <lastmod>2026-03-17</lastmod>
     <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://new.smkkrisma.sch.id/alumni</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 </urlset>

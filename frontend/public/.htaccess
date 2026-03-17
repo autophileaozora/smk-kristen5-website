@@ -1,4 +1,16 @@
 Options -MultiViews
+
+# JS/CSS assets punya hash di nama file, aman di-cache lama
+<FilesMatch "\.(js|css)$">
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+# HTML dan file lainnya: selalu revalidate agar chunk terbaru dimuat
+<FilesMatch "\.(html|htm|json|xml|txt)$">
+  Header set Cache-Control "no-cache, must-revalidate"
+</FilesMatch>
+
+# React Router SPA fallback
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
