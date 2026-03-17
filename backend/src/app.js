@@ -24,6 +24,7 @@ const allowedOrigins = [
   'https://smkkrisma.sch.id',
   'https://www.smkkrisma.sch.id',
   'https://new.smkkrisma.sch.id',
+  'https://www.new.smkkrisma.sch.id',
   'https://smkkristen5klaten.netlify.app',
 ];
 
