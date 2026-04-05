@@ -534,6 +534,12 @@ const ArtikelDetail = () => {
           display: table;
           clear: both;
         }
+        .article-content .ql-align-justify { text-align: justify; }
+        .article-content .ql-align-center { text-align: center; }
+        .article-content .ql-align-right { text-align: right; }
+        .article-content [style*="text-align: justify"] { text-align: justify; }
+        .article-content [style*="text-align: center"] { text-align: center; }
+        .article-content [style*="text-align: right"] { text-align: right; }
       `}</style>
     </div>
   );

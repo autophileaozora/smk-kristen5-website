@@ -166,10 +166,9 @@ export default function ArticleEditorPage() {
         showToast('Artikel berhasil diupdate', 'success');
         refreshPreview();
       } else {
-        const res = await api.post('/api/articles', payload);
-        const newId = res.data.data.article._id;
+        await api.post('/api/articles', payload);
         showToast('Artikel berhasil dibuat', 'success');
-        navigate(`/admin/articles/${newId}/edit`, { replace: true });
+        navigate('/admin/articles', { replace: true });
       }
     } catch (e) {
       showToast(e.response?.data?.message || 'Gagal menyimpan artikel', 'error');

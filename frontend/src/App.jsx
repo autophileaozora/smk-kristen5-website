@@ -23,6 +23,7 @@ const KesiswaanPage = lazy(() => import('./pages/admin/KesiswaanPage'));
 const HomepagePage = lazy(() => import('./pages/admin/HomepagePage'));
 const PengaturanPage = lazy(() => import('./pages/admin/PengaturanPage'));
 const SistemPage = lazy(() => import('./pages/admin/SistemPage'));
+const RecycleBin = lazy(() => import('./pages/RecycleBin'));
 const ContactMessages = lazy(() => import('./pages/ContactMessages'));
 const HomepageFixed = lazy(() => import('./pages/public/HomepageFixed'));
 const CustomPageView = lazy(() => import('./pages/public/CustomPageView'));
@@ -111,6 +112,7 @@ function App() {
             <Route path="homepage" element={<HomepagePage />} />
             <Route path="pengaturan" element={<PengaturanPage />} />
             <Route path="sistem" element={<SistemPage />} />
+            <Route path="recycle-bin" element={<RecycleBin />} />
             <Route path="pesan" element={<ContactMessages />} />
             <Route path="profile" element={<ProfileManagement />} />
             <Route path="my-articles" element={<Articles />} />

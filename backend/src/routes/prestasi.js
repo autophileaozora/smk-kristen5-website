@@ -60,7 +60,7 @@ router.get('/:id', async (req, res) => {
 // @access  Protected (Admin & Siswa)
 router.post('/', protect, uploadSingle('image'), async (req, res) => {
   try {
-    const { title, description, category, level, date, participants, showInRunningText } = req.body;
+    const { title, description, category, level, date, participants, showInRunningText, image } = req.body;
 
     if (!title || !description || !date || !participants) {
       return res.status(400).json({
@@ -80,26 +80,20 @@ router.post('/', protect, uploadSingle('image'), async (req, res) => {
       createdBy: req.user.id,
     };
 
-    // Upload image to Cloudinary if provided
+    // Upload image to Cloudinary if binary file, or use URL if pre-uploaded
     if (req.file) {
       try {
-        console.log('Uploading image to Cloudinary...', {
-          cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Not Set',
-          apiKey: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not Set',
-          apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not Set',
-          bufferSize: req.file.buffer.length,
-        });
         const result = await uploadToCloudinary(req.file.buffer);
-        console.log('Cloudinary upload success:', result.secure_url);
         prestasiData.image = result.secure_url;
       } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
         const errorMessage = uploadError?.message || uploadError?.error?.message || JSON.stringify(uploadError) || 'Unknown error';
         return res.status(500).json({
           success: false,
           message: 'Failed to upload image to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (image) {
+      prestasiData.image = image;
     }
 
     const prestasi = await Prestasi.create(prestasiData);
@@ -226,13 +220,10 @@ router.delete('/:id', protect, async (req, res) => {
       });
     }
 
-    // Hard-delete image from Cloudinary
-    if (prestasi.image) {
-      const publicId = getPublicIdFromUrl(prestasi.image);
-      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
-    }
-
-    await prestasi.deleteOne();
+    // Soft-delete — move to recycle bin
+    prestasi.isDeleted = true;
+    prestasi.deletedAt = new Date();
+    await prestasi.save();
 
     // Audit log
     await AuditLog.create({
@@ -249,7 +240,7 @@ router.delete('/:id', protect, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Prestasi deleted successfully',
+      message: 'Prestasi dipindahkan ke recycle bin',
     });
   } catch (error) {
     res.status(500).json({

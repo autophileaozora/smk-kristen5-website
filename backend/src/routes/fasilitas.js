@@ -13,7 +13,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { category } = req.query;
-    const filter = {};
+    const filter = { isDeleted: { $ne: true } };
 
     if (category) {
       // If category specified, get items for that category OR public items
@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
 router.get('/active', async (req, res) => {
   try {
     const { category } = req.query;
-    const filter = { isActive: true };
+    const filter = { isActive: true, isDeleted: { $ne: true } };
 
     if (category) {
       filter.$or = [
@@ -259,13 +259,10 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    // Hard-delete image from Cloudinary
-    if (fasilitas.image) {
-      const publicId = getPublicIdFromUrl(fasilitas.image);
-      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
-    }
-
-    await fasilitas.deleteOne();
+    // Soft-delete — move to recycle bin
+    fasilitas.isDeleted = true;
+    fasilitas.deletedAt = new Date();
+    await fasilitas.save();
 
     // Audit log
     await AuditLog.create({
@@ -283,7 +280,7 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Fasilitas deleted successfully',
+      message: 'Fasilitas dipindahkan ke recycle bin',
     });
   } catch (error) {
     res.status(500).json({

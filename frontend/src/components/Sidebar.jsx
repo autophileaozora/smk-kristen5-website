@@ -6,7 +6,7 @@ import { useSchoolLogo } from '../hooks/useContact';
 import {
   LayoutDashboard, FileText, GraduationCap,
   Users, Images, FilePlus,
-  UserCog, Settings, Mail,
+  UserCog, Settings, Mail, Trash2,
   ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen,
   ExternalLink, LogOut, Search,
 } from 'lucide-react';
@@ -55,6 +55,7 @@ const Sidebar = ({ collapsed, onToggleCollapse, onOpenSearch }) => {
         { name: 'Pesan Masuk', path: '/admin/pesan', icon: Mail },
         { name: 'Pengaturan', path: '/admin/pengaturan', icon: Settings },
         { name: 'User & Log', path: '/admin/sistem', icon: UserCog },
+        { name: 'Recycle Bin', path: '/admin/recycle-bin', icon: Trash2 },
       ],
     },
   ] : [

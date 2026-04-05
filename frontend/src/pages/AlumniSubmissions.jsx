@@ -8,7 +8,7 @@ const STATUS_LABELS = {
   rejected: { label: 'Ditolak', color: 'bg-red-100 text-red-700' },
 };
 
-const AlumniSubmissions = ({ embedded = false, onCountChange }) => {
+const AlumniSubmissions = ({ embedded = false, onCountChange, externalSearch = '' }) => {
   const [submissions, setSubmissions] = useState([]);
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
   const [activeFilter, setActiveFilter] = useState('pending');
@@ -90,6 +90,19 @@ const AlumniSubmissions = ({ embedded = false, onCountChange }) => {
     }
   };
 
+  const filteredSubmissions = externalSearch
+    ? submissions.filter((s) => {
+        const q = externalSearch.toLowerCase();
+        return (
+          s.name?.toLowerCase().includes(q) ||
+          s.jurusan?.toLowerCase().includes(q) ||
+          s.currentOccupation?.toLowerCase().includes(q) ||
+          s.company?.toLowerCase().includes(q) ||
+          s.testimonial?.toLowerCase().includes(q)
+        );
+      })
+    : submissions;
+
   const filterTabs = [
     { id: 'pending', label: 'Menunggu', count: counts.pending },
     { id: 'approved', label: 'Disetujui', count: counts.approved },
@@ -165,14 +178,14 @@ const AlumniSubmissions = ({ embedded = false, onCountChange }) => {
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : submissions.length === 0 ? (
+        ) : filteredSubmissions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Clock className="w-10 h-10 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-400">Tidak ada review di sini</p>
+            <p className="text-sm text-gray-400">{externalSearch ? 'Tidak ada hasil pencarian' : 'Tidak ada review di sini'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {submissions.map((s) => (
+            {filteredSubmissions.map((s) => (
               <SubmissionCard
                 key={s._id}
                 submission={s}

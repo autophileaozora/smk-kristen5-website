@@ -143,7 +143,9 @@ const MataPelajaran = ({ embedded = false, createTrigger = 0, externalSearch }) 
     try {
       const uploadData = new FormData();
       uploadData.append('image', file);
-      const response = await api.post('/api/upload/image', uploadData);
+      const response = await api.post('/api/upload/image', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       const url = response.data.data.url;
       setFormData(prev => ({ ...prev, image: url }));
       setImagePreview(url);

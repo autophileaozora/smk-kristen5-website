@@ -4,6 +4,7 @@ import Alumni from '../models/Alumni.js';
 import { protect } from '../middleware/auth.js';
 import { isAdministrator } from '../middleware/roleCheck.js';
 import { uploadSingle, uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload.js';
+import { handleMulterError } from '../middleware/uploadValidation.js';
 import AuditLog from '../models/AuditLog.js';
 
 const router = express.Router();
@@ -23,7 +24,7 @@ router.get('/count', async (req, res) => {
 // @route   POST /api/alumni-submissions
 // @desc    Submit alumni review (public)
 // @access  Public
-router.post('/', uploadSingle('photo'), async (req, res) => {
+router.post('/', uploadSingle('photo'), handleMulterError, async (req, res) => {
   try {
     const { name, graduationYear, jurusan, currentOccupation, company, phone, testimonial } = req.body;
 

@@ -13,7 +13,7 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const jurusans = await Jurusan.find()
+    const jurusans = await Jurusan.find({ isDeleted: { $ne: true } })
       .populate('createdBy', 'name')
       .sort({ name: 1 });
 
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/active', async (req, res) => {
   try {
-    const jurusans = await Jurusan.find({ isActive: true })
+    const jurusans = await Jurusan.find({ isActive: true, isDeleted: { $ne: true } })
       .sort({ name: 1 });
 
     res.status(200).json({
@@ -465,23 +465,10 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    // Hard-delete all images from Cloudinary
-    if (jurusan.logo) {
-      const publicId = getPublicIdFromUrl(jurusan.logo);
-      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
-    }
-    if (jurusan.backgroundImage) {
-      const publicId = getPublicIdFromUrl(jurusan.backgroundImage);
-      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
-    }
-    for (const img of (jurusan.gallery || [])) {
-      if (img.url) {
-        const publicId = getPublicIdFromUrl(img.url);
-        if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
-      }
-    }
-
-    await jurusan.deleteOne();
+    // Soft-delete — move to recycle bin (images kept until permanently deleted)
+    jurusan.isDeleted = true;
+    jurusan.deletedAt = new Date();
+    await jurusan.save();
 
     // Audit log
     await AuditLog.create({
@@ -499,7 +486,7 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Jurusan deleted successfully',
+      message: 'Jurusan dipindahkan ke recycle bin',
     });
   } catch (error) {
     res.status(500).json({

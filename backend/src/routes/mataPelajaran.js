@@ -13,7 +13,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { category } = req.query;
-    const filter = {};
+    const filter = { isDeleted: { $ne: true } };
 
     if (category) {
       // If category specified, get items for that category OR public items
@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
 router.get('/active', async (req, res) => {
   try {
     const { category } = req.query;
-    const filter = { isActive: true };
+    const filter = { isActive: true, isDeleted: { $ne: true } };
 
     if (category) {
       filter.$or = [
@@ -256,7 +256,10 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    await mataPelajaran.deleteOne();
+    // Soft-delete — move to recycle bin
+    mataPelajaran.isDeleted = true;
+    mataPelajaran.deletedAt = new Date();
+    await mataPelajaran.save();
 
     // Audit log
     await AuditLog.create({
@@ -274,7 +277,7 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Mata pelajaran deleted successfully',
+      message: 'Mata pelajaran dipindahkan ke recycle bin',
     });
   } catch (error) {
     res.status(500).json({

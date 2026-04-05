@@ -129,16 +129,25 @@ const Categories = ({ embedded = false }) => {
     return true;
   });
 
+  const TYPE_META = {
+    jurusan:    { label: 'Jurusan',    color: 'bg-violet-400/12 text-violet-700 border-violet-400/22', icon: 'bg-violet-400/10 text-violet-600/80' },
+    topik:      { label: 'Topik',      color: 'bg-blue-400/12 text-blue-700 border-blue-400/22',       icon: 'bg-blue-400/10 text-blue-600/80' },
+    kegiatan:   { label: 'Kegiatan',   color: 'bg-green-400/12 text-green-700 border-green-400/22',   icon: 'bg-green-400/10 text-green-600/80' },
+    prestasi:   { label: 'Prestasi',   color: 'bg-yellow-400/12 text-yellow-700 border-yellow-400/22', icon: 'bg-yellow-400/10 text-yellow-600/80' },
+    artikel:    { label: 'Artikel',    color: 'bg-sky-400/12 text-sky-700 border-sky-400/22',         icon: 'bg-sky-400/10 text-sky-600/80' },
+    pengumuman: { label: 'Pengumuman', color: 'bg-orange-400/12 text-orange-700 border-orange-400/22', icon: 'bg-orange-400/10 text-orange-600/80' },
+  };
+  const getTypeMeta = (type) => TYPE_META[type] || { label: type, color: 'bg-gray-400/12 text-gray-700 border-gray-400/22', icon: 'bg-gray-400/10 text-gray-600/80' };
+
   // ── Type badge — glass tinted ─────────────────────────────────────────────
-  const TypeBadge = ({ type }) => (
-    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold backdrop-blur-sm ${
-      type === 'jurusan'
-        ? 'bg-violet-400/12 text-violet-700 border border-violet-400/22'
-        : 'bg-blue-400/12 text-blue-700 border border-blue-400/22'
-    }`}>
-      {type === 'jurusan' ? 'Jurusan' : 'Topik'}
-    </span>
-  );
+  const TypeBadge = ({ type }) => {
+    const meta = getTypeMeta(type);
+    return (
+      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold backdrop-blur-sm border ${meta.color}`}>
+        {meta.label}
+      </span>
+    );
+  };
 
   // ── Category card — liquid glass ─────────────────────────────────────────
   const CategoryCard = ({ category }) => (
@@ -165,12 +174,10 @@ const Categories = ({ embedded = false }) => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-            category.type === 'jurusan' ? 'bg-violet-400/10' : 'bg-blue-400/10'
-          }`}>
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${getTypeMeta(category.type).icon.split(' ')[0]}`}>
             {category.type === 'jurusan'
-              ? <FolderOpen size={17} className="text-violet-600/80" />
-              : <Tag size={17} className="text-blue-600/80" />
+              ? <FolderOpen size={17} className={getTypeMeta(category.type).icon.split(' ')[1]} />
+              : <Tag size={17} className={getTypeMeta(category.type).icon.split(' ')[1]} />
             }
           </div>
           <div className="min-w-0">
@@ -234,7 +241,7 @@ const Categories = ({ embedded = false }) => {
 
                 {/* Type filter — mini segmented control */}
                 <div className="flex items-center gap-0.5 bg-black/[0.05] rounded-xl p-0.5">
-                  {[{ v: '', l: 'Semua' }, { v: 'topik', l: 'Topik' }].map(opt => (
+                  {[{ v: '', l: 'Semua' }, { v: 'topik', l: 'Topik' }, { v: 'kegiatan', l: 'Kegiatan' }, { v: 'prestasi', l: 'Prestasi' }, { v: 'artikel', l: 'Artikel' }, { v: 'pengumuman', l: 'Pengumuman' }].map(opt => (
                     <button
                       key={opt.v}
                       onClick={() => setFilterType(opt.v)}
@@ -363,6 +370,10 @@ const Categories = ({ embedded = false }) => {
                   required
                 >
                   <option value="topik">Topik</option>
+                  <option value="kegiatan">Kegiatan</option>
+                  <option value="prestasi">Prestasi</option>
+                  <option value="artikel">Artikel</option>
+                  <option value="pengumuman">Pengumuman</option>
                 </select>
                 <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>

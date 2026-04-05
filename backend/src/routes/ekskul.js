@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 
     const { category, isActive } = req.query;
 
-    const filter = {};
+    const filter = { isDeleted: { $ne: true } };
     if (category) filter.category = category;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
 
@@ -48,7 +48,7 @@ router.get('/active', async (req, res) => {
   try {
     const { category } = req.query;
 
-    const filter = { isActive: true };
+    const filter = { isActive: true, isDeleted: { $ne: true } };
     if (category) filter.category = category;
 
     const ekskuls = await Ekskul.find(filter)
@@ -100,7 +100,7 @@ router.get('/:id', async (req, res) => {
 // @access  Protected + Admin
 router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, res) => {
   try {
-    const { name, description, category, coach, schedule, location, achievements } = req.body;
+    const { name, description, category, coach, schedule, location, achievements, image } = req.body;
 
     if (!name || !description || !coach || !schedule) {
       return res.status(400).json({
@@ -120,21 +120,20 @@ router.post('/', protect, isAdministrator, uploadSingle('image'), async (req, re
       createdBy: req.user.id,
     };
 
-    // Upload image to Cloudinary if provided
+    // Upload image to Cloudinary if binary file, or use URL if pre-uploaded
     if (req.file) {
       try {
-        console.log('Uploading ekskul image to Cloudinary...');
         const result = await uploadToCloudinary(req.file.buffer);
-        console.log('Cloudinary upload success:', result.secure_url);
         ekskulData.image = result.secure_url;
       } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
         const errorMessage = uploadError?.message || uploadError?.error?.message || JSON.stringify(uploadError) || 'Unknown error';
         return res.status(500).json({
           success: false,
           message: 'Failed to upload image to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (image) {
+      ekskulData.image = image;
     }
 
     const ekskul = await Ekskul.create(ekskulData);
@@ -258,13 +257,10 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
       });
     }
 
-    // Hard-delete image from Cloudinary
-    if (ekskul.image) {
-      const publicId = getPublicIdFromUrl(ekskul.image);
-      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
-    }
-
-    await ekskul.deleteOne();
+    // Soft-delete — move to recycle bin
+    ekskul.isDeleted = true;
+    ekskul.deletedAt = new Date();
+    await ekskul.save();
 
     // Audit log
     await AuditLog.create({
@@ -281,7 +277,7 @@ router.delete('/:id', protect, isAdministrator, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Ekskul deleted successfully',
+      message: 'Ekskul dipindahkan ke recycle bin',
     });
   } catch (error) {
     res.status(500).json({

@@ -12,13 +12,14 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { graduationYear, jurusan, isPublished, isFeatured } = req.query;
-    
+    const { graduationYear, jurusan, isPublished, isFeatured, search } = req.query;
+
     const filter = {};
     if (graduationYear) filter.graduationYear = parseInt(graduationYear);
     if (jurusan) filter.jurusan = jurusan;
     if (isPublished !== undefined) filter.isPublished = isPublished === 'true';
     if (isFeatured !== undefined) filter.isFeatured = isFeatured === 'true';
+    if (search) filter.name = { $regex: search, $options: 'i' };
 
     const alumni = await Alumni.find(filter)
       .populate('createdBy', 'name')
@@ -153,6 +154,7 @@ router.post('/', protect, isAdministrator, uploadSingle('photo'), async (req, re
       linkedIn,
       isPublished,
       isFeatured,
+      photo,
     } = req.body;
 
     if (!name || !graduationYear || !jurusan) {
@@ -177,21 +179,20 @@ router.post('/', protect, isAdministrator, uploadSingle('photo'), async (req, re
       createdBy: req.user.id,
     };
 
-    // Upload photo to Cloudinary if provided
+    // Upload photo to Cloudinary if binary file, or use URL if pre-uploaded
     if (req.file) {
       try {
-        console.log('Uploading alumni photo to Cloudinary...');
         const result = await uploadToCloudinary(req.file.buffer);
-        console.log('Cloudinary upload success:', result.secure_url);
         alumniData.photo = result.secure_url;
       } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
         const errorMessage = uploadError?.message || uploadError?.error?.message || JSON.stringify(uploadError) || 'Unknown error';
         return res.status(500).json({
           success: false,
           message: 'Failed to upload photo to Cloudinary: ' + errorMessage,
         });
       }
+    } else if (photo) {
+      alumniData.photo = photo;
     }
 
     const alumni = await Alumni.create(alumniData);

@@ -635,12 +635,12 @@ const Alumni = ({ embedded = false, createTrigger = 0, externalSearch = '', filt
                   LinkedIn URL
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   name="linkedIn"
                   value={formData.linkedIn}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400"
-                  placeholder="https://linkedin.com/in/..."
+                  placeholder="https://linkedin.com/in/... (opsional)"
                 />
               </div>
 

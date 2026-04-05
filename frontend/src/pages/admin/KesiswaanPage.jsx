@@ -216,7 +216,7 @@ const KesiswaanPage = () => {
               <Events embedded createTrigger={createTrigger} />
             )}
             {activeTab === 'review-alumni' && (
-              <AlumniSubmissions embedded onCountChange={setPendingCount} />
+              <AlumniSubmissions embedded onCountChange={setPendingCount} externalSearch={searchQuery} />
             )}
           </Suspense>
 

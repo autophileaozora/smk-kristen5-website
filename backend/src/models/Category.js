@@ -17,7 +17,7 @@ const categorySchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['jurusan', 'topik'],
+      enum: ['jurusan', 'topik', 'kegiatan', 'prestasi', 'artikel', 'pengumuman'],
       required: [true, 'Category type is required'],
     },
     description: {

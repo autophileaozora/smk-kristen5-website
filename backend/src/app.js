@@ -128,6 +128,7 @@ import sitemapRoutes from './routes/sitemap.js';
 import contactMessageRoutes from './routes/contactMessages.js';
 import statsCardsRoutes from './routes/statsCards.js';
 import ogRoutes from './routes/og.js';
+import recycleBinRoutes from './routes/recycleBin.js';
 
 // Mount routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -162,6 +163,7 @@ app.use('/api/alumni-submissions', alumniSubmissionsRoutes);
 app.use('/api/contact-messages', contactMessageRoutes);
 app.use('/api/stats-cards', statsCardsRoutes);
 app.use('/api/og', ogRoutes);
+app.use('/api/recycle-bin', recycleBinRoutes);
 
 // Root route
 app.get('/', (req, res) => {

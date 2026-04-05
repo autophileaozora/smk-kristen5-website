@@ -74,6 +74,10 @@ const HomepageFixed = () => {
       setReviewError('Foto profil wajib diupload.');
       return;
     }
+    if (photoFile.size > 2 * 1024 * 1024) {
+      setReviewError('Ukuran foto terlalu besar. Maksimal 2MB.');
+      return;
+    }
     setReviewSubmitState('submitting');
     try {
       const fd = new FormData();
@@ -90,7 +94,7 @@ const HomepageFixed = () => {
       });
       setReviewSubmitState('success');
     } catch (err) {
-      setReviewError(err.response?.data?.message || 'Terjadi kesalahan, coba lagi.');
+      setReviewError(err.response?.data?.message || err.message || 'Terjadi kesalahan, coba lagi.');
       setReviewSubmitState('idle');
     }
   };
@@ -631,7 +635,7 @@ const HomepageFixed = () => {
 
         {/* Right - Accordion */}
         <div ref={accordionContainerRef} className="flex-1 px-6 lg:px-16 py-10 flex flex-col justify-start gap-4 lg:overflow-y-auto lg:h-[600px] max-w-[1400px]">
-          {(data.jurusans || []).slice(0, 5).map((jurusan, idx) => (
+          {(data.jurusans || []).map((jurusan, idx) => (
             <div key={idx} ref={el => accordionItemRefs.current[idx] = el} className="pb-4 border-b border-gray-300">
               <div
                 className="flex justify-between items-center cursor-pointer hover:opacity-70 transition-opacity"

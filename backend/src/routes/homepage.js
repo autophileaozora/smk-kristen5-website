@@ -50,19 +50,19 @@ router.get('/', async (req, res) => {
       videoHeroes,
       statsCards,
     ] = await Promise.all([
-      Jurusan.find().sort({ name: 1 }).lean(),
-      Article.find({ status: 'published' })
+      Jurusan.find({ isDeleted: { $ne: true } }).sort({ name: 1 }).lean(),
+      Article.find({ status: 'published', isDeleted: { $ne: true } })
         .populate('categoryJurusan', 'name slug')
         .populate('categoryTopik', 'name slug')
         .populate('author', 'name')
         .sort({ publishedAt: -1 })
         .limit(6)
         .lean(),
-      Ekskul.find().sort({ createdAt: -1 }).lean(),
+      Ekskul.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean(),
       Alumni.find({ isPublished: true }).sort({ graduationYear: -1, createdAt: -1 }).lean(),
       Partner.find({ isActive: true }).sort({ order: 1, createdAt: -1 }).lean(),
-      Fasilitas.find().sort({ displayOrder: 1, name: 1 }).lean(),
-      Prestasi.find().sort({ date: -1, createdAt: -1 }).lean(),
+      Fasilitas.find({ isDeleted: { $ne: true } }).sort({ displayOrder: 1, name: 1 }).lean(),
+      Prestasi.find({ isDeleted: { $ne: true } }).sort({ date: -1, createdAt: -1 }).lean(),
       HeroSlide.find({ isActive: true })
         .select('-createdBy')
         .sort({ displayOrder: 1 })

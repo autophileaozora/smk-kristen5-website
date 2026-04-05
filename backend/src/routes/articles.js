@@ -15,7 +15,7 @@ router.get('/public', async (req, res) => {
   try {
     const { jurusanCode, topikSlug, limit = 10 } = req.query;
 
-    const query = { status: 'published' };
+    const query = { status: 'published', isDeleted: { $ne: true } };
 
     // Filter by jurusan code if provided (Article.categoryJurusan refs Jurusan model)
     if (jurusanCode) {
@@ -64,7 +64,8 @@ router.get('/slug/:slug', async (req, res) => {
   try {
     const article = await Article.findOne({
       slug: req.params.slug,
-      status: 'published'
+      status: 'published',
+      isDeleted: { $ne: true }
     })
       .populate('categoryJurusan', 'name code slug')
       .populate('categoryTopik', 'name slug')
@@ -105,7 +106,7 @@ router.get('/', protect, sanitizePagination, async (req, res) => {
       author,
     } = req.query;
 
-    const query = {};
+    const query = { isDeleted: { $ne: true } };
 
     // Admin sees all, Siswa sees only own
     if (req.user.role !== 'administrator') {
@@ -258,8 +259,12 @@ router.post('/', protect, async (req, res) => {
     }
 
     // categoryTopik is optional - can be null for general articles
-    // Siswa creates article with "pending" status, Admin creates with "draft"
-    const initialStatus = req.user.role === 'administrator' ? 'draft' : 'pending';
+    // Siswa always creates with "pending", Admin can set any valid status
+    const allowedAdminStatuses = ['draft', 'published'];
+    const requestedStatus = req.body.status;
+    const initialStatus = req.user.role === 'administrator'
+      ? (allowedAdminStatuses.includes(requestedStatus) ? requestedStatus : 'draft')
+      : 'pending';
 
     const article = await Article.create({
       title,
@@ -342,7 +347,12 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metaDescription, keywords, altText, metadata, faqs } = req.body;
+    const { title, content, excerpt, categoryJurusan, categoryTopik, featuredImage, metaDescription, keywords, altText, metadata, faqs, status } = req.body;
+
+    // Admin can change status to any valid value
+    if (isAdmin && status && ['draft', 'published', 'rejected'].includes(status)) {
+      article.status = status;
+    }
 
     article.title = title || article.title;
     article.content = content || article.content;
@@ -436,13 +446,10 @@ router.delete('/:id', protect, async (req, res) => {
       });
     }
 
-    // Hard-delete featured image from Cloudinary
-    if (article.featuredImage?.url) {
-      const publicId = article.featuredImage?.publicId || getPublicIdFromUrl(article.featuredImage.url);
-      if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
-    }
-
-    await article.deleteOne();
+    // Soft-delete — move to recycle bin
+    article.isDeleted = true;
+    article.deletedAt = new Date();
+    await article.save();
 
     // Audit log
     await AuditLog.create({
@@ -460,7 +467,7 @@ router.delete('/:id', protect, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Article deleted successfully',
+      message: 'Artikel dipindahkan ke recycle bin',
     });
   } catch (error) {
     res.status(500).json({

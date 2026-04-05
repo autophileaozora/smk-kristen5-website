@@ -58,6 +58,8 @@ const ekskulSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
   },
   {
     timestamps: true,
