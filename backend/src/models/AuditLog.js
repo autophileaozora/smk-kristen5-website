@@ -17,6 +17,8 @@ const auditLogSchema = new mongoose.Schema(
         'read',
         'update',
         'delete',
+        'restore',
+        'permanent_delete',
         'approve',
         'reject',
         'upload',
@@ -53,7 +55,9 @@ const auditLogSchema = new mongoose.Schema(
         'siteSettings',
         'customPage',
         'footerColumn',
-        'alumniSubmission'
+        'alumniSubmission',
+        'artikel',
+        'mata-pelajaran'
       ],
     },
     resourceId: {

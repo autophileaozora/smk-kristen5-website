@@ -6,6 +6,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { ArrowLeft, Save, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
 import ImageUpload from '../components/ImageUpload';
+import useAuthStore from '../store/authStore';
 
 const INITIAL_FORM = {
   title: '',
@@ -26,8 +27,10 @@ export default function ArticleEditorPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = !!id;
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'administrator';
 
-  const [formData, setFormData] = useState(INITIAL_FORM);
+  const [formData, setFormData] = useState({ ...INITIAL_FORM, status: isAdmin ? 'published' : 'draft' });
   const [categories, setCategories] = useState([]);
   const [jurusans, setJurusans] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -345,15 +348,16 @@ export default function ArticleEditorPage() {
           {isEdit ? 'Edit Artikel' : 'Buat Artikel Baru'}
           {formData.title && <span className="text-gray-400 font-normal ml-2">— {formData.title}</span>}
         </h1>
-        <select
-          value={formData.status}
-          onChange={e => setFormData(f => ({ ...f, status: e.target.value }))}
-          className="text-xs border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 shrink-0"
-        >
-          <option value="draft">Draft</option>
-          <option value="pending_review">Pending Review</option>
-          <option value="published">Published</option>
-        </select>
+        {isAdmin && (
+          <select
+            value={formData.status}
+            onChange={e => setFormData(f => ({ ...f, status: e.target.value }))}
+            className="text-xs border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 shrink-0"
+          >
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        )}
         {/* Desktop preview toggle */}
         <button
           onClick={() => setShowPreview(v => !v)}

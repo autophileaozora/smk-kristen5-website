@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Plus, Edit3, Trash2, Tag, FolderOpen, X, MoreVertical, ChevronDown } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Tag, X, MoreVertical } from 'lucide-react';
 import api from '../services/api';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
@@ -24,7 +24,6 @@ const Categories = ({ embedded = false }) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [filterType, setFilterType] = useState('');
 
   // Floating pill state (embedded)
   const [showActions, setShowActions] = useState(false);
@@ -117,7 +116,6 @@ const Categories = ({ embedded = false }) => {
 
   const filteredCategories = categories.filter(cat => {
     if (cat.type === 'jurusan') return false;
-    if (filterType && cat.type !== filterType) return false;
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       return (
@@ -129,32 +127,11 @@ const Categories = ({ embedded = false }) => {
     return true;
   });
 
-  const TYPE_META = {
-    jurusan:    { label: 'Jurusan',    color: 'bg-violet-400/12 text-violet-700 border-violet-400/22', icon: 'bg-violet-400/10 text-violet-600/80' },
-    topik:      { label: 'Topik',      color: 'bg-blue-400/12 text-blue-700 border-blue-400/22',       icon: 'bg-blue-400/10 text-blue-600/80' },
-    kegiatan:   { label: 'Kegiatan',   color: 'bg-green-400/12 text-green-700 border-green-400/22',   icon: 'bg-green-400/10 text-green-600/80' },
-    prestasi:   { label: 'Prestasi',   color: 'bg-yellow-400/12 text-yellow-700 border-yellow-400/22', icon: 'bg-yellow-400/10 text-yellow-600/80' },
-    artikel:    { label: 'Artikel',    color: 'bg-sky-400/12 text-sky-700 border-sky-400/22',         icon: 'bg-sky-400/10 text-sky-600/80' },
-    pengumuman: { label: 'Pengumuman', color: 'bg-orange-400/12 text-orange-700 border-orange-400/22', icon: 'bg-orange-400/10 text-orange-600/80' },
-  };
-  const getTypeMeta = (type) => TYPE_META[type] || { label: type, color: 'bg-gray-400/12 text-gray-700 border-gray-400/22', icon: 'bg-gray-400/10 text-gray-600/80' };
-
-  // ── Type badge — glass tinted ─────────────────────────────────────────────
-  const TypeBadge = ({ type }) => {
-    const meta = getTypeMeta(type);
-    return (
-      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold backdrop-blur-sm border ${meta.color}`}>
-        {meta.label}
-      </span>
-    );
-  };
-
   // ── Category card — liquid glass ─────────────────────────────────────────
   const CategoryCard = ({ category }) => (
     <div className="group relative bg-white/70 backdrop-blur-sm rounded-xl overflow-hidden transition-all duration-200 shadow-[0_1px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85)] border border-white/70 hover:border-white/95 hover:shadow-[0_4px_20px_rgba(0,0,0,0.09),inset_0_1px_0_rgba(255,255,255,0.9)]">
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
-          <TypeBadge type={category.type} />
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
             <button
               onClick={() => openEditModal(category)}
@@ -174,11 +151,8 @@ const Categories = ({ embedded = false }) => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${getTypeMeta(category.type).icon.split(' ')[0]}`}>
-            {category.type === 'jurusan'
-              ? <FolderOpen size={17} className={getTypeMeta(category.type).icon.split(' ')[1]} />
-              : <Tag size={17} className={getTypeMeta(category.type).icon.split(' ')[1]} />
-            }
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-400/10">
+            <Tag size={17} className="text-blue-600/80" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">{category.name}</p>
@@ -239,23 +213,6 @@ const Categories = ({ embedded = false }) => {
                   <Search size={16} />
                 </button>
 
-                {/* Type filter — mini segmented control */}
-                <div className="flex items-center gap-0.5 bg-black/[0.05] rounded-xl p-0.5">
-                  {[{ v: '', l: 'Semua' }, { v: 'topik', l: 'Topik' }, { v: 'kegiatan', l: 'Kegiatan' }, { v: 'prestasi', l: 'Prestasi' }, { v: 'artikel', l: 'Artikel' }, { v: 'pengumuman', l: 'Pengumuman' }].map(opt => (
-                    <button
-                      key={opt.v}
-                      onClick={() => setFilterType(opt.v)}
-                      className={`px-2 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 ${
-                        filterType === opt.v
-                          ? 'bg-white/90 shadow-sm text-gray-800'
-                          : 'text-gray-500/80 hover:text-gray-700'
-                      }`}
-                    >
-                      {opt.l}
-                    </button>
-                  ))}
-                </div>
-
                 {/* Add */}
                 <button
                   onClick={openCreateModal}
@@ -268,7 +225,7 @@ const Categories = ({ embedded = false }) => {
                 {/* Divider + Close */}
                 <div className="w-px h-4 bg-black/10 mx-0.5" />
                 <button
-                  onClick={() => { setShowActions(false); setShowSearch(false); setSearchQuery(''); setFilterType(''); }}
+                  onClick={() => { setShowActions(false); setShowSearch(false); setSearchQuery(''); }}
                   className="p-1.5 rounded-xl text-gray-400/70 hover:bg-black/[0.06] hover:text-gray-600 transition-all duration-150"
                   title="Tutup"
                 >
@@ -280,22 +237,14 @@ const Categories = ({ embedded = false }) => {
         </div>
 
         {/* Active filter pill */}
-        {(searchQuery || filterType) && (
+        {searchQuery && (
           <div className="px-4 pt-3 pb-2 pr-14 flex flex-wrap gap-1.5 items-center">
-            {searchQuery && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                "{searchQuery}"
-                <button onClick={() => setSearchQuery('')} className="ml-0.5 hover:text-blue-900">×</button>
-              </span>
-            )}
-            {filterType && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-50 text-violet-700 rounded-full text-xs font-medium capitalize">
-                {filterType}
-                <button onClick={() => setFilterType('')} className="ml-0.5">×</button>
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+              "{searchQuery}"
+              <button onClick={() => setSearchQuery('')} className="ml-0.5 hover:text-blue-900">×</button>
+            </span>
             <button
-              onClick={() => { setSearchQuery(''); setFilterType(''); }}
+              onClick={() => setSearchQuery('')}
               className="text-xs text-red-500 hover:text-red-700 font-medium"
             >
               Hapus semua
@@ -313,9 +262,9 @@ const Categories = ({ embedded = false }) => {
             <div className="col-span-3 py-16 text-center">
               <Tag size={40} className="mx-auto text-gray-200 mb-3" />
               <p className="text-sm text-gray-400">
-                {searchQuery || filterType ? 'Tidak ada kategori yang sesuai' : 'Belum ada kategori'}
+                {searchQuery ? 'Tidak ada kategori yang sesuai' : 'Belum ada kategori'}
               </p>
-              {!searchQuery && !filterType && (
+              {!searchQuery && (
                 <button
                   onClick={openCreateModal}
                   className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
@@ -359,25 +308,6 @@ const Categories = ({ embedded = false }) => {
                 placeholder="teknik-komputer-jaringan"
               />
               <p className="mt-1 text-xs text-gray-400">Otomatis dibuat dari nama, bisa diedit manual</p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Tipe *</label>
-              <div className="relative">
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData(f => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all appearance-none pr-8"
-                  required
-                >
-                  <option value="topik">Topik</option>
-                  <option value="kegiatan">Kegiatan</option>
-                  <option value="prestasi">Prestasi</option>
-                  <option value="artikel">Artikel</option>
-                  <option value="pengumuman">Pengumuman</option>
-                </select>
-                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-              <p className="mt-1 text-xs text-gray-400">Contoh: Berita, Pengumuman, dll.</p>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">Deskripsi</label>
@@ -484,15 +414,6 @@ const Categories = ({ embedded = false }) => {
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Slug *</label>
             <input type="text" value={formData.slug} onChange={(e) => setFormData(f => ({ ...f, slug: e.target.value }))} required className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-gray-400 font-mono" placeholder="teknik-komputer-jaringan" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Tipe *</label>
-            <div className="relative">
-              <select value={formData.type} onChange={(e) => setFormData(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2 text-sm bg-white/60 border border-black/[0.08] rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all appearance-none pr-8" required>
-                <option value="topik">Topik</option>
-              </select>
-              <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Deskripsi</label>
